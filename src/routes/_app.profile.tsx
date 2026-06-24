@@ -134,14 +134,16 @@ function ProfilePage() {
         </form>
       </Card>
 
-      <Link to="/health" className="block">
+      <Link to="/health-features" className="block">
         <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
             <HeartPulse className="h-5 w-5" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Особенности здоровья</p>
-            <p className="text-xs text-muted-foreground">Давление, пульс, энергия, самочувствие</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {summarizeHealthFeatures(profile.healthFeatures)}
+            </p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </Card>
