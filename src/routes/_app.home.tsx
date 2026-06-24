@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Zap, Wheat, Mic, Footprints } from "lucide-react";
+import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Zap, Wheat, Mic, Footprints, Coffee, Utensils } from "lucide-react";
 import { useEntries, useProfile, todayISO, formatDateWeekday } from "@/lib/store";
 import { toast } from "sonner";
 
