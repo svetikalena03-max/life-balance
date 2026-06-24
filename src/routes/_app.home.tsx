@@ -28,6 +28,8 @@ function HomePage() {
   const wellbeing = todayEntry?.wellbeing ?? lastWith("wellbeing")?.wellbeing ?? "—";
   const breadUnits = todayEntry?.breadUnits ?? 0;
   const steps = todayEntry?.steps ?? lastWith("steps")?.steps;
+  const mealsCount = todayEntry?.meals?.filter((m) => (m.food && m.food.trim()) || (m.portion && m.portion.trim())).length ?? 0;
+  const coffee = todayEntry?.coffee ?? 0;
 
   const lastBP = todayEntry?.systolic ? todayEntry : lastWith("systolic");
   const pulse = todayEntry?.pulse ?? lastWith("pulse")?.pulse;
