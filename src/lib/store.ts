@@ -30,17 +30,76 @@ export interface Profile {
   goal?: Goal;
 }
 
+export type MealType =
+  | "breakfast1"
+  | "breakfast2"
+  | "snack1"
+  | "lunch"
+  | "snack2"
+  | "dinner"
+  | "lateSnack"
+  | "extra";
+
+export const MEAL_LABELS: Record<MealType, string> = {
+  breakfast1: "Завтрак 1",
+  breakfast2: "Завтрак 2",
+  snack1: "Перекус",
+  lunch: "Обед",
+  snack2: "Полдник",
+  dinner: "Ужин",
+  lateSnack: "Поздний перекус",
+  extra: "Дополнительный приём",
+};
+
+export const DEFAULT_MEAL_TYPES: MealType[] = [
+  "breakfast1",
+  "breakfast2",
+  "snack1",
+  "lunch",
+  "snack2",
+  "dinner",
+  "lateSnack",
+];
+
+export interface Meal {
+  id: string;
+  type: MealType;
+  food?: string;
+  portion?: string;
+  time?: string; // HH:MM
+  comment?: string;
+}
+
+export type SugarLevel = "none" | "one" | "two" | "other";
+export const SUGAR_LABELS: Record<SugarLevel, string> = {
+  none: "Без сахара",
+  one: "1 ложка",
+  two: "2 ложки",
+  other: "Другое",
+};
+
 export interface DayEntry {
   date: string; // YYYY-MM-DD
-  // Дневник
-  food?: string;
-  drinks?: string;
+  // Дневник — приёмы пищи
+  meals?: Meal[];
+  food?: string; // legacy, для старых записей
+  // Напитки
+  drinks?: string; // legacy
+  water?: number; // ml
+  tea?: number; // ml
+  coffee?: number; // ml
+  soda?: number; // ml
+  juice?: number; // ml
+  otherDrinks?: string;
+  sugar?: SugarLevel;
+  sugarOther?: string;
+  milk?: boolean;
+  // Прочее
   wellbeing?: string;
   weight?: number;
-  water?: number; // ml
-  sleep?: number; // hours
-  mood?: number; // 1-10
-  breadUnits?: number; // хлебцы
+  sleep?: number;
+  mood?: number;
+  breadUnits?: number;
   steps?: number;
   workout?: string;
   workoutMinutes?: number;
@@ -48,7 +107,7 @@ export interface DayEntry {
   systolic?: number;
   diastolic?: number;
   pulse?: number;
-  energy?: number; // 1-10
+  energy?: number;
   edema?: boolean;
   heartburn?: boolean;
   bloating?: boolean;
