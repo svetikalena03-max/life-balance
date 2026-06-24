@@ -37,7 +37,8 @@ export interface DayEntry {
 }
 
 const PROFILE_KEY = "hg_profile";
-const ENTRIES_KEY = "hg_entries";
+const ENTRIES_KEY = "hg_entries_v2";
+const LEGACY_ENTRIES_KEY = "hg_entries";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -82,6 +83,10 @@ export function useEntries() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Migration: remove legacy demo entries
+    if (isBrowser) {
+      try { window.localStorage.removeItem(LEGACY_ENTRIES_KEY); } catch { /* noop */ }
+    }
     setEntries(read<DayEntry[]>(ENTRIES_KEY, []));
     setReady(true);
     const handler = () => setEntries(read<DayEntry[]>(ENTRIES_KEY, []));
