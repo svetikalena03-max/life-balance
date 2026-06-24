@@ -8,6 +8,13 @@ export interface AuthUser {
   name?: string;
 }
 
+export interface AuthResult {
+  ok: boolean;
+  error?: string;
+  code?: string;
+  user?: AuthUser | null;
+}
+
 function toAuthUser(u: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null): AuthUser | null {
   if (!u) return null;
   const meta = u.user_metadata ?? {};
@@ -31,11 +38,11 @@ export function useAuth() {
   }, []);
 
   const signUp = useCallback(
-    async (email: string, password: string, name?: string): Promise<{ ok: boolean; error?: string }> => {
+    async (email: string, password: string, name?: string): Promise<AuthResult> => {
       const e = email.trim().toLowerCase();
       const p = password.trim();
       if (!e || !p) return { ok: false, error: "Введите email и пароль" };
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: e,
         password: p,
         options: {
@@ -44,24 +51,66 @@ export function useAuth() {
         },
       });
       if (error) {
-        const msg = error.message.toLowerCase();
-        if (msg.includes("registered") || msg.includes("exists"))
-          return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
-        return { ok: false, error: error.message };
+        console.error("Supabase Auth signUp error", {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          name: error.name,
+        });
+        return { ok: false, error: error.message, code: error.code };
       }
-      return { ok: true };
+      let session = data.session;
+      let signedUser = data.user;
+      if (!session) {
+        const retry = await supabase.auth.signInWithPassword({ email: e, password: p });
+        if (retry.error) {
+          console.error("Supabase Auth signInWithPassword after signUp error", {
+            email: e,
+            message: retry.error.message,
+            code: retry.error.code,
+            status: retry.error.status,
+            name: retry.error.name,
+          });
+          return { ok: false, error: retry.error.message, code: retry.error.code };
+        }
+        session = retry.data.session;
+        signedUser = retry.data.user;
+      }
+      console.info("Supabase Auth signUp success", {
+        userId: signedUser?.id,
+        email: signedUser?.email,
+        hasSession: Boolean(session),
+        emailConfirmedAt: signedUser?.email_confirmed_at,
+      });
+      return { ok: true, user: toAuthUser(signedUser) };
     },
     [],
   );
 
   const signIn = useCallback(
-    async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password: password.trim(),
+    async (email: string, password: string): Promise<AuthResult> => {
+      const e = email.trim().toLowerCase();
+      const p = password.trim();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: e,
+        password: p,
       });
-      if (error) return { ok: false, error: "Неверный email или пароль" };
-      return { ok: true };
+      if (error) {
+        console.error("Supabase Auth signInWithPassword error", {
+          email: e,
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          name: error.name,
+        });
+        return { ok: false, error: error.message, code: error.code };
+      }
+      console.info("Supabase Auth signInWithPassword success", {
+        userId: data.user?.id,
+        email: data.user?.email,
+        hasSession: Boolean(data.session),
+      });
+      return { ok: true, user: toAuthUser(data.user) };
     },
     [],
   );
@@ -73,7 +122,16 @@ export function useAuth() {
       const { error } = await supabase.auth.resetPasswordForEmail(e, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        console.error("Supabase Auth resetPasswordForEmail error", {
+          email: e,
+          message: error.message,
+          code: error.code,
+          status: error.status,
+          name: error.name,
+        });
+        return { ok: false, error: error.message };
+      }
       return { ok: true };
     },
     [],

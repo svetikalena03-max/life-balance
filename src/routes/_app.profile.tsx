@@ -62,18 +62,18 @@ function ProfilePage() {
   };
 
   void user;
-  const reset = () => {
-    signOut();
+  const reset = async () => {
+    await signOut();
     navigate({ to: "/" });
   };
 
-  const wipe = () => {
+  const wipe = async () => {
     if (!confirm("Удалить все данные дневника?")) return;
     localStorage.removeItem("hg_profile");
     localStorage.removeItem("hg_entries");
     localStorage.removeItem("hg_entries_v2");
     window.dispatchEvent(new CustomEvent("hg-storage"));
-    signOut();
+    await signOut();
     navigate({ to: "/" });
   };
 

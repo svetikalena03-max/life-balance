@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -24,6 +25,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (ready && user) navigate({ to: "/home" });
@@ -31,9 +34,14 @@ function LoginPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    setServerError(null);
+    setSubmitting(true);
     const res = await signIn(email, password);
     if (!res.ok) {
-      toast.error(res.error ?? "Неверный email или пароль");
+      const message = res.error ?? "Ошибка входа";
+      setServerError(message);
+      toast.error(message);
+      setSubmitting(false);
       return;
     }
     toast.success("Вы успешно вошли");
@@ -56,10 +64,16 @@ function LoginPage() {
         </div>
 
         <Card className="p-5">
-          <form onSubmit={submit} className="flex flex-col gap-4">
+          <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+            {serverError && (
+              <Alert variant="destructive">
+                <AlertTitle>Ошибка Auth</AlertTitle>
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => v.trim().toLowerCase())} required />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -88,8 +102,8 @@ function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" size="lg" className="h-12 text-base font-semibold">
-              Войти
+            <Button type="submit" size="lg" className="h-12 text-base font-semibold" disabled={submitting}>
+              {submitting ? "Входим..." : "Войти"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Нет аккаунта?{" "}

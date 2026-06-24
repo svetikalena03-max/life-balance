@@ -153,6 +153,17 @@ export interface Profile {
   healthFeatures?: HealthFeatures;
 }
 
+export const DEFAULT_PROFILE: Profile = {
+  name: "Друг",
+  age: 30,
+  gender: "female",
+  height: 170,
+  currentWeight: 70,
+  targetWeight: 70,
+  waterGoal: 2000,
+  goal: "health",
+};
+
 export type MealType =
   | "breakfast1"
   | "breakfast2"
@@ -393,6 +404,40 @@ function profileToRow(p: Profile, userId: string) {
     birth_date: p.birthDate ?? null,
     goal: p.goal ?? null,
   };
+}
+
+export async function ensureCurrentUserProfile(profile: Profile): Promise<{ ok: boolean; error?: string }> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error("Supabase Auth getUser error while creating profile", {
+      message: userError.message,
+      code: userError.code,
+      status: userError.status,
+      name: userError.name,
+    });
+    return { ok: false, error: userError.message };
+  }
+  const user = userData.user;
+  if (!user) return { ok: false, error: "Пользователь не авторизован после регистрации" };
+
+  const row = {
+    ...profileToRow(profile, user.id),
+    email: user.email?.trim().toLowerCase() ?? null,
+  };
+  const { error } = await supabase.from("profiles").upsert(row, { onConflict: "user_id" });
+  if (error) {
+    console.error("Supabase profile upsert error", {
+      userId: user.id,
+      email: user.email,
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    return { ok: false, error: error.message };
+  }
+  console.info("Supabase profile upsert success", { userId: user.id, email: user.email });
+  return { ok: true };
 }
 
 function habitsToRow(h: Habits, userId: string) {
