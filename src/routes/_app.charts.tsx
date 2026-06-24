@@ -19,6 +19,7 @@ function ChartsPage() {
     diastolic: e.diastolic ?? null,
     pulse: e.pulse ?? null,
     energy: e.energy ?? null,
+    bread: e.breadUnits ?? null,
   }));
 
   if (entries.length === 0) {
@@ -32,6 +33,9 @@ function ChartsPage() {
     );
   }
 
+  const axisStyle = { fontSize: 11 } as const;
+  const tooltip = { borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" };
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Графики" subtitle="Динамика по дням" />
@@ -39,9 +43,9 @@ function ChartsPage() {
       <ChartCard title="Вес, кг">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+          <Tooltip contentStyle={tooltip} />
           <Line type="monotone" dataKey="weight" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
         </LineChart>
       </ChartCard>
@@ -49,9 +53,9 @@ function ChartsPage() {
       <ChartCard title="Вода, л">
         <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
+          <Tooltip contentStyle={tooltip} />
           <Bar dataKey="water" fill="var(--chart-2)" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ChartCard>
@@ -59,9 +63,9 @@ function ChartsPage() {
       <ChartCard title="Сон, часов">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
+          <Tooltip contentStyle={tooltip} />
           <Line type="monotone" dataKey="sleep" stroke="var(--chart-5)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
         </LineChart>
       </ChartCard>
@@ -69,9 +73,9 @@ function ChartsPage() {
       <ChartCard title="Давление, мм рт.ст.">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
+          <Tooltip contentStyle={tooltip} />
           <Line type="monotone" dataKey="systolic" name="Верхнее" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
           <Line type="monotone" dataKey="diastolic" name="Нижнее" stroke="var(--chart-4)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
         </LineChart>
@@ -80,9 +84,9 @@ function ChartsPage() {
       <ChartCard title="Пульс, уд/мин">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
+          <Tooltip contentStyle={tooltip} />
           <Line type="monotone" dataKey="pulse" stroke="var(--chart-2)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
         </LineChart>
       </ChartCard>
@@ -90,10 +94,20 @@ function ChartsPage() {
       <ChartCard title="Энергия, 1–10">
         <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" domain={[0, 10]} />
-          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" domain={[0, 10]} />
+          <Tooltip contentStyle={tooltip} />
           <Bar dataKey="energy" fill="var(--chart-3)" radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ChartCard>
+
+      <ChartCard title="Хлебцы, шт">
+        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
+          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
+          <Tooltip contentStyle={tooltip} />
+          <Bar dataKey="bread" fill="var(--chart-4)" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ChartCard>
     </div>

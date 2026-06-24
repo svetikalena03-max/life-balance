@@ -18,8 +18,8 @@ function AppLayout() {
   }, [ready, profile, navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-xl px-4 pb-28 pt-4">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      <div className="mx-auto w-full max-w-xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3">
         <Outlet />
       </div>
       <BottomNav />

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
+import { SaveSuccess } from "@/components/SaveSuccess";
 import { useEntries, todayISO } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/diary")({
@@ -16,7 +17,6 @@ export const Route = createFileRoute("/_app/diary")({
 
 function DiaryPage() {
   const { entries, saveEntry, ready } = useEntries();
-  const navigate = useNavigate();
   const today = todayISO();
   const existing = entries.find((e) => e.date === today);
 
@@ -27,7 +27,11 @@ function DiaryPage() {
   const [water, setWater] = useState("");
   const [sleep, setSleep] = useState("");
   const [breadUnits, setBreadUnits] = useState("");
+  const [steps, setSteps] = useState("");
+  const [workout, setWorkout] = useState("");
+  const [workoutMinutes, setWorkoutMinutes] = useState("");
   const [mood, setMood] = useState(7);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -38,6 +42,9 @@ function DiaryPage() {
       setWater(existing.water != null ? String(existing.water) : "");
       setSleep(existing.sleep != null ? String(existing.sleep) : "");
       setBreadUnits(existing.breadUnits != null ? String(existing.breadUnits) : "");
+      setSteps(existing.steps != null ? String(existing.steps) : "");
+      setWorkout(existing.workout ?? "");
+      setWorkoutMinutes(existing.workoutMinutes != null ? String(existing.workoutMinutes) : "");
       setMood(existing.mood ?? 7);
     }
   }, [ready, existing?.date]);
@@ -51,15 +58,23 @@ function DiaryPage() {
       water: water === "" ? undefined : Number(water),
       sleep: sleep === "" ? undefined : Number(sleep),
       breadUnits: breadUnits === "" ? undefined : Number(breadUnits),
+      steps: steps === "" ? undefined : Number(steps),
+      workout: workout || undefined,
+      workoutMinutes: workoutMinutes === "" ? undefined : Number(workoutMinutes),
       mood,
     });
     toast.success("День сохранён");
-    navigate({ to: "/history" });
+    setSaved(true);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Дневник дня" subtitle="Запишите, как прошёл день" />
+
+      {saved && (
+        <SaveSuccess onContinue={() => setSaved(false)} />
+      )}
 
       <Card className="p-5">
         <form onSubmit={submit} className="flex flex-col gap-5">
@@ -79,22 +94,17 @@ function DiaryPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="w">Вес сегодня, кг</Label>
-              <Input id="w" type="number" step="0.1" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="70" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="water">Вода, мл</Label>
-              <Input id="water" type="number" inputMode="numeric" value={water} onChange={(e) => setWater(e.target.value)} placeholder="2000" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="sleep">Часы сна</Label>
-              <Input id="sleep" type="number" step="0.1" inputMode="decimal" value={sleep} onChange={(e) => setSleep(e.target.value)} placeholder="7.5" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="bu">Хлебцы, шт</Label>
-              <Input id="bu" type="number" inputMode="numeric" value={breadUnits} onChange={(e) => setBreadUnits(e.target.value)} placeholder="0" />
-            </div>
+            <Field id="w" label="Вес, кг" value={weight} setValue={setWeight} step="0.1" placeholder="70" />
+            <Field id="water" label="Вода, мл" value={water} setValue={setWater} placeholder="2000" />
+            <Field id="sleep" label="Часы сна" value={sleep} setValue={setSleep} step="0.1" placeholder="7.5" />
+            <Field id="bu" label="Хлебцы, шт" value={breadUnits} setValue={setBreadUnits} placeholder="0" />
+            <Field id="st" label="Шаги за день" value={steps} setValue={setSteps} placeholder="8000" />
+            <Field id="wm" label="Время тренировки, мин" value={workoutMinutes} setValue={setWorkoutMinutes} placeholder="30" />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="workout">Тренировка</Label>
+            <Input id="workout" value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Йога, бег, силовая…" />
           </div>
 
           <div className="flex flex-col gap-3">
@@ -110,6 +120,27 @@ function DiaryPage() {
           </Button>
         </form>
       </Card>
+    </div>
+  );
+}
+
+function Field({
+  id, label, value, setValue, step, placeholder,
+}: {
+  id: string; label: string; value: string; setValue: (v: string) => void; step?: string; placeholder?: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        step={step}
+        inputMode={step ? "decimal" : "numeric"}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder={placeholder}
+      />
     </div>
   );
 }

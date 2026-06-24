@@ -138,8 +138,13 @@
     border-color: var(--color-border);
   }
 
-  body {
+  html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    overflow-x: hidden;
+  }
+
+  body {
+    overscroll-behavior-y: none;
   }
 }

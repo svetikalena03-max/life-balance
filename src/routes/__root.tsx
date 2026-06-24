@@ -78,16 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Здоровье Голосом" },
-      { name: "description", content: "Дневник веса, питания, воды, сна и самочувствия." },
-      { name: "author", content: "Здоровье Голосом" },
-      { property: "og:title", content: "Здоровье Голосом" },
-      { property: "og:description", content: "Дневник веса, питания, воды, сна и самочувствия." },
-
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" },
+      { title: "Баланс жизни — здоровье, питание, сон" },
+      { name: "description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
+      { name: "author", content: "Баланс жизни" },
+      { property: "og:title", content: "Баланс жизни" },
+      { property: "og:description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Heart } from "lucide-react";
-import { useProfile, type Gender } from "@/lib/store";
+import { Sparkles } from "lucide-react";
+import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Здоровье Голосом — отслеживание здоровья" },
-      { name: "description", content: "Дневник веса, питания, воды, сна и самочувствия на русском языке." },
+      { title: "Баланс жизни — здоровье, питание, сон" },
+      { name: "description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
     ],
   }),
   component: OnboardingPage,
@@ -28,6 +28,7 @@ function OnboardingPage() {
   const [height, setHeight] = useState("");
   const [currentWeight, setCurrentWeight] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
+  const [goal, setGoal] = useState<Goal>("health");
 
   useEffect(() => {
     if (ready && profile) navigate({ to: "/home" });
@@ -43,20 +44,21 @@ function OnboardingPage() {
       currentWeight: Number(currentWeight) || 70,
       targetWeight: Number(targetWeight) || 70,
       waterGoal: 2000,
+      goal,
     });
     navigate({ to: "/home" });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary via-background to-background px-4 py-8">
-      <div className="mx-auto flex max-w-md flex-col gap-6">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-secondary via-background to-background px-4 py-8">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/15 text-primary">
-            <Heart className="h-8 w-8" />
+            <Sparkles className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Здоровье Голосом</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Баланс жизни</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Дневник самочувствия, веса, воды и сна. Расскажите о себе, чтобы начать.
+            Питание, здоровье, сон, энергия и хорошее самочувствие каждый день.
           </p>
         </div>
 
@@ -101,6 +103,18 @@ function OnboardingPage() {
               </div>
             </div>
 
+            <div className="flex flex-col gap-2">
+              <Label>Цель</Label>
+              <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(GOAL_LABELS) as Goal[]).map((g) => (
+                    <SelectItem key={g} value={g}>{GOAL_LABELS[g]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button type="submit" size="lg" className="mt-2 h-12 text-base font-semibold">
               Начать
             </Button>
@@ -108,7 +122,7 @@ function OnboardingPage() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground">
-          Данные сохраняются локально на вашем устройстве
+          Данные сохраняются на вашем устройстве
         </p>
       </div>
     </div>
