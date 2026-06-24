@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
-import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit, ChevronRight, Heart } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
+import { LogOut, ChevronRight, Heart, HeartPulse } from "lucide-react";
 
 
 export const Route = createFileRoute("/_app/profile")({
@@ -60,12 +60,19 @@ function ProfilePage() {
     toast.success("Профиль обновлён");
   };
 
+  const { signOut } = useAuth();
   const reset = () => {
-    if (!confirm("Сбросить все данные?")) return;
+    signOut();
+    navigate({ to: "/" });
+  };
+
+  const wipe = () => {
+    if (!confirm("Удалить все данные дневника?")) return;
     localStorage.removeItem("hg_profile");
     localStorage.removeItem("hg_entries");
     localStorage.removeItem("hg_entries_v2");
     window.dispatchEvent(new CustomEvent("hg-storage"));
+    signOut();
     navigate({ to: "/" });
   };
 
@@ -126,6 +133,19 @@ function ProfilePage() {
         </form>
       </Card>
 
+      <Link to="/health" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <HeartPulse className="h-5 w-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Особенности здоровья</p>
+            <p className="text-xs text-muted-foreground">Давление, пульс, энергия, самочувствие</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
+
       <Link to="/habits" className="block">
         <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -139,32 +159,18 @@ function ProfilePage() {
         </Card>
       </Link>
 
-
-
-      <Card className="p-4">
-        <p className="mb-3 text-sm font-semibold text-foreground">Скоро в приложении</p>
-        <ul className="grid gap-2 text-sm text-muted-foreground">
-          <Soon icon={<Sparkles className="h-4 w-4" />} label="AI-анализ дня" />
-          <Soon icon={<Utensils className="h-4 w-4" />} label="Меню на завтра" />
-          <Soon icon={<BrainCircuit className="h-4 w-4" />} label="Персональные рекомендации" />
-          <Soon icon={<Mic className="h-4 w-4" />} label="Голосовой дневник" />
-          <Soon icon={<Dumbbell className="h-4 w-4" />} label="Тренировки" />
-          <Soon icon={<Bell className="h-4 w-4" />} label="Напоминания" />
-        </ul>
-      </Card>
-
-      <Button variant="outline" onClick={reset} className="h-11">
-        <LogOut className="mr-2 h-4 w-4" /> Сбросить данные
-      </Button>
+      <div className="grid gap-2">
+        <Button variant="outline" onClick={reset} className="h-11">
+          <LogOut className="mr-2 h-4 w-4" /> Выйти
+        </Button>
+        <button
+          onClick={wipe}
+          className="text-center text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          Удалить все данные дневника
+        </button>
+      </div>
     </div>
   );
 }
 
-function Soon({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <li className="flex items-center gap-2">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground">{icon}</span>
-      <span className="truncate">{label}</span>
-    </li>
-  );
-}

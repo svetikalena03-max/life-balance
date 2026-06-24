@@ -1,0 +1,27 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
+
+export const Route = createFileRoute("/_app/admin")({
+  component: AdminPage,
+});
+
+function AdminPage() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Link to="/profile" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Назад
+      </Link>
+      <h1 className="text-2xl font-bold text-foreground">Админ-панель</h1>
+      <Card className="flex flex-col items-center gap-3 p-6 text-center">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <ShieldCheck className="h-6 w-6" />
+        </span>
+        <p className="text-base font-semibold text-foreground">Раздел в разработке</p>
+        <p className="text-sm text-muted-foreground">
+          Управление пользователями и контентом будет доступно администраторам.
+        </p>
+      </Card>
+    </div>
+  );
+}

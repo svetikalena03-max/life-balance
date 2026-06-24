@@ -9,8 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LegalDocRouteImport } from './routes/legal.$doc'
+import { Route as AppVoiceRouteImport } from './routes/_app.voice'
+import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
@@ -18,8 +23,20 @@ import { Route as AppHealthRouteImport } from './routes/_app.health'
 import { Route as AppHabitsRouteImport } from './routes/_app.habits'
 import { Route as AppDiaryRouteImport } from './routes/_app.diary'
 import { Route as AppChartsRouteImport } from './routes/_app.charts'
+import { Route as AppAiRouteImport } from './routes/_app.ai'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppHistoryDateRouteImport } from './routes/_app.history.$date'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
@@ -28,6 +45,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LegalDocRoute = LegalDocRouteImport.update({
+  id: '/legal/$doc',
+  path: '/legal/$doc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppVoiceRoute = AppVoiceRouteImport.update({
+  id: '/voice',
+  path: '/voice',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubscriptionRoute = AppSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -64,6 +96,16 @@ const AppChartsRoute = AppChartsRouteImport.update({
   path: '/charts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiRoute = AppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
   id: '/$date',
   path: '/$date',
@@ -72,6 +114,10 @@ const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin': typeof AppAdminRoute
+  '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
   '/habits': typeof AppHabitsRoute
@@ -79,10 +125,17 @@ export interface FileRoutesByFullPath {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/subscription': typeof AppSubscriptionRoute
+  '/voice': typeof AppVoiceRoute
+  '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin': typeof AppAdminRoute
+  '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
   '/habits': typeof AppHabitsRoute
@@ -90,12 +143,19 @@ export interface FileRoutesByTo {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/subscription': typeof AppSubscriptionRoute
+  '/voice': typeof AppVoiceRoute
+  '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_app/admin': typeof AppAdminRoute
+  '/_app/ai': typeof AppAiRoute
   '/_app/charts': typeof AppChartsRoute
   '/_app/diary': typeof AppDiaryRoute
   '/_app/habits': typeof AppHabitsRoute
@@ -103,12 +163,19 @@ export interface FileRoutesById {
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
+  '/_app/subscription': typeof AppSubscriptionRoute
+  '/_app/voice': typeof AppVoiceRoute
+  '/legal/$doc': typeof LegalDocRoute
   '/_app/history/$date': typeof AppHistoryDateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
+    | '/register'
+    | '/admin'
+    | '/ai'
     | '/charts'
     | '/diary'
     | '/habits'
@@ -116,10 +183,17 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/subscription'
+    | '/voice'
+    | '/legal/$doc'
     | '/history/$date'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
+    | '/register'
+    | '/admin'
+    | '/ai'
     | '/charts'
     | '/diary'
     | '/habits'
@@ -127,11 +201,18 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/subscription'
+    | '/voice'
+    | '/legal/$doc'
     | '/history/$date'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/login'
+    | '/register'
+    | '/_app/admin'
+    | '/_app/ai'
     | '/_app/charts'
     | '/_app/diary'
     | '/_app/habits'
@@ -139,16 +220,36 @@ export interface FileRouteTypes {
     | '/_app/history'
     | '/_app/home'
     | '/_app/profile'
+    | '/_app/subscription'
+    | '/_app/voice'
+    | '/legal/$doc'
     | '/_app/history/$date'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  LegalDocRoute: typeof LegalDocRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -162,6 +263,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/legal/$doc': {
+      id: '/legal/$doc'
+      path: '/legal/$doc'
+      fullPath: '/legal/$doc'
+      preLoaderRoute: typeof LegalDocRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/voice': {
+      id: '/_app/voice'
+      path: '/voice'
+      fullPath: '/voice'
+      preLoaderRoute: typeof AppVoiceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/subscription': {
+      id: '/_app/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AppSubscriptionRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/profile': {
       id: '/_app/profile'
@@ -212,6 +334,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai': {
+      id: '/_app/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AppAiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/history/$date': {
       id: '/_app/history/$date'
       path: '/$date'
@@ -235,6 +371,8 @@ const AppHistoryRouteWithChildren = AppHistoryRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppAiRoute: typeof AppAiRoute
   AppChartsRoute: typeof AppChartsRoute
   AppDiaryRoute: typeof AppDiaryRoute
   AppHabitsRoute: typeof AppHabitsRoute
@@ -242,9 +380,13 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppSubscriptionRoute: typeof AppSubscriptionRoute
+  AppVoiceRoute: typeof AppVoiceRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppAiRoute: AppAiRoute,
   AppChartsRoute: AppChartsRoute,
   AppDiaryRoute: AppDiaryRoute,
   AppHabitsRoute: AppHabitsRoute,
@@ -252,6 +394,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppProfileRoute: AppProfileRoute,
+  AppSubscriptionRoute: AppSubscriptionRoute,
+  AppVoiceRoute: AppVoiceRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -259,6 +403,9 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  LegalDocRoute: LegalDocRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

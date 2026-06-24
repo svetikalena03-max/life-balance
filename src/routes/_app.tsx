@@ -1,21 +1,20 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { Outlet } from "@tanstack/react-router";
 import { BottomNav } from "@/components/BottomNav";
-import { useProfile } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
 function AppLayout() {
-  const { profile, ready } = useProfile();
+  const { user, ready } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (ready && !profile) {
-      navigate({ to: "/" });
-    }
-  }, [ready, profile, navigate]);
+    if (ready && !user) navigate({ to: "/" });
+  }, [ready, user, navigate]);
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
