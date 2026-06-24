@@ -110,5 +110,5 @@ export function useAuth() {
     persist(null);
   }, []);
 
-  return { user, ready, signUp, signIn, signOut };
+  return { user, ready, signUp, signIn, signOut, resetPassword };
 }
