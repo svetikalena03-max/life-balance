@@ -1,5 +1,6 @@
-// Локальная заглушка авторизации. Готова к замене на Supabase Auth.
+// Авторизация через Lovable Cloud (Supabase Auth).
 import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AuthUser {
   id: string;
@@ -7,27 +8,11 @@ export interface AuthUser {
   name?: string;
 }
 
-interface StoredUser extends AuthUser {
-  password: string;
-}
-
-const AUTH_KEY = "hg_auth_user";
-const USERS_KEY = "hg_auth_users";
-
-const isBrowser = typeof window !== "undefined";
-
-function readUsers(): StoredUser[] {
-  if (!isBrowser) return [];
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]") as StoredUser[];
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users: StoredUser[]) {
-  if (!isBrowser) return;
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+function toAuthUser(u: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null): AuthUser | null {
+  if (!u) return null;
+  const meta = u.user_metadata ?? {};
+  const name = (meta.name as string | undefined) ?? (meta.full_name as string | undefined);
+  return { id: u.id, email: u.email ?? "", name };
 }
 
 export function useAuth() {
@@ -35,79 +20,68 @@ export function useAuth() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(AUTH_KEY);
-      setUser(raw ? (JSON.parse(raw) as AuthUser) : null);
-    } catch {
-      setUser(null);
-    }
-    setReady(true);
-    const handler = () => {
-      try {
-        const raw = localStorage.getItem(AUTH_KEY);
-        setUser(raw ? (JSON.parse(raw) as AuthUser) : null);
-      } catch {
-        setUser(null);
-      }
-    };
-    window.addEventListener("hg-auth", handler);
-    return () => window.removeEventListener("hg-auth", handler);
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(toAuthUser(session?.user ?? null));
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(toAuthUser(data.session?.user ?? null));
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const persist = (u: AuthUser | null) => {
-    if (u) localStorage.setItem(AUTH_KEY, JSON.stringify(u));
-    else localStorage.removeItem(AUTH_KEY);
-    setUser(u);
-    window.dispatchEvent(new CustomEvent("hg-auth"));
-  };
-
   const signUp = useCallback(
-    (email: string, password: string, name?: string): { ok: boolean; error?: string; user?: AuthUser } => {
+    async (email: string, password: string, name?: string): Promise<{ ok: boolean; error?: string }> => {
       const e = email.trim().toLowerCase();
       const p = password.trim();
       if (!e || !p) return { ok: false, error: "Введите email и пароль" };
-      const users = readUsers();
-      if (users.some((u) => u.email === e))
-        return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
-      const u: StoredUser = { id: crypto.randomUUID(), email: e, password: p, name: name?.trim() };
-      writeUsers([...users, u]);
-      const pub: AuthUser = { id: u.id, email: u.email, name: u.name };
-      persist(pub);
-      return { ok: true, user: pub };
-    },
-    [],
-  );
-
-  const signIn = useCallback(
-    (email: string, password: string): { ok: boolean; error?: string; user?: AuthUser } => {
-      const e = email.trim().toLowerCase();
-      const p = password.trim();
-      const found = readUsers().find((u) => u.email === e && u.password === p);
-      if (!found) return { ok: false, error: "Неверный email или пароль" };
-      const pub: AuthUser = { id: found.id, email: found.email, name: found.name };
-      persist(pub);
-      return { ok: true, user: pub };
-    },
-    [],
-  );
-
-  const resetPassword = useCallback(
-    (email: string, newPassword: string): { ok: boolean; error?: string } => {
-      const e = email.trim().toLowerCase();
-      const p = newPassword.trim();
-      if (!e || !p) return { ok: false, error: "Введите email и новый пароль" };
-      const users = readUsers();
-      const idx = users.findIndex((u) => u.email === e);
-      if (idx === -1) return { ok: false, error: "Пользователь с таким email не найден" };
-      users[idx] = { ...users[idx], password: p };
-      writeUsers(users);
+      const { error } = await supabase.auth.signUp({
+        email: e,
+        password: p,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: name ? { name: name.trim() } : {},
+        },
+      });
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("registered") || msg.includes("exists"))
+          return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
+        return { ok: false, error: error.message };
+      }
       return { ok: true };
     },
     [],
   );
 
-  const signOut = useCallback(() => {
-    persist(null);
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      });
+      if (error) return { ok: false, error: "Неверный email или пароль" };
+      return { ok: true };
+    },
+    [],
+  );
+
+  const resetPassword = useCallback(
+    async (email: string): Promise<{ ok: boolean; error?: string }> => {
+      const e = email.trim().toLowerCase();
+      if (!e) return { ok: false, error: "Введите email" };
+      const { error } = await supabase.auth.resetPasswordForEmail(e, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+    [],
+  );
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   }, []);
 
   return { user, ready, signUp, signIn, signOut, resetPassword };

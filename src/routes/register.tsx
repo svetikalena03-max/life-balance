@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useProfile, type Gender } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
@@ -44,13 +45,13 @@ function RegisterPage() {
     if (ready && user) navigate({ to: "/home" });
   }, [ready, user, navigate]);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!agreeData || !agreeTerms || !agreeMedical) {
       toast.error("Подтвердите все обязательные согласия");
       return;
     }
-    const res = signUp(email, password, name.trim() || undefined);
+    const res = await signUp(email, password, name.trim() || undefined);
     if (!res.ok) {
       toast.error(res.error ?? "Не удалось зарегистрироваться");
       return;
@@ -58,7 +59,7 @@ function RegisterPage() {
     const age = birthDate
       ? Math.max(1, Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 3600 * 1000)))
       : 30;
-    setProfile({
+    await setProfile({
       name: name.trim() || "Друг",
       age,
       gender,
@@ -69,6 +70,17 @@ function RegisterPage() {
       birthDate: birthDate || undefined,
       goal: "health",
     });
+    const { data: sess } = await supabase.auth.getUser();
+    if (sess.user) {
+      await supabase.from("legal_consents").insert({
+        user_id: sess.user.id,
+        privacy_policy_accepted: agreeData,
+        personal_data_accepted: agreeData,
+        user_agreement_accepted: agreeTerms,
+        medical_disclaimer_accepted: agreeMedical,
+        document_version: "v1",
+      });
+    }
     toast.success("Аккаунт создан");
     navigate({ to: "/home" });
   };
