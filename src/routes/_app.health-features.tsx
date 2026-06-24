@@ -43,7 +43,7 @@ function HealthFeaturesPage() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    setProfile({ ...profile, healthFeatures: hf });
+    setProfile({ ...(profile ?? { name: "" }), healthFeatures: hf });
     toast.success("Особенности здоровья сохранены");
     navigate({ to: "/profile" });
   };
