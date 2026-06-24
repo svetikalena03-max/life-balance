@@ -44,13 +44,13 @@ function RegisterPage() {
     if (ready && user) navigate({ to: "/home" });
   }, [ready, user, navigate]);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!agreeData || !agreeTerms || !agreeMedical) {
       toast.error("Подтвердите все обязательные согласия");
       return;
     }
-    const res = signUp(email, password, name.trim() || undefined);
+    const res = await signUp(email, password, name.trim() || undefined);
     if (!res.ok) {
       toast.error(res.error ?? "Не удалось зарегистрироваться");
       return;
@@ -58,7 +58,7 @@ function RegisterPage() {
     const age = birthDate
       ? Math.max(1, Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 3600 * 1000)))
       : 30;
-    setProfile({
+    await setProfile({
       name: name.trim() || "Друг",
       age,
       gender,
