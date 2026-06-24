@@ -26,17 +26,19 @@ function DiaryPage() {
   const [weight, setWeight] = useState("");
   const [water, setWater] = useState("");
   const [sleep, setSleep] = useState("");
+  const [breadUnits, setBreadUnits] = useState("");
   const [mood, setMood] = useState(7);
 
   useEffect(() => {
     if (existing) {
-      setFood(existing.food);
-      setDrinks(existing.drinks);
-      setWellbeing(existing.wellbeing);
-      setWeight(String(existing.weight));
-      setWater(String(existing.water));
-      setSleep(String(existing.sleep));
-      setMood(existing.mood);
+      setFood(existing.food ?? "");
+      setDrinks(existing.drinks ?? "");
+      setWellbeing(existing.wellbeing ?? "");
+      setWeight(existing.weight != null ? String(existing.weight) : "");
+      setWater(existing.water != null ? String(existing.water) : "");
+      setSleep(existing.sleep != null ? String(existing.sleep) : "");
+      setBreadUnits(existing.breadUnits != null ? String(existing.breadUnits) : "");
+      setMood(existing.mood ?? 7);
     }
   }, [ready, existing?.date]);
 
@@ -45,9 +47,10 @@ function DiaryPage() {
     saveEntry({
       date: today,
       food, drinks, wellbeing,
-      weight: Number(weight) || 0,
-      water: Number(water) || 0,
-      sleep: Number(sleep) || 0,
+      weight: weight === "" ? undefined : Number(weight),
+      water: water === "" ? undefined : Number(water),
+      sleep: sleep === "" ? undefined : Number(sleep),
+      breadUnits: breadUnits === "" ? undefined : Number(breadUnits),
       mood,
     });
     toast.success("День сохранён");
@@ -84,9 +87,13 @@ function DiaryPage() {
               <Label htmlFor="water">Вода, мл</Label>
               <Input id="water" type="number" inputMode="numeric" value={water} onChange={(e) => setWater(e.target.value)} placeholder="2000" />
             </div>
-            <div className="col-span-2 flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="sleep">Часы сна</Label>
               <Input id="sleep" type="number" step="0.1" inputMode="decimal" value={sleep} onChange={(e) => setSleep(e.target.value)} placeholder="7.5" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="bu">Хлебцы, шт</Label>
+              <Input id="bu" type="number" inputMode="numeric" value={breadUnits} onChange={(e) => setBreadUnits(e.target.value)} placeholder="0" />
             </div>
           </div>
 

@@ -27,14 +27,33 @@ function HistoryDetail() {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
-            <Metric label="Вес" value={`${entry.weight.toFixed(1)} кг`} />
-            <Metric label="Вода" value={`${(entry.water / 1000).toFixed(1)} л`} />
-            <Metric label="Сон" value={`${entry.sleep.toFixed(1)} ч`} />
-            <Metric label="Настроение" value={`${entry.mood}/10`} />
+            {entry.weight != null && <Metric label="Вес" value={`${entry.weight.toFixed(1)} кг`} />}
+            {entry.water != null && <Metric label="Вода" value={`${(entry.water / 1000).toFixed(1)} л`} />}
+            {entry.sleep != null && <Metric label="Сон" value={`${entry.sleep.toFixed(1)} ч`} />}
+            {entry.mood != null && <Metric label="Настроение" value={`${entry.mood}/10`} />}
+            {entry.breadUnits != null && <Metric label="Хлебцы" value={`${entry.breadUnits} шт`} />}
+            {entry.systolic != null && <Metric label="Давление" value={`${entry.systolic}/${entry.diastolic ?? "—"}`} />}
+            {entry.pulse != null && <Metric label="Пульс" value={`${entry.pulse} уд/мин`} />}
+            {entry.energy != null && <Metric label="Энергия" value={`${entry.energy}/10`} />}
+            {entry.stress != null && <Metric label="Стресс" value={`${entry.stress}/10`} />}
           </div>
-          <Section title="Питание" body={entry.food} />
-          <Section title="Напитки" body={entry.drinks} />
-          <Section title="Самочувствие" body={entry.wellbeing} />
+
+          {(entry.edema || entry.heartburn || entry.bloating || entry.backPain || entry.kneePain) && (
+            <Card className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Симптомы</p>
+              <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                {entry.edema && <Tag>Отёки</Tag>}
+                {entry.heartburn && <Tag>Изжога</Tag>}
+                {entry.bloating && <Tag>Вздутие</Tag>}
+                {entry.backPain && <Tag>Боль в спине</Tag>}
+                {entry.kneePain && <Tag>Боль в коленях</Tag>}
+              </div>
+            </Card>
+          )}
+
+          {entry.food && <Section title="Питание" body={entry.food} />}
+          {entry.drinks && <Section title="Напитки" body={entry.drinks} />}
+          {entry.wellbeing && <Section title="Самочувствие" body={entry.wellbeing} />}
         </div>
       )}
     </div>
@@ -54,7 +73,11 @@ function Section({ title, body }: { title: string; body: string }) {
   return (
     <Card className="p-4">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>
-      <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{body || "—"}</p>
+      <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{body}</p>
     </Card>
   );
+}
+
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">{children}</span>;
 }
