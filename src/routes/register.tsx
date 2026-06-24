@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { normalizeAuthEmail, useAuth } from "@/lib/auth";
+import { checkAuthDebugUser, resetDebugUser } from "@/lib/auth-debug.functions";
 import { DEFAULT_PROFILE, ensureCurrentUserProfile, type Gender } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,8 +26,10 @@ export const Route = createFileRoute("/register")({
 });
 
 function RegisterPage() {
-  const { user, ready, signUp } = useAuth();
+  const { user, ready, signUp, signOut } = useAuth();
   const navigate = useNavigate();
+  const checkDebugUser = useServerFn(checkAuthDebugUser);
+  const resetTestUser = useServerFn(resetDebugUser);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,25 +45,51 @@ function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeMedical, setAgreeMedical] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [lastAuthError, setLastAuthError] = useState<string>("");
+  const [debugRegistered, setDebugRegistered] = useState<string>("не проверено");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (ready && user && !submitting) navigate({ to: "/home" });
   }, [ready, user, submitting, navigate]);
 
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const normalized = normalizeAuthEmail(email);
+    if (!normalized) {
+      setDebugRegistered("не проверено");
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await checkDebugUser({ data: { email: normalized } });
+        setDebugRegistered(res.registered ? "да" : "нет");
+      } catch (err) {
+        setDebugRegistered(err instanceof Error ? err.message : "ошибка проверки");
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [email, checkDebugUser]);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setServerError(null);
+    setSuccessMessage(null);
+    setLastAuthError("");
+    const normalizedEmail = normalizeAuthEmail(email);
+    setEmail(normalizedEmail);
     setSubmitting(true);
     if (!agreeData || !agreeTerms || !agreeMedical) {
       toast.error("Подтвердите все обязательные согласия");
       setSubmitting(false);
       return;
     }
-    const res = await signUp(email, password, name.trim() || undefined);
+    const res = await signUp(normalizedEmail, password, name.trim() || undefined);
     if (!res.ok) {
       const message = res.error ?? "Ошибка регистрации";
       setServerError(message);
+      setLastAuthError(res.serverError ?? message);
       toast.error(message);
       setSubmitting(false);
       return;
@@ -82,6 +112,7 @@ function RegisterPage() {
     if (!profileRes.ok) {
       const message = profileRes.error ?? "Профиль не создан";
       setServerError(message);
+      setLastAuthError(message);
       toast.error(message);
       setSubmitting(false);
       return;
@@ -104,13 +135,34 @@ function RegisterPage() {
           hint: consentError.hint,
         });
         setServerError(consentError.message);
+        setLastAuthError(consentError.message);
         toast.error(consentError.message);
         setSubmitting(false);
         return;
       }
     }
-    toast.success("Аккаунт создан");
-    navigate({ to: "/home" });
+    await signOut();
+    setPassword("");
+    setSuccessMessage("Аккаунт создан. Теперь вы можете войти.");
+    setDebugRegistered("да");
+    toast.success("Аккаунт создан. Теперь вы можете войти.");
+    setSubmitting(false);
+  };
+
+  const resetAccount = async () => {
+    const normalizedEmail = normalizeAuthEmail(email);
+    if (!normalizedEmail) {
+      toast.error("Введите email тестового аккаунта");
+      return;
+    }
+    await resetTestUser({ data: { email: normalizedEmail } });
+    setEmail(normalizedEmail);
+    setPassword("");
+    setServerError(null);
+    setSuccessMessage(null);
+    setLastAuthError("");
+    setDebugRegistered("нет");
+    toast.success("Тестовый аккаунт сброшен");
   };
 
   return (
@@ -136,13 +188,19 @@ function RegisterPage() {
                 <AlertDescription>{serverError}</AlertDescription>
               </Alert>
             )}
+            {successMessage && (
+              <Alert>
+                <AlertTitle>Готово</AlertTitle>
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">Имя</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Анна" />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => v.trim().toLowerCase())} required />
+              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => normalizeAuthEmail(v))} required />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="pass">Пароль</Label>
@@ -239,6 +297,24 @@ function RegisterPage() {
             <Button type="submit" size="lg" className="h-12 text-base font-semibold" disabled={submitting}>
               {submitting ? "Создаём..." : "Создать аккаунт"}
             </Button>
+            {successMessage && (
+              <Button type="button" variant="outline" onClick={() => navigate({ to: "/login" })}>
+                Войти
+              </Button>
+            )}
+            {import.meta.env.DEV && (
+              <>
+                <Button type="button" variant="outline" onClick={resetAccount} disabled={submitting}>
+                  Сбросить тестовый аккаунт
+                </Button>
+                <Card className="p-3 text-xs text-muted-foreground">
+                  <p>Текущий email: {normalizeAuthEmail(email) || "—"}</p>
+                  <p>Зарегистрирован: {debugRegistered}</p>
+                  <p>Статус авторизации: {ready ? (user ? "вошёл" : "не вошёл") : "проверка"}</p>
+                  <p>Последняя ошибка Auth: {lastAuthError || "—"}</p>
+                </Card>
+              </>
+            )}
             <p className="text-center text-sm text-muted-foreground">
               Уже есть аккаунт?{" "}
               <Link to="/login" className="text-primary hover:underline">
