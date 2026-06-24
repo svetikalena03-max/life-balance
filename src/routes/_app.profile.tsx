@@ -60,12 +60,19 @@ function ProfilePage() {
     toast.success("Профиль обновлён");
   };
 
+  const { signOut } = useAuth();
   const reset = () => {
-    if (!confirm("Сбросить все данные?")) return;
+    signOut();
+    navigate({ to: "/" });
+  };
+
+  const wipe = () => {
+    if (!confirm("Удалить все данные дневника?")) return;
     localStorage.removeItem("hg_profile");
     localStorage.removeItem("hg_entries");
     localStorage.removeItem("hg_entries_v2");
     window.dispatchEvent(new CustomEvent("hg-storage"));
+    signOut();
     navigate({ to: "/" });
   };
 
