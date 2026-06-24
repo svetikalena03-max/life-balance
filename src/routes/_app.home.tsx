@@ -79,6 +79,19 @@ function HomePage() {
         </span>
       </Button>
 
+      <Card className="p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Utensils className="h-4 w-4 text-primary" />
+          <p className="text-sm font-semibold text-foreground">Питание сегодня</p>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <MiniStat label="Приёмов" value={`${mealsCount}`} />
+          <MiniStat label="Вода" value={`${(water / 1000).toFixed(1)} л`} />
+          <MiniStat label="Кофе" value={`${coffee} мл`} />
+          <MiniStat label="Хлебцы" value={`${breadUnits}`} />
+        </div>
+      </Card>
+
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={<Droplet className="h-5 w-5" />}
