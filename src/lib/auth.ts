@@ -59,13 +59,30 @@ export function useAuth() {
         });
         return { ok: false, error: error.message, code: error.code };
       }
+      let session = data.session;
+      let signedUser = data.user;
+      if (!session) {
+        const retry = await supabase.auth.signInWithPassword({ email: e, password: p });
+        if (retry.error) {
+          console.error("Supabase Auth signInWithPassword after signUp error", {
+            email: e,
+            message: retry.error.message,
+            code: retry.error.code,
+            status: retry.error.status,
+            name: retry.error.name,
+          });
+          return { ok: false, error: retry.error.message, code: retry.error.code };
+        }
+        session = retry.data.session;
+        signedUser = retry.data.user;
+      }
       console.info("Supabase Auth signUp success", {
-        userId: data.user?.id,
-        email: data.user?.email,
-        hasSession: Boolean(data.session),
-        emailConfirmedAt: data.user?.email_confirmed_at,
+        userId: signedUser?.id,
+        email: signedUser?.email,
+        hasSession: Boolean(session),
+        emailConfirmedAt: signedUser?.email_confirmed_at,
       });
-      return { ok: true, user: toAuthUser(data.user) };
+      return { ok: true, user: toAuthUser(signedUser) };
     },
     [],
   );
