@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useProfile, type Gender } from "@/lib/store";
 import { toast } from "sonner";
