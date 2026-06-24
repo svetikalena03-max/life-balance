@@ -524,13 +524,12 @@ export function useEntries() {
     });
     const dailyRow = entryToDailyRow(patch, userId);
     const healthRow = entryToHealthRow(patch, userId);
-    const ops: Promise<any>[] = [];
-    // Only push daily if there's at least one daily field besides user_id/date
+    const ops: PromiseLike<unknown>[] = [];
     if (Object.keys(dailyRow).length > 2) {
-      ops.push(supabase.from("daily_entries").upsert(dailyRow, { onConflict: "user_id,date" }));
+      ops.push(supabase.from("daily_entries").upsert(dailyRow as any, { onConflict: "user_id,date" }));
     }
     if (healthRow) {
-      ops.push(supabase.from("health_entries").upsert(healthRow, { onConflict: "user_id,date" }));
+      ops.push(supabase.from("health_entries").upsert(healthRow as any, { onConflict: "user_id,date" }));
     }
     await Promise.all(ops);
   }, []);
