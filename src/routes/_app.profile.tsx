@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
-import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit, ChevronRight, Heart } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
+import { LogOut, ChevronRight, Heart, HeartPulse } from "lucide-react";
 
 
 export const Route = createFileRoute("/_app/profile")({
