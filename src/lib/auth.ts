@@ -64,10 +64,12 @@ export function useAuth() {
   const signUp = useCallback(
     (email: string, password: string, name?: string): { ok: boolean; error?: string; user?: AuthUser } => {
       const e = email.trim().toLowerCase();
-      if (!e || !password) return { ok: false, error: "Введите email и пароль" };
+      const p = password.trim();
+      if (!e || !p) return { ok: false, error: "Введите email и пароль" };
       const users = readUsers();
-      if (users.some((u) => u.email === e)) return { ok: false, error: "Пользователь уже существует" };
-      const u: StoredUser = { id: crypto.randomUUID(), email: e, password, name };
+      if (users.some((u) => u.email === e))
+        return { ok: false, error: "Пользователь с таким email уже зарегистрирован" };
+      const u: StoredUser = { id: crypto.randomUUID(), email: e, password: p, name: name?.trim() };
       writeUsers([...users, u]);
       const pub: AuthUser = { id: u.id, email: u.email, name: u.name };
       persist(pub);
@@ -79,7 +81,8 @@ export function useAuth() {
   const signIn = useCallback(
     (email: string, password: string): { ok: boolean; error?: string; user?: AuthUser } => {
       const e = email.trim().toLowerCase();
-      const found = readUsers().find((u) => u.email === e && u.password === password);
+      const p = password.trim();
+      const found = readUsers().find((u) => u.email === e && u.password === p);
       if (!found) return { ok: false, error: "Неверный email или пароль" };
       const pub: AuthUser = { id: found.id, email: found.email, name: found.name };
       persist(pub);
@@ -88,9 +91,24 @@ export function useAuth() {
     [],
   );
 
+  const resetPassword = useCallback(
+    (email: string, newPassword: string): { ok: boolean; error?: string } => {
+      const e = email.trim().toLowerCase();
+      const p = newPassword.trim();
+      if (!e || !p) return { ok: false, error: "Введите email и новый пароль" };
+      const users = readUsers();
+      const idx = users.findIndex((u) => u.email === e);
+      if (idx === -1) return { ok: false, error: "Пользователь с таким email не найден" };
+      users[idx] = { ...users[idx], password: p };
+      writeUsers(users);
+      return { ok: true };
+    },
+    [],
+  );
+
   const signOut = useCallback(() => {
     persist(null);
   }, []);
 
-  return { user, ready, signUp, signIn, signOut };
+  return { user, ready, signUp, signIn, signOut, resetPassword };
 }
