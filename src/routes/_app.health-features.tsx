@@ -33,8 +33,6 @@ function HealthFeaturesPage() {
     if (profile?.healthFeatures) setHf(profile.healthFeatures);
   }, [profile?.name]);
 
-  if (!profile) return null;
-
   const toggle = (key: keyof HealthFeatures, value: string) => {
     setHf((p) => {
       const arr = (p[key] as string[] | undefined) ?? [];
@@ -45,7 +43,8 @@ function HealthFeaturesPage() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    setProfile({ ...profile, healthFeatures: hf });
+    const base = profile ?? { name: "", age: 0, gender: "female" as const, height: 0, currentWeight: 0, targetWeight: 0 };
+    setProfile({ ...base, healthFeatures: hf });
     toast.success("Особенности здоровья сохранены");
     navigate({ to: "/profile" });
   };
