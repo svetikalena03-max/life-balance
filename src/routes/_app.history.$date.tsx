@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
-import { useEntries, formatDateRu } from "@/lib/store";
+import { useEntries, formatDateRu, MEAL_LABELS, SUGAR_LABELS } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/history/$date")({
   component: HistoryDetail,
