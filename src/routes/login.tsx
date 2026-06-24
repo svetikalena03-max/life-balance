@@ -23,6 +23,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (ready && user) navigate({ to: "/home" });
@@ -32,10 +33,10 @@ function LoginPage() {
     e.preventDefault();
     const res = signIn(email, password);
     if (!res.ok) {
-      toast.error(res.error ?? "Ошибка входа");
+      toast.error(res.error ?? "Неверный email или пароль");
       return;
     }
-    toast.success("С возвращением!");
+    toast.success("Вы успешно вошли");
     navigate({ to: "/home" });
   };
 
