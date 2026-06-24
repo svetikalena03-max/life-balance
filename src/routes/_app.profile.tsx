@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
-import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
+import { useProfile, type Gender, type Goal, GOAL_LABELS, summarizeHealthFeatures } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { LogOut, ChevronRight, Heart, HeartPulse } from "lucide-react";
 
