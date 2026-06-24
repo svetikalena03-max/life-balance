@@ -61,7 +61,7 @@ function ProfilePage() {
     toast.success("Профиль обновлён");
   };
 
-  const { signOut } = useAuth();
+  void user;
   const reset = () => {
     signOut();
     navigate({ to: "/" });
