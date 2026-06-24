@@ -1,129 +1,169 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Sparkles } from "lucide-react";
-import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
+import {
+  Sparkles,
+  BookOpen,
+  Scale,
+  Droplets,
+  Moon,
+  HeartPulse,
+  Smile,
+  CheckCircle2,
+  Mic,
+  Brain,
+  Lightbulb,
+  Utensils,
+} from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Баланс жизни — здоровье, питание, сон" },
-      { name: "description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
+      {
+        name: "description",
+        content:
+          "Персональный помощник по здоровью, питанию, активности и хорошему самочувствию.",
+      },
     ],
   }),
-  component: OnboardingPage,
+  component: LandingPage,
 });
 
-function OnboardingPage() {
-  const { profile, setProfile, ready } = useProfile();
+const features = [
+  { icon: BookOpen, label: "Дневник питания" },
+  { icon: Scale, label: "Контроль веса" },
+  { icon: Droplets, label: "Контроль воды" },
+  { icon: Moon, label: "Контроль сна" },
+  { icon: HeartPulse, label: "Давление и пульс" },
+  { icon: Smile, label: "Настроение и энергия" },
+  { icon: CheckCircle2, label: "Контроль привычек" },
+  { icon: Mic, label: "Голосовой дневник" },
+  { icon: Brain, label: "AI-анализ здоровья" },
+  { icon: Lightbulb, label: "Персональные рекомендации" },
+  { icon: Utensils, label: "Меню на следующий день" },
+];
+
+const audience = [
+  "Для мужчин и женщин любого возраста",
+  "Для желающих похудеть",
+  "Для людей с хроническими заболеваниями",
+  "Для контроля давления",
+  "Для улучшения сна",
+  "Для формирования полезных привычек",
+];
+
+const why = ["питанием", "весом", "водой", "сном", "настроением", "давлением", "самочувствием"];
+
+function LandingPage() {
+  const { user, ready } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState<Gender>("female");
-  const [height, setHeight] = useState("");
-  const [currentWeight, setCurrentWeight] = useState("");
-  const [targetWeight, setTargetWeight] = useState("");
-  const [goal, setGoal] = useState<Goal>("health");
-
   useEffect(() => {
-    if (ready && profile) navigate({ to: "/home" });
-  }, [ready, profile, navigate]);
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    setProfile({
-      name: name.trim() || "Друг",
-      age: Number(age) || 30,
-      gender,
-      height: Number(height) || 170,
-      currentWeight: Number(currentWeight) || 70,
-      targetWeight: Number(targetWeight) || 70,
-      waterGoal: 2000,
-      goal,
-    });
-    navigate({ to: "/home" });
-  };
+    if (ready && user) navigate({ to: "/home" });
+  }, [ready, user, navigate]);
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-secondary via-background to-background px-4 py-8">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <div className="flex flex-col items-center text-center">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-secondary via-background to-background">
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-8">
+        <header className="flex flex-col items-center text-center">
           <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/15 text-primary">
             <Sparkles className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Баланс жизни</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Питание, здоровье, сон, энергия и хорошее самочувствие каждый день.
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Баланс жизни
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+            Ваш персональный помощник по здоровью, питанию, активности и хорошему
+            самочувствию.
           </p>
+        </header>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link to="/register" className="contents">
+            <Button size="lg" className="h-12 w-full text-base font-semibold">
+              Зарегистрироваться
+            </Button>
+          </Link>
+          <Link to="/login" className="contents">
+            <Button size="lg" variant="outline" className="h-12 w-full text-base font-semibold">
+              Войти
+            </Button>
+          </Link>
         </div>
 
-        <Card className="p-6">
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Имя</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Анна" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="age">Возраст</Label>
-                <Input id="age" type="number" inputMode="numeric" value={age} onChange={(e) => setAge(e.target.value)} placeholder="30" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>Пол</Label>
-                <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="female">Женский</SelectItem>
-                    <SelectItem value="male">Мужской</SelectItem>
-                    <SelectItem value="other">Другой</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="height">Рост, см</Label>
-              <Input id="height" type="number" inputMode="numeric" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="170" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="cw">Текущий вес, кг</Label>
-                <Input id="cw" type="number" step="0.1" inputMode="decimal" value={currentWeight} onChange={(e) => setCurrentWeight(e.target.value)} placeholder="70" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="tw">Целевой вес, кг</Label>
-                <Input id="tw" type="number" step="0.1" inputMode="decimal" value={targetWeight} onChange={(e) => setTargetWeight(e.target.value)} placeholder="65" />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>Цель</Label>
-              <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(GOAL_LABELS) as Goal[]).map((g) => (
-                    <SelectItem key={g} value={g}>{GOAL_LABELS[g]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button type="submit" size="lg" className="mt-2 h-12 text-base font-semibold">
-              Начать
-            </Button>
-          </form>
+        <Card className="p-5">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Что умеет приложение</h2>
+          <ul className="grid gap-2">
+            {features.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-3 text-sm text-foreground">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">{label}</span>
+              </li>
+            ))}
+          </ul>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Данные сохраняются на вашем устройстве
-        </p>
+        <Card className="p-5">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Для кого</h2>
+          <ul className="grid gap-2 text-sm text-muted-foreground">
+            {audience.map((a) => (
+              <li key={a} className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>{a}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Почему это полезно</h2>
+          <p className="text-sm text-muted-foreground">
+            Приложение помогает видеть взаимосвязь между:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {why.map((w) => (
+              <span
+                key={w}
+                className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
+              >
+                {w}
+              </span>
+            ))}
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link to="/register" className="contents">
+            <Button size="lg" className="h-12 w-full text-base font-semibold">
+              Зарегистрироваться
+            </Button>
+          </Link>
+          <Link to="/login" className="contents">
+            <Button size="lg" variant="outline" className="h-12 w-full text-base font-semibold">
+              Войти
+            </Button>
+          </Link>
+        </div>
+
+        <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pb-6 text-center text-xs text-muted-foreground">
+          <Link to="/legal/$doc" params={{ doc: "privacy" }} className="hover:text-foreground">
+            Политика конфиденциальности
+          </Link>
+          <Link to="/legal/$doc" params={{ doc: "terms" }} className="hover:text-foreground">
+            Пользовательское соглашение
+          </Link>
+          <Link to="/legal/$doc" params={{ doc: "consent" }} className="hover:text-foreground">
+            Согласие на обработку данных
+          </Link>
+          <Link to="/legal/$doc" params={{ doc: "medical" }} className="hover:text-foreground">
+            Медицинский отказ
+          </Link>
+        </footer>
       </div>
     </div>
   );
