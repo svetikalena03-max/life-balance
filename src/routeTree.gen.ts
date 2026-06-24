@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
+import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
@@ -46,6 +47,11 @@ const LegalDocRoute = LegalDocRouteImport.update({
   id: '/legal/$doc',
   path: '/legal/$doc',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSubscriptionRoute = AppSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/subscription': typeof AppSubscriptionRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
 }
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/subscription': typeof AppSubscriptionRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
 }
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
+  '/_app/subscription': typeof AppSubscriptionRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_app/history/$date': typeof AppHistoryDateRoute
 }
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/subscription'
     | '/legal/$doc'
     | '/history/$date'
   fileRoutesByTo: FileRoutesByTo
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/subscription'
     | '/legal/$doc'
     | '/history/$date'
   id:
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_app/history'
     | '/_app/home'
     | '/_app/profile'
+    | '/_app/subscription'
     | '/legal/$doc'
     | '/_app/history/$date'
   fileRoutesById: FileRoutesById
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/legal/$doc'
       preLoaderRoute: typeof LegalDocRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/subscription': {
+      id: '/_app/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AppSubscriptionRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/profile': {
       id: '/_app/profile'
@@ -302,6 +321,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppSubscriptionRoute: typeof AppSubscriptionRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -312,6 +332,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppProfileRoute: AppProfileRoute,
+  AppSubscriptionRoute: AppSubscriptionRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
