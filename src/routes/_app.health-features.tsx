@@ -33,8 +33,6 @@ function HealthFeaturesPage() {
     if (profile?.healthFeatures) setHf(profile.healthFeatures);
   }, [profile?.name]);
 
-  if (!profile) return null;
-
   const toggle = (key: keyof HealthFeatures, value: string) => {
     setHf((p) => {
       const arr = (p[key] as string[] | undefined) ?? [];
