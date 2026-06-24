@@ -41,16 +41,19 @@ function RegisterPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeMedical, setAgreeMedical] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (ready && user) navigate({ to: "/home" });
-  }, [ready, user, navigate]);
+    if (ready && user && !submitting) navigate({ to: "/home" });
+  }, [ready, user, submitting, navigate]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setServerError(null);
+    setSubmitting(true);
     if (!agreeData || !agreeTerms || !agreeMedical) {
       toast.error("Подтвердите все обязательные согласия");
+      setSubmitting(false);
       return;
     }
     const res = await signUp(email, password, name.trim() || undefined);
@@ -58,6 +61,7 @@ function RegisterPage() {
       const message = res.error ?? "Ошибка регистрации";
       setServerError(message);
       toast.error(message);
+      setSubmitting(false);
       return;
     }
     const age = birthDate
@@ -79,6 +83,7 @@ function RegisterPage() {
       const message = profileRes.error ?? "Профиль не создан";
       setServerError(message);
       toast.error(message);
+      setSubmitting(false);
       return;
     }
     const { data: sess } = await supabase.auth.getUser();
@@ -100,6 +105,7 @@ function RegisterPage() {
         });
         setServerError(consentError.message);
         toast.error(consentError.message);
+        setSubmitting(false);
         return;
       }
     }
@@ -123,7 +129,7 @@ function RegisterPage() {
         </div>
 
         <Card className="p-5">
-          <form onSubmit={submit} className="flex flex-col gap-4">
+          <form onSubmit={submit} noValidate className="flex flex-col gap-4">
             {serverError && (
               <Alert variant="destructive">
                 <AlertTitle>Ошибка Auth</AlertTitle>
@@ -136,7 +142,7 @@ function RegisterPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => v.trim().toLowerCase())} required />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="pass">Пароль</Label>
@@ -230,8 +236,8 @@ function RegisterPage() {
               />
             </div>
 
-            <Button type="submit" size="lg" className="h-12 text-base font-semibold">
-              Создать аккаунт
+            <Button type="submit" size="lg" className="h-12 text-base font-semibold" disabled={submitting}>
+              {submitting ? "Создаём..." : "Создать аккаунт"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Уже есть аккаунт?{" "}
