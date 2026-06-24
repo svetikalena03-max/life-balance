@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
-import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit } from "lucide-react";
+import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit, ChevronRight, Heart } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+
 
 export const Route = createFileRoute("/_app/profile")({
   component: ProfilePage,
