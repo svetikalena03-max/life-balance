@@ -62,8 +62,31 @@ function LoginPage() {
               <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="pass">Пароль</Label>
-              <Input id="pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="pass">Пароль</Label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  Забыли пароль?
+                </Link>
+              </div>
+              <div className="relative">
+                <Input
+                  id="pass"
+                  type={show ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:text-foreground"
+                  aria-label={show ? "Скрыть пароль" : "Показать пароль"}
+                >
+                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" size="lg" className="h-12 text-base font-semibold">
               Войти
