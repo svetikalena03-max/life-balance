@@ -22,6 +22,7 @@ import { Route as AppHealthRouteImport } from './routes/_app.health'
 import { Route as AppHabitsRouteImport } from './routes/_app.habits'
 import { Route as AppDiaryRouteImport } from './routes/_app.diary'
 import { Route as AppChartsRouteImport } from './routes/_app.charts'
+import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppHistoryDateRouteImport } from './routes/_app.history.$date'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -88,6 +89,11 @@ const AppChartsRoute = AppChartsRouteImport.update({
   path: '/charts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiRoute = AppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
   id: '/$date',
   path: '/$date',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
   '/habits': typeof AppHabitsRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
   '/habits': typeof AppHabitsRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_app/ai': typeof AppAiRoute
   '/_app/charts': typeof AppChartsRoute
   '/_app/diary': typeof AppDiaryRoute
   '/_app/habits': typeof AppHabitsRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/ai'
     | '/charts'
     | '/diary'
     | '/habits'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/ai'
     | '/charts'
     | '/diary'
     | '/habits'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/register'
+    | '/_app/ai'
     | '/_app/charts'
     | '/_app/diary'
     | '/_app/habits'
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai': {
+      id: '/_app/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AppAiRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/history/$date': {
       id: '/_app/history/$date'
       path: '/$date'
@@ -314,6 +333,7 @@ const AppHistoryRouteWithChildren = AppHistoryRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAiRoute: typeof AppAiRoute
   AppChartsRoute: typeof AppChartsRoute
   AppDiaryRoute: typeof AppDiaryRoute
   AppHabitsRoute: typeof AppHabitsRoute
@@ -325,6 +345,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAiRoute: AppAiRoute,
   AppChartsRoute: AppChartsRoute,
   AppDiaryRoute: AppDiaryRoute,
   AppHabitsRoute: AppHabitsRoute,
