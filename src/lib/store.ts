@@ -1,6 +1,22 @@
 import { useEffect, useState, useCallback } from "react";
 
 export type Gender = "male" | "female" | "other";
+export type Goal =
+  | "lose"
+  | "maintain"
+  | "gain"
+  | "health"
+  | "pressure"
+  | "sleep";
+
+export const GOAL_LABELS: Record<Goal, string> = {
+  lose: "Похудение",
+  maintain: "Поддержание веса",
+  gain: "Набор веса",
+  health: "Улучшение здоровья",
+  pressure: "Контроль давления",
+  sleep: "Улучшение сна",
+};
 
 export interface Profile {
   name: string;
@@ -10,6 +26,8 @@ export interface Profile {
   currentWeight: number;
   targetWeight: number;
   waterGoal?: number;
+  birthDate?: string; // YYYY-MM-DD
+  goal?: Goal;
 }
 
 export interface DayEntry {
@@ -23,6 +41,9 @@ export interface DayEntry {
   sleep?: number; // hours
   mood?: number; // 1-10
   breadUnits?: number; // хлебцы
+  steps?: number;
+  workout?: string;
+  workoutMinutes?: number;
   // Здоровье
   systolic?: number;
   diastolic?: number;
@@ -33,7 +54,8 @@ export interface DayEntry {
   bloating?: boolean;
   backPain?: boolean;
   kneePain?: boolean;
-  stress?: number; // 1-10
+  stressed?: boolean;
+  healthComment?: string;
 }
 
 const PROFILE_KEY = "hg_profile";
@@ -83,7 +105,6 @@ export function useEntries() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Migration: remove legacy demo entries
     if (isBrowser) {
       try { window.localStorage.removeItem(LEGACY_ENTRIES_KEY); } catch { /* noop */ }
     }
@@ -120,4 +141,9 @@ export function formatDateRu(iso: string) {
 export function formatDateShort(iso: string) {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
+
+export function formatDateWeekday(iso: string) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
 }
