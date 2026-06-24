@@ -224,7 +224,7 @@ function DiaryPage() {
 }
 
 function MealBlock({
-  meal, index, onChange, onRemove, canRemove,
+  meal, onChange, onRemove, canRemove,
 }: {
   meal: Meal;
   index: number;
@@ -236,19 +236,9 @@ function MealBlock({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          {meal.type === "extra" ? (
-            <Input
-              value={meal.food && index >= 7 ? "" : ""}
-              placeholder=""
-              className="hidden"
-              readOnly
-            />
-          ) : null}
-          <p className="truncate text-sm font-semibold text-foreground">
-            {MEAL_LABELS[meal.type]}
-          </p>
-        </div>
+        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+          {MEAL_LABELS[meal.type]}
+        </p>
         {canRemove && (
           <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-8 px-2 text-muted-foreground">
             <Trash2 className="h-4 w-4" />
