@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS } from "@/lib/store";
-import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit } from "lucide-react";
+import { LogOut, Mic, Sparkles, Utensils, Dumbbell, Bell, BrainCircuit, ChevronRight, Heart } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+
 
 export const Route = createFileRoute("/_app/profile")({
   component: ProfilePage,
@@ -123,6 +125,21 @@ function ProfilePage() {
           <Button type="submit" size="lg" className="h-12 font-semibold">Сохранить</Button>
         </form>
       </Card>
+
+      <Link to="/habits" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Heart className="h-5 w-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Мои привычки</p>
+            <p className="text-xs text-muted-foreground">Курение, алкоголь, кофе, стресс, экранное время</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
+
+
 
       <Card className="p-4">
         <p className="mb-3 text-sm font-semibold text-foreground">Скоро в приложении</p>

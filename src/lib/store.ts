@@ -18,6 +18,24 @@ export const GOAL_LABELS: Record<Goal, string> = {
   sleep: "Улучшение сна",
 };
 
+export interface Habits {
+  smoking?: "no" | "sometimes" | "daily";
+  vape?: "no" | "sometimes" | "daily";
+  alcohol?: "no" | "rare" | "weekly" | "often";
+  coffeeFreq?: "no" | "one" | "two" | "three_plus";
+  coffeeMl?: number;
+  teaCups?: number;
+  teaMl?: number;
+  teaSugar?: "with" | "without";
+  energyDrinks?: "no" | "sometimes" | "regular";
+  sweets?: "no" | "sometimes" | "daily";
+  fastfood?: "no" | "sometimes" | "often";
+  nightSnacks?: "no" | "sometimes" | "often";
+  stressLevel?: "low" | "medium" | "high";
+  screenTime?: "lt4" | "4to8" | "gt8";
+  dailySteps?: number;
+}
+
 export interface Profile {
   name: string;
   age: number;
@@ -28,7 +46,9 @@ export interface Profile {
   waterGoal?: number;
   birthDate?: string; // YYYY-MM-DD
   goal?: Goal;
+  habits?: Habits;
 }
+
 
 export type MealType =
   | "breakfast1"
