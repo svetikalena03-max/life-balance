@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setTranslatorLang } from "@/lib/i18n-translator";
 
 export type Theme = "light" | "dark";
 export type Lang = "ru" | "en";
