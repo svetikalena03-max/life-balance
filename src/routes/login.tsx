@@ -147,7 +147,7 @@ function LoginPage() {
             )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => normalizeAuthEmail(v))} required />
+              <Input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => normalizeAuthEmail(v))} required />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
