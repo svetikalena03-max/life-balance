@@ -17,6 +17,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,33 +34,26 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
-  { icon: BookOpen, label: "Дневник питания" },
-  { icon: Scale, label: "Контроль веса" },
-  { icon: Droplets, label: "Контроль воды" },
-  { icon: Moon, label: "Контроль сна" },
-  { icon: HeartPulse, label: "Давление и пульс" },
-  { icon: Smile, label: "Настроение и энергия" },
-  { icon: CheckCircle2, label: "Контроль привычек" },
-  { icon: Mic, label: "Голосовой дневник" },
-  { icon: Brain, label: "AI-анализ здоровья" },
-  { icon: Lightbulb, label: "Персональные рекомендации" },
-  { icon: Utensils, label: "Меню на следующий день" },
+  { icon: BookOpen, key: "f_diary" },
+  { icon: Scale, key: "f_weight" },
+  { icon: Droplets, key: "f_water" },
+  { icon: Moon, key: "f_sleep" },
+  { icon: HeartPulse, key: "f_bp" },
+  { icon: Smile, key: "f_mood" },
+  { icon: CheckCircle2, key: "f_habits" },
+  { icon: Mic, key: "f_voice" },
+  { icon: Brain, key: "f_ai" },
+  { icon: Lightbulb, key: "f_reco" },
+  { icon: Utensils, key: "f_menu" },
 ];
 
-const audience = [
-  "Для мужчин и женщин любого возраста",
-  "Для желающих похудеть",
-  "Для людей с хроническими заболеваниями",
-  "Для контроля давления",
-  "Для улучшения сна",
-  "Для формирования полезных привычек",
-];
-
-const why = ["питанием", "весом", "водой", "сном", "настроением", "давлением", "самочувствием"];
+const audienceKeys = ["a_all", "a_lose", "a_chronic", "a_bp", "a_sleep", "a_habits"];
+const whyKeys = ["w_food", "w_weight", "w_water", "w_sleep", "w_mood", "w_bp", "w_well"];
 
 function LandingPage() {
   const { user, ready } = useAuth();
   const navigate = useNavigate();
+  const { t } = useSettings();
 
   useEffect(() => {
     if (ready && user) navigate({ to: "/home" });
@@ -76,62 +70,59 @@ function LandingPage() {
             Баланс жизни
           </h1>
           <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-            Ваш персональный помощник по здоровью, питанию, активности и хорошему
-            самочувствию.
+            {t("landing_subtitle")}
           </p>
         </header>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link to="/register" className="contents">
             <Button size="lg" className="h-12 w-full text-base font-semibold">
-              Зарегистрироваться
+              {t("signUp")}
             </Button>
           </Link>
           <Link to="/login" className="contents">
             <Button size="lg" variant="outline" className="h-12 w-full text-base font-semibold">
-              Войти
+              {t("signIn")}
             </Button>
           </Link>
         </div>
 
         <Card className="p-5">
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Что умеет приложение</h2>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">{t("landing_features")}</h2>
           <ul className="grid gap-2">
-            {features.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-3 text-sm text-foreground">
+            {features.map(({ icon: Icon, key }) => (
+              <li key={key} className="flex items-center gap-3 text-sm text-foreground">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="h-4 w-4" />
                 </span>
-                <span className="min-w-0">{label}</span>
+                <span className="min-w-0">{t(key)}</span>
               </li>
             ))}
           </ul>
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Для кого</h2>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">{t("landing_audience")}</h2>
           <ul className="grid gap-2 text-sm text-muted-foreground">
-            {audience.map((a) => (
-              <li key={a} className="flex items-start gap-2">
+            {audienceKeys.map((k) => (
+              <li key={k} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>{a}</span>
+                <span>{t(k)}</span>
               </li>
             ))}
           </ul>
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Почему это полезно</h2>
-          <p className="text-sm text-muted-foreground">
-            Приложение помогает видеть взаимосвязь между:
-          </p>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">{t("landing_why")}</h2>
+          <p className="text-sm text-muted-foreground">{t("landing_why_text")}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {why.map((w) => (
+            {whyKeys.map((k) => (
               <span
-                key={w}
+                key={k}
                 className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
               >
-                {w}
+                {t(k)}
               </span>
             ))}
           </div>
@@ -140,28 +131,28 @@ function LandingPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link to="/register" className="contents">
             <Button size="lg" className="h-12 w-full text-base font-semibold">
-              Зарегистрироваться
+              {t("signUp")}
             </Button>
           </Link>
           <Link to="/login" className="contents">
             <Button size="lg" variant="outline" className="h-12 w-full text-base font-semibold">
-              Войти
+              {t("signIn")}
             </Button>
           </Link>
         </div>
 
         <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pb-6 text-center text-xs text-muted-foreground">
           <Link to="/legal/$doc" params={{ doc: "privacy" }} className="hover:text-foreground">
-            Политика конфиденциальности
+            {t("legal_privacy")}
           </Link>
           <Link to="/legal/$doc" params={{ doc: "terms" }} className="hover:text-foreground">
-            Пользовательское соглашение
+            {t("legal_terms")}
           </Link>
           <Link to="/legal/$doc" params={{ doc: "consent" }} className="hover:text-foreground">
-            Согласие на обработку данных
+            {t("legal_consent")}
           </Link>
           <Link to="/legal/$doc" params={{ doc: "medical" }} className="hover:text-foreground">
-            Медицинский отказ
+            {t("legal_medical")}
           </Link>
         </footer>
       </div>
