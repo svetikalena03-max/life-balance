@@ -162,6 +162,19 @@ function ProfilePage() {
         </Card>
       </Link>
 
+      <Link to="/settings" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <SettingsIcon className="h-5 w-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Настройки приложения</p>
+            <p className="text-xs text-muted-foreground">Тема, язык, отображение</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
+
       <div className="grid gap-2">
         <Button variant="outline" onClick={reset} className="h-11">
           <LogOut className="mr-2 h-4 w-4" /> Выйти
