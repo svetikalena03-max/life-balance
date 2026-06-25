@@ -1,14 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, BookOpen, HeartPulse, History, BarChart3, User } from "lucide-react";
 import type { ComponentType } from "react";
+import { useSettings } from "@/lib/settings";
 
-const items: Array<{ to: string; label: string; icon: ComponentType<{ className?: string }> }> = [
-  { to: "/home", label: "Главная", icon: Home },
-  { to: "/diary", label: "Дневник", icon: BookOpen },
-  { to: "/health", label: "Здоровье", icon: HeartPulse },
-  { to: "/history", label: "История", icon: History },
-  { to: "/charts", label: "Графики", icon: BarChart3 },
-  { to: "/profile", label: "Профиль", icon: User },
+const items: Array<{ to: string; key: string; icon: ComponentType<{ className?: string }> }> = [
+  { to: "/home", key: "home", icon: Home },
+  { to: "/diary", key: "diary", icon: BookOpen },
+  { to: "/health", key: "health", icon: HeartPulse },
+  { to: "/history", key: "history", icon: History },
+  { to: "/charts", key: "charts", icon: BarChart3 },
+  { to: "/profile", key: "profile", icon: User },
 ];
 
 export function BottomNav() {
