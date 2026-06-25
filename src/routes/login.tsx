@@ -63,17 +63,28 @@ function LoginPage() {
     const normalizedEmail = normalizeAuthEmail(email);
     setEmail(normalizedEmail);
     setSubmitting(true);
-    const res = await signIn(normalizedEmail, password);
-    if (!res.ok) {
-      const message = res.error ?? "Ошибка входа";
+    try {
+      const timeout = new Promise<{ ok: false; error: string; timedOut: true }>((resolve) =>
+        setTimeout(() => resolve({ ok: false, error: "Превышено время ожидания ответа. Попробуйте ещё раз.", timedOut: true }), 15000),
+      );
+      const res = await Promise.race([signIn(normalizedEmail, password), timeout]);
+      if (!res.ok) {
+        const message = res.error ?? "Ошибка входа";
+        setServerError(message);
+        setLastAuthError((res as { serverError?: string }).serverError ?? message);
+        toast.error(message);
+        return;
+      }
+      toast.success("Вы успешно вошли");
+      navigate({ to: "/home" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Неизвестная ошибка входа";
       setServerError(message);
-      setLastAuthError(res.serverError ?? message);
+      setLastAuthError(message);
       toast.error(message);
+    } finally {
       setSubmitting(false);
-      return;
     }
-    toast.success("Вы успешно вошли");
-    navigate({ to: "/home" });
   };
 
   const resetAccount = async () => {
