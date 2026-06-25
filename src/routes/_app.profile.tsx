@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS, summarizeHealthFeatures } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { LogOut, ChevronRight, Heart, HeartPulse } from "lucide-react";
+import { LogOut, ChevronRight, Heart, HeartPulse, Settings as SettingsIcon } from "lucide-react";
 
 
 export const Route = createFileRoute("/_app/profile")({
