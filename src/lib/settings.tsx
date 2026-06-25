@@ -93,6 +93,7 @@ function applyTheme(theme: Theme) {
 function applyLang(lang: Lang) {
   if (typeof document === "undefined") return;
   document.documentElement.lang = lang;
+  setTranslatorLang(lang);
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
