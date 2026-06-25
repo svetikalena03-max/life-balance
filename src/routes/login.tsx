@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ function LoginPage() {
   const [lastAuthError, setLastAuthError] = useState<string>("");
   const [debugRegistered, setDebugRegistered] = useState<string>("не проверено");
   const [submitting, setSubmitting] = useState(false);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (ready && user) navigate({ to: "/home" });
@@ -58,16 +59,21 @@ function LoginPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const formEmail = String(formData.get("email") ?? email);
+    const formPassword = String(formData.get("password") ?? password);
     setServerError(null);
     setLastAuthError("");
-    const normalizedEmail = normalizeAuthEmail(email);
+    const normalizedEmail = normalizeAuthEmail(formEmail);
     setEmail(normalizedEmail);
+    setPassword(formPassword);
     setSubmitting(true);
     try {
       const timeout = new Promise<{ ok: false; error: string; timedOut: true }>((resolve) =>
         setTimeout(() => resolve({ ok: false, error: "Превышено время ожидания ответа. Попробуйте ещё раз.", timedOut: true }), 15000),
       );
-      const res = await Promise.race([signIn(normalizedEmail, password), timeout]);
+      const res = await Promise.race([signIn(normalizedEmail, formPassword), timeout]);
       if (!res.ok) {
         const message = res.error ?? "Ошибка входа";
         setServerError(message);
@@ -85,6 +91,14 @@ function LoginPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const togglePassword = () => {
+    setShow((current) => {
+      const next = !current;
+      if (passwordRef.current) passwordRef.current.type = next ? "text" : "password";
+      return next;
+    });
   };
 
   const resetAccount = async () => {
@@ -133,7 +147,7 @@ function LoginPage() {
             )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => normalizeAuthEmail(v))} required />
+              <Input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmail((v) => normalizeAuthEmail(v))} required />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -145,6 +159,8 @@ function LoginPage() {
               <div className="relative">
                 <Input
                   id="pass"
+                  name="password"
+                  ref={passwordRef}
                   type={show ? "text" : "password"}
                   autoComplete="current-password"
                   value={password}
@@ -155,11 +171,11 @@ function LoginPage() {
                 <button
                   type="button"
                   tabIndex={-1}
-                  onMouseDown={(e) => e.preventDefault()}
+                  onPointerDown={(e) => e.preventDefault()}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setShow((s) => !s);
+                    togglePassword();
                   }}
                   className="absolute right-1 top-1/2 z-10 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md bg-background/60 text-muted-foreground hover:bg-accent hover:text-foreground"
                   aria-label={show ? "Скрыть пароль" : "Показать пароль"}
