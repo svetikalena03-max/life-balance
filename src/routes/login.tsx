@@ -171,11 +171,14 @@ function LoginPage() {
                 <button
                   type="button"
                   tabIndex={-1}
-                  onPointerDown={(e) => e.preventDefault()}
-                  onClick={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     togglePassword();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                   }}
                   className="absolute right-1 top-1/2 z-10 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md bg-background/60 text-muted-foreground hover:bg-accent hover:text-foreground"
                   aria-label={show ? "Скрыть пароль" : "Показать пароль"}

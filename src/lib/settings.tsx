@@ -126,8 +126,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(LANG_KEY, data.language);
       }
     };
-    supabase.auth.getSession().then(({ data }) => sync(data.session?.user.id));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => sync(session?.user.id));
+    supabase.auth.getSession().then(({ data }) => {
+      void sync(data.session?.user.id);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      window.setTimeout(() => {
+        void sync(session?.user.id);
+      }, 0);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
