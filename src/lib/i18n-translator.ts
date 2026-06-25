@@ -376,9 +376,11 @@ let currentLang: "ru" | "en" = "ru";
 
 function applyAll() {
   if (typeof document === "undefined") return;
+  console.log("[i18n] applyAll lang=", currentLang);
   applying = true;
   try { walkNode(document.body, currentLang === "en"); }
   finally { applying = false; }
+  console.log("[i18n] applyAll done, h1=", document.querySelector("h1")?.textContent);
 }
 
 export function setTranslatorLang(lang: "ru" | "en") {
