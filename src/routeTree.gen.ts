@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LegalDocRouteImport } from './routes/legal.$doc'
 import { Route as AppVoiceRouteImport } from './routes/_app.voice'
 import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
@@ -72,6 +73,11 @@ const AppVoiceRoute = AppVoiceRouteImport.update({
 const AppSubscriptionRoute = AppSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/subscription': typeof AppSubscriptionRoute
   '/_app/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/settings'
     | '/subscription'
     | '/voice'
     | '/legal/$doc'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/settings'
     | '/subscription'
     | '/voice'
     | '/legal/$doc'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/_app/history'
     | '/_app/home'
     | '/_app/profile'
+    | '/_app/settings'
     | '/_app/subscription'
     | '/_app/voice'
     | '/legal/$doc'
@@ -335,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/subscription'
       fullPath: '/subscription'
       preLoaderRoute: typeof AppSubscriptionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -440,6 +459,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
   AppVoiceRoute: typeof AppVoiceRoute
 }
@@ -455,6 +475,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppProfileRoute: AppProfileRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
   AppVoiceRoute: AppVoiceRoute,
 }
