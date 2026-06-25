@@ -14,10 +14,11 @@ const items: Array<{ to: string; key: string; icon: ComponentType<{ className?: 
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useSettings();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <ul className="mx-auto flex max-w-xl items-stretch justify-between px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {items.map(({ to, label, icon: Icon }) => {
+        {items.map(({ to, key, icon: Icon }) => {
           const active = pathname === to || (to !== "/home" && pathname.startsWith(to));
           return (
             <li key={to} className="flex-1">
@@ -28,7 +29,7 @@ export function BottomNav() {
                 }`}
               >
                 <Icon className={`h-5 w-5 ${active ? "stroke-[2.5]" : ""}`} />
-                <span>{label}</span>
+                <span>{t(key)}</span>
               </Link>
             </li>
           );
