@@ -30,6 +30,7 @@ import { Route as AppDiaryRouteImport } from './routes/_app.diary'
 import { Route as AppChartsRouteImport } from './routes/_app.charts'
 import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppRecoveryIdRouteImport } from './routes/_app.recovery.$id'
 import { Route as AppHistoryDateRouteImport } from './routes/_app.history.$date'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -136,6 +137,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRecoveryIdRoute = AppRecoveryIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppRecoveryRoute,
+} as any)
 const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
   id: '/$date',
   path: '/$date',
@@ -158,12 +164,13 @@ export interface FileRoutesByFullPath {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
-  '/recovery': typeof AppRecoveryRoute
+  '/recovery': typeof AppRecoveryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
+  '/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -181,12 +188,13 @@ export interface FileRoutesByTo {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
-  '/recovery': typeof AppRecoveryRoute
+  '/recovery': typeof AppRecoveryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
+  '/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -206,12 +214,13 @@ export interface FileRoutesById {
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
-  '/_app/recovery': typeof AppRecoveryRoute
+  '/_app/recovery': typeof AppRecoveryRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subscription': typeof AppSubscriptionRoute
   '/_app/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_app/history/$date': typeof AppHistoryDateRoute
+  '/_app/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/voice'
     | '/legal/$doc'
     | '/history/$date'
+    | '/recovery/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/voice'
     | '/legal/$doc'
     | '/history/$date'
+    | '/recovery/$id'
   id:
     | '__root__'
     | '/'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/_app/voice'
     | '/legal/$doc'
     | '/_app/history/$date'
+    | '/_app/recovery/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/recovery/$id': {
+      id: '/_app/recovery/$id'
+      path: '/$id'
+      fullPath: '/recovery/$id'
+      preLoaderRoute: typeof AppRecoveryIdRouteImport
+      parentRoute: typeof AppRecoveryRoute
+    }
     '/_app/history/$date': {
       id: '/_app/history/$date'
       path: '/$date'
@@ -467,6 +486,18 @@ const AppHistoryRouteWithChildren = AppHistoryRoute._addFileChildren(
   AppHistoryRouteChildren,
 )
 
+interface AppRecoveryRouteChildren {
+  AppRecoveryIdRoute: typeof AppRecoveryIdRoute
+}
+
+const AppRecoveryRouteChildren: AppRecoveryRouteChildren = {
+  AppRecoveryIdRoute: AppRecoveryIdRoute,
+}
+
+const AppRecoveryRouteWithChildren = AppRecoveryRoute._addFileChildren(
+  AppRecoveryRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAiRoute: typeof AppAiRoute
@@ -478,7 +509,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppProfileRoute: typeof AppProfileRoute
-  AppRecoveryRoute: typeof AppRecoveryRoute
+  AppRecoveryRoute: typeof AppRecoveryRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
   AppVoiceRoute: typeof AppVoiceRoute
@@ -495,7 +526,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppProfileRoute: AppProfileRoute,
-  AppRecoveryRoute: AppRecoveryRoute,
+  AppRecoveryRoute: AppRecoveryRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
   AppVoiceRoute: AppVoiceRoute,
