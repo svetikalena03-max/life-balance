@@ -114,3 +114,118 @@ async function runAnalyzeMeal(input: AnalyzeMealInput): Promise<AnalyzeMealResul
 export const analyzeMeal = createServerFn({ method: "POST" })
   .inputValidator((data) => analyzeMealInputSchema.parse(data))
   .handler(async ({ data }): Promise<AnalyzeMealResult> => runAnalyzeMeal(data));
+
+const analyzeDayTextInputSchema = z.object({
+  dayText: z.string().trim().min(1, "Опишите свой день"),
+});
+
+export type AnalyzeDayTextInput = z.infer<typeof analyzeDayTextInputSchema>;
+
+export type DayTextAnalysis = {
+  nutrition: string;
+  water: string;
+  otherDrinks: string;
+  sleep: string;
+  pressure: string;
+  mood: string;
+  wellbeing: string;
+  advice: string;
+};
+
+export type AnalyzeDayTextSuccess = {
+  ok: true;
+  analysis: DayTextAnalysis;
+};
+
+export type AnalyzeDayTextResult = AnalyzeDayTextSuccess | AnalyzeMealFailure;
+
+const NOT_SPECIFIED = "не указано";
+
+const DAY_TEXT_FIELDS: Array<keyof DayTextAnalysis> = [
+  "nutrition",
+  "water",
+  "otherDrinks",
+  "sleep",
+  "pressure",
+  "mood",
+  "wellbeing",
+  "advice",
+];
+
+function buildAnalyzeDayTextPrompt(dayText: string): string {
+  return [
+    "Пользователь приложения «Баланс жизни» описал свой день свободным текстом.",
+    "Извлеки из текста данные и структурируй их. Если чего-то нет в тексте — напиши «не указано».",
+    "В поле advice дай один короткий безопасный совет по образу жизни (без диагнозов).",
+    "Пиши на русском языке.",
+    "",
+    `Текст пользователя: ${dayText}`,
+    "",
+    "Ответь строго в формате JSON со следующими полями:",
+    JSON.stringify({
+      nutrition: "что и когда ел(а)",
+      water: "количество воды",
+      otherDrinks: "чай, кофе, соки и прочие напитки",
+      sleep: "сколько спал(а)",
+      pressure: "артериальное давление",
+      mood: "настроение",
+      wellbeing: "самочувствие",
+      advice: "краткий совет",
+    }),
+  ].join("\n");
+}
+
+function parseAnalyzeDayTextResponse(content: string): AnalyzeDayTextSuccess {
+  const parsed = JSON.parse(content) as Record<string, unknown>;
+
+  const analysis = DAY_TEXT_FIELDS.reduce((acc, field) => {
+    const value = parsed[field];
+    acc[field] = typeof value === "string" && value.trim().length > 0 ? value.trim() : NOT_SPECIFIED;
+    return acc;
+  }, {} as DayTextAnalysis);
+
+  return { ok: true, analysis };
+}
+
+async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDayTextResult> {
+  const { isOpenAIConfigured, openai, getOpenAIModel } = await import(
+    "@/integrations/openai/client.server"
+  );
+
+  if (!isOpenAIConfigured()) {
+    return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+  }
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: getOpenAIModel(),
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: buildAIConsultantSystemPrompt(),
+        },
+        {
+          role: "user",
+          content: buildAnalyzeDayTextPrompt(input.dayText),
+        },
+      ],
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      return { ok: false, error: "OpenAI вернул пустой ответ" };
+    }
+
+    return parseAnalyzeDayTextResponse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось выполнить AI-анализ";
+    console.error("[AI] analyzeDayText failed:", error);
+    return { ok: false, error: message };
+  }
+}
+
+export const analyzeDayText = createServerFn({ method: "POST" })
+  .inputValidator((data) => analyzeDayTextInputSchema.parse(data))
+  .handler(async ({ data }): Promise<AnalyzeDayTextResult> => runAnalyzeDayText(data));
