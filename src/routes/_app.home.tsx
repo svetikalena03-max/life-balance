@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Mic, GlassWater } from "lucide-react";
 import { useEntries, useProfile, todayISO, formatDateWeekday } from "@/lib/store";
-import { toast } from "sonner";
+import { VoiceDayDialog } from "@/components/VoiceDayDialog";
 
 export const Route = createFileRoute("/_app/home")({
   component: HomePage,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_app/home")({
 function HomePage() {
   const { profile } = useProfile();
   const { entries } = useEntries();
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   const today = todayISO();
   const todayEntry = entries.find((e) => e.date === today);
@@ -78,7 +80,7 @@ function HomePage() {
       </Card>
 
       <Button
-        onClick={() => toast.info("Голосовой ввод появится скоро")}
+        onClick={() => setVoiceOpen(true)}
         size="lg"
         className="h-16 w-full justify-start gap-3 rounded-2xl bg-gradient-to-r from-chart-5/80 to-primary/80 px-5 text-base font-semibold text-primary-foreground shadow-md hover:opacity-95"
       >
@@ -87,9 +89,11 @@ function HomePage() {
         </span>
         <span className="min-w-0 text-left">
           <span className="block truncate">Рассказать о своём дне</span>
-          <span className="block text-xs font-normal opacity-90">Скоро: голосовой дневник</span>
+          <span className="block text-xs font-normal opacity-90">AI-анализ вашего дня</span>
         </span>
       </Button>
+
+      <VoiceDayDialog open={voiceOpen} onOpenChange={setVoiceOpen} />
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard
