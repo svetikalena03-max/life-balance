@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { RecipeCard } from "@/components/recipes/RecipeCard";
+import { RecipeRecommendationCard } from "@/components/recipes/RecipeRecommendationCard";
 import { RecipeFiltersPanel } from "@/components/recipes/RecipeFiltersPanel";
 import { suggestRecipes, type SuggestRecipesResult } from "@/lib/ai.functions";
 import {
@@ -40,8 +41,8 @@ function RecipesPage() {
 
   const recipes = useMemo(() => filterRecipes(filters), [filters]);
 
-  const aiRecommendations = useMemo(() => {
-    if (!aiResult?.ok) return [];
+  const aiSuggestions = useMemo(() => {
+    if (!aiResult?.ok) return { matched: [], unknownIds: [] as string[] };
     return resolveRecipeSuggestions(aiResult.recommendations);
   }, [aiResult]);
 
@@ -105,23 +106,29 @@ function RecipesPage() {
       )}
 
       {aiResult?.ok && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <Alert>
             <AlertTitle>Персональные рекомендации</AlertTitle>
             <AlertDescription>{aiResult.summary}</AlertDescription>
           </Alert>
 
-          {aiRecommendations.length === 0 ? (
+          {aiSuggestions.unknownIds.length > 0 && (
+            <Alert>
+              <AlertDescription>
+                Некоторые рецепты из ответа AI не найдены в каталоге (
+                {aiSuggestions.unknownIds.join(", ")}). Показаны только доступные варианты.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {aiSuggestions.matched.length === 0 ? (
             <Card className="p-6 text-center text-sm text-muted-foreground">
               AI не смог сопоставить рецепты с каталогом. Попробуйте ещё раз или используйте фильтры ниже.
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {aiRecommendations.map(({ recipe, reason }) => (
-                <div key={recipe.id} className="flex flex-col gap-2">
-                  <RecipeCard recipe={recipe} />
-                  <p className="px-1 text-xs leading-relaxed text-muted-foreground">{reason}</p>
-                </div>
+              {aiSuggestions.matched.map(({ recipe, reason }) => (
+                <RecipeRecommendationCard key={recipe.id} recipe={recipe} reason={reason} />
               ))}
             </div>
           )}

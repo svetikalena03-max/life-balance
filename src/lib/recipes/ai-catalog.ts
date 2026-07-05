@@ -17,22 +17,33 @@ export function buildRecipeCatalogForAI(): string {
   return JSON.stringify(compact);
 }
 
+export type ResolvedRecipeSuggestions = {
+  matched: Array<{ recipe: Recipe; reason: string }>;
+  unknownIds: string[];
+};
+
 export function resolveRecipeSuggestions(
   items: Array<{ recipeId: string; reason: string }>,
-): Array<{ recipe: Recipe; reason: string }> {
+): ResolvedRecipeSuggestions {
   const seen = new Set<string>();
-  const result: Array<{ recipe: Recipe; reason: string }> = [];
+  const matched: Array<{ recipe: Recipe; reason: string }> = [];
+  const unknownIds: string[] = [];
 
   for (const item of items) {
     if (seen.has(item.recipeId)) continue;
-    const recipe = findRecipeById(item.recipeId);
-    if (!recipe) continue;
     seen.add(item.recipeId);
-    result.push({
+
+    const recipe = findRecipeById(item.recipeId);
+    if (!recipe) {
+      unknownIds.push(item.recipeId);
+      continue;
+    }
+
+    matched.push({
       recipe,
       reason: item.reason.trim() || "Подходит под ваш профиль.",
     });
   }
 
-  return result;
+  return { matched, unknownIds };
 }
