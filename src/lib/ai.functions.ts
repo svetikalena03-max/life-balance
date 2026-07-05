@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  buildAnalyzeDayTextPromptExample,
+  parseAnalyzeDayTextResponse,
+  type DayEntryExtract,
+  type DayTextDisplay,
+} from "./ai-day-analysis";
 import { buildAIConsultantSystemPrompt } from "./ai-prompts";
 const analyzeMealInputSchema = z.object({
   foodText: z.string().trim().min(1, "Укажите, что было съедено"),
@@ -121,70 +127,54 @@ const analyzeDayTextInputSchema = z.object({
 
 export type AnalyzeDayTextInput = z.infer<typeof analyzeDayTextInputSchema>;
 
-export type DayTextAnalysis = {
-  nutrition: string;
-  water: string;
-  otherDrinks: string;
-  sleep: string;
-  pressure: string;
-  mood: string;
-  wellbeing: string;
-  advice: string;
-};
+/** Текстовые поля для отображения в UI (обратная совместимость). */
+export type DayTextAnalysis = DayTextDisplay;
+
+export type { DayEntryExtract };
 
 export type AnalyzeDayTextSuccess = {
   ok: true;
   analysis: DayTextAnalysis;
+  /** Structured-данные, совместимые с DayEntry (без date). Используется на этапе сохранения. */
+  structured: DayEntryExtract;
 };
 
 export type AnalyzeDayTextResult = AnalyzeDayTextSuccess | AnalyzeMealFailure;
 
-const NOT_SPECIFIED = "не указано";
-
-const DAY_TEXT_FIELDS: Array<keyof DayTextAnalysis> = [
-  "nutrition",
-  "water",
-  "otherDrinks",
-  "sleep",
-  "pressure",
-  "mood",
-  "wellbeing",
-  "advice",
-];
-
 function buildAnalyzeDayTextPrompt(dayText: string): string {
   return [
     "Пользователь приложения «Баланс жизни» описал свой день свободным текстом.",
-    "Извлеки из текста данные и структурируй их. Если чего-то нет в тексте — напиши «не указано».",
+    "Извлеки данные и верни JSON с двумя уровнями:",
+    "1) Текстовые поля верхнего уровня — для отображения пользователю на русском языке.",
+    "   Если данных нет — пиши «не указано».",
+    "2) Объект entry — structured-данные для сохранения в дневник (числа, булевы, массив meals).",
+    "   Включай в entry только те поля, которые явно упомянуты в тексте.",
+    "   Не включай поля, которых нет в тексте.",
+    "",
+    "Правила для entry:",
+    "- water, tea, coffee, soda, juice — объём в миллилитрах (целые числа).",
+    "- sleep — часы сна (число, например 6.5).",
+    "- mood, energy — шкала 1–10 (целое число).",
+    "- systolic, diastolic — верхнее и нижнее давление (целые числа).",
+    "- pulse — пульс ударов/мин (целое число).",
+    "- weight — вес в кг (число).",
+    "- steps — шаги (целое число).",
+    "- meals — массив приёмов пищи: type (breakfast1|breakfast2|snack1|lunch|snack2|dinner|lateSnack|extra), food, portion, time, comment.",
+    "- edema, heartburn, bloating, backPain, kneePain, stressed, milk — true/false.",
+    "- sugar — none|one|two|other.",
+    "",
     "В поле advice дай один короткий безопасный совет по образу жизни (без диагнозов).",
-    "Пиши на русском языке.",
     "",
     `Текст пользователя: ${dayText}`,
     "",
-    "Ответь строго в формате JSON со следующими полями:",
-    JSON.stringify({
-      nutrition: "что и когда ел(а)",
-      water: "количество воды",
-      otherDrinks: "чай, кофе, соки и прочие напитки",
-      sleep: "сколько спал(а)",
-      pressure: "артериальное давление",
-      mood: "настроение",
-      wellbeing: "самочувствие",
-      advice: "краткий совет",
-    }),
+    "Ответь строго в формате JSON (пример структуры):",
+    buildAnalyzeDayTextPromptExample(),
   ].join("\n");
 }
 
-function parseAnalyzeDayTextResponse(content: string): AnalyzeDayTextSuccess {
-  const parsed = JSON.parse(content) as Record<string, unknown>;
-
-  const analysis = DAY_TEXT_FIELDS.reduce((acc, field) => {
-    const value = parsed[field];
-    acc[field] = typeof value === "string" && value.trim().length > 0 ? value.trim() : NOT_SPECIFIED;
-    return acc;
-  }, {} as DayTextAnalysis);
-
-  return { ok: true, analysis };
+function parseAnalyzeDayTextSuccess(content: string): AnalyzeDayTextSuccess {
+  const { display, structured } = parseAnalyzeDayTextResponse(content);
+  return { ok: true, analysis: display, structured };
 }
 
 async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDayTextResult> {
@@ -218,7 +208,7 @@ async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDay
       return { ok: false, error: "OpenAI вернул пустой ответ" };
     }
 
-    return parseAnalyzeDayTextResponse(content);
+    return parseAnalyzeDayTextSuccess(content);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Не удалось выполнить AI-анализ";
     console.error("[AI] analyzeDayText failed:", error);

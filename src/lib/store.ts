@@ -479,6 +479,109 @@ function hfToRow(hf: HealthFeatures, userId: string) {
   };
 }
 
+export type SaveEntryResult = { ok: true } | { ok: false; error: string };
+
+function newMealId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now() + Math.random());
+}
+
+function isMealEmpty(meal: Meal): boolean {
+  return !meal.food?.trim() && !meal.portion?.trim() && !meal.comment?.trim() && !meal.time;
+}
+
+function ensureMealIds(meals: Meal[]): Meal[] {
+  return meals.map((m) => ({ ...m, id: m.id || newMealId() }));
+}
+
+function mergeMeals(existing: Meal[] | undefined, incoming: Meal[]): Meal[] {
+  const result = existing?.length ? [...existing] : [];
+
+  for (const raw of incoming) {
+    const type = raw.type ?? "extra";
+    const aiMeal = { ...raw, type, id: raw.id || newMealId() };
+
+    if (type === "extra") {
+      result.push(aiMeal);
+      continue;
+    }
+
+    const idx = result.findIndex((m) => m.type === type);
+    if (idx < 0) {
+      result.push(aiMeal);
+      continue;
+    }
+
+    if (isMealEmpty(result[idx]!)) {
+      result[idx] = { ...aiMeal, id: result[idx]!.id || aiMeal.id };
+    }
+  }
+
+  return ensureMealIds(result);
+}
+
+const STRUCTURED_SCALAR_KEYS = [
+  "water",
+  "tea",
+  "coffee",
+  "soda",
+  "juice",
+  "otherDrinks",
+  "sugar",
+  "sugarOther",
+  "milk",
+  "wellbeing",
+  "weight",
+  "sleep",
+  "mood",
+  "breadUnits",
+  "steps",
+  "workout",
+  "workoutMinutes",
+  "systolic",
+  "diastolic",
+  "pulse",
+  "energy",
+  "edema",
+  "heartburn",
+  "bloating",
+  "backPain",
+  "kneePain",
+  "stressed",
+  "healthComment",
+] as const satisfies ReadonlyArray<keyof DayEntry>;
+
+/** Объединяет AI structured с записью дня: не перезаписывает уже заполненные поля. */
+export function mergeStructuredIntoDayEntry(
+  existing: DayEntry | undefined,
+  structured: Partial<Omit<DayEntry, "date">>,
+  date: string,
+): DayEntry {
+  const merged: DayEntry = { ...(existing ?? { date }), date };
+
+  for (const key of STRUCTURED_SCALAR_KEYS) {
+    const value = structured[key];
+    if (value === undefined || value === null) continue;
+    if (merged[key] === undefined || merged[key] === null) {
+      (merged as Record<string, unknown>)[key] = value;
+    }
+  }
+
+  if (structured.meals?.length) {
+    merged.meals = mergeMeals(merged.meals, structured.meals);
+  }
+
+  return merged;
+}
+
+export function hasStructuredContent(structured: Partial<Omit<DayEntry, "date">>): boolean {
+  return Object.entries(structured).some(([key, value]) => {
+    if (value === undefined || value === null) return false;
+    if (key === "meals") return Array.isArray(value) && value.length > 0;
+    if (typeof value === "string") return value.trim().length > 0;
+    return true;
+  });
+}
+
 // ============ hooks ============
 
 function useUserId() {
@@ -533,6 +636,7 @@ export function useEntries() {
   const uid = useUserId();
   const [entries, setEntries] = useState<DayEntry[]>([]);
   const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
   const uidRef = useRef<string | null>(null);
   uidRef.current = uid;
 
@@ -558,28 +662,57 @@ export function useEntries() {
     })();
   }, [uid]);
 
-  const saveEntry = useCallback(async (patch: DayEntry) => {
+  const saveEntry = useCallback(async (patch: DayEntry): Promise<SaveEntryResult> => {
     const userId = uidRef.current;
-    if (!userId) return;
+    if (!userId) {
+      return { ok: false, error: "Войдите в аккаунт, чтобы сохранить данные" };
+    }
+
+    setSaving(true);
+    let previousEntries: DayEntry[] = [];
+    let merged: DayEntry = patch;
+
     setEntries((prev) => {
+      previousEntries = prev;
       const existing = prev.find((e) => e.date === patch.date);
-      const merged: DayEntry = { ...(existing ?? { date: patch.date }), ...patch };
+      merged = { ...(existing ?? { date: patch.date }), ...patch };
       const filtered = prev.filter((e) => e.date !== patch.date);
       return [...filtered, merged].sort((a, b) => a.date.localeCompare(b.date));
     });
-    const dailyRow = entryToDailyRow(patch, userId);
-    const healthRow = entryToHealthRow(patch, userId);
-    const ops: PromiseLike<unknown>[] = [];
+
+    const dailyRow = entryToDailyRow(merged, userId);
+    const healthRow = entryToHealthRow(merged, userId);
+    const ops: Array<PromiseLike<{ error: { message: string } | null }>> = [];
     if (Object.keys(dailyRow).length > 2) {
       ops.push(supabase.from("daily_entries").upsert(dailyRow as any, { onConflict: "user_id,date" }));
     }
     if (healthRow) {
       ops.push(supabase.from("health_entries").upsert(healthRow as any, { onConflict: "user_id,date" }));
     }
-    await Promise.all(ops);
+
+    if (ops.length === 0) {
+      setSaving(false);
+      return { ok: false, error: "Нет данных для сохранения" };
+    }
+
+    try {
+      const results = await Promise.all(ops);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) {
+        setEntries(previousEntries);
+        return { ok: false, error: failed.error.message };
+      }
+      return { ok: true };
+    } catch (error) {
+      setEntries(previousEntries);
+      const message = error instanceof Error ? error.message : "Не удалось сохранить данные";
+      return { ok: false, error: message };
+    } finally {
+      setSaving(false);
+    }
   }, []);
 
-  return { entries, saveEntry, ready };
+  return { entries, saveEntry, ready, saving };
 }
 
 export function todayISO() {

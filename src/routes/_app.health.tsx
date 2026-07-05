@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { SaveSuccess } from "@/components/SaveSuccess";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_app/health")({
 });
 
 function HealthPage() {
-  const { entries, saveEntry, ready } = useEntries();
+  const { entries, saveEntry, ready, saving } = useEntries();
   const today = todayISO();
   const existing = entries.find((e) => e.date === today);
 
@@ -50,9 +51,9 @@ function HealthPage() {
     }
   }, [ready, existing?.date]);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    saveEntry({
+    const result = await saveEntry({
       date: today,
       systolic: sys === "" ? undefined : Number(sys),
       diastolic: dia === "" ? undefined : Number(dia),
@@ -61,6 +62,12 @@ function HealthPage() {
       edema, heartburn, bloating, backPain, kneePain, stressed,
       healthComment: healthComment || undefined,
     });
+
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+
     toast.success("Показатели здоровья сохранены");
     setSaved(true);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -111,8 +118,15 @@ function HealthPage() {
             <Textarea id="hc" rows={3} value={healthComment} onChange={(e) => setHealthComment(e.target.value)} placeholder="Что беспокоит, что хорошо…" />
           </div>
 
-          <Button type="submit" size="lg" className="h-12 text-base font-semibold">
-            Сохранить здоровье
+          <Button type="submit" size="lg" className="h-12 text-base font-semibold" disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сохранение...
+              </>
+            ) : (
+              "Сохранить здоровье"
+            )}
           </Button>
         </form>
       </Card>

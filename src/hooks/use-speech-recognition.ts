@@ -44,34 +44,77 @@ function mapSpeechError(error: string): string | null {
   }
 }
 
+function joinTranscriptParts(parts: string[]): string {
+  return parts
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+export type SpeechUnsupportedReason = "https" | "browser";
+
 export function useSpeechRecognition() {
   const Ctor = getSpeechRecognitionCtor();
-  const supported = Ctor !== null;
+  const unsupportedReason: SpeechUnsupportedReason | null =
+    typeof window === "undefined"
+      ? "browser"
+      : !window.isSecureContext
+        ? "https"
+        : Ctor
+          ? null
+          : "browser";
+  const supported = unsupportedReason === null;
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const transcriptRef = useRef("");
+  const finalTranscriptRef = useRef("");
+  const interimTranscriptRef = useRef("");
   const onTranscriptRef = useRef<((text: string) => void) | null>(null);
   const intentionalStopRef = useRef(false);
   const [listening, setListening] = useState(false);
+  const [finalText, setFinalText] = useState("");
+  const [interimText, setInterimText] = useState("");
   const [speechError, setSpeechError] = useState<string | null>(null);
+
+  const updatePreview = useCallback(() => {
+    setFinalText(finalTranscriptRef.current);
+  }, []);
+
+  const resetSession = useCallback(() => {
+    finalTranscriptRef.current = "";
+    interimTranscriptRef.current = "";
+    setFinalText("");
+    setInterimText("");
+  }, []);
 
   const cleanupRecognition = useCallback(() => {
     recognitionRef.current = null;
-    transcriptRef.current = "";
     intentionalStopRef.current = false;
+    interimTranscriptRef.current = "";
+    setInterimText("");
     setListening(false);
   }, []);
 
+  const deliverTranscript = useCallback(() => {
+    const spoken = joinTranscriptParts([finalTranscriptRef.current, interimTranscriptRef.current]);
+    if (spoken) onTranscriptRef.current?.(spoken);
+    finalTranscriptRef.current = "";
+  }, []);
+
   const abort = useCallback(() => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      resetSession();
+      return;
+    }
     intentionalStopRef.current = true;
+    onTranscriptRef.current = null;
     try {
       recognitionRef.current.abort();
     } catch {
       // ignore
     }
+    finalTranscriptRef.current = "";
     cleanupRecognition();
-  }, [cleanupRecognition]);
+  }, [cleanupRecognition, resetSession]);
 
   useEffect(() => () => abort(), [abort]);
 
@@ -81,9 +124,10 @@ export function useSpeechRecognition() {
     try {
       recognitionRef.current.stop();
     } catch {
+      deliverTranscript();
       cleanupRecognition();
     }
-  }, [cleanupRecognition]);
+  }, [cleanupRecognition, deliverTranscript]);
 
   const start = useCallback(
     (onTranscript: (text: string) => void) => {
@@ -100,37 +144,63 @@ export function useSpeechRecognition() {
       }
 
       setSpeechError(null);
-      transcriptRef.current = "";
+      resetSession();
       onTranscriptRef.current = onTranscript;
       intentionalStopRef.current = false;
 
       const recognition = new Ctor();
       recognition.lang = "ru-RU";
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       recognition.onresult = (event) => {
-        let full = "";
-        for (let i = 0; i < event.results.length; i += 1) {
-          full += event.results[i][0]?.transcript ?? "";
+        let interim = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          const chunk = result[0]?.transcript ?? "";
+          if (result.isFinal) {
+            finalTranscriptRef.current = joinTranscriptParts([finalTranscriptRef.current, chunk]);
+            interimTranscriptRef.current = "";
+          } else {
+            interim += chunk;
+          }
         }
-        transcriptRef.current = full;
+
+        interimTranscriptRef.current = interim.trim();
+        setInterimText(interimTranscriptRef.current);
+        updatePreview();
       };
 
       recognition.onerror = (event) => {
         if (event.error === "aborted") return;
-        if (event.error === "no-speech" && intentionalStopRef.current) return;
+        if (event.error === "no-speech") {
+          if (intentionalStopRef.current) return;
+          return;
+        }
 
         const message = mapSpeechError(event.error);
         if (message) setSpeechError(message);
+        onTranscriptRef.current = null;
+        finalTranscriptRef.current = "";
         cleanupRecognition();
       };
 
       recognition.onend = () => {
-        const spoken = transcriptRef.current.trim();
-        if (spoken) onTranscriptRef.current?.(spoken);
-        cleanupRecognition();
+        if (intentionalStopRef.current) {
+          deliverTranscript();
+          cleanupRecognition();
+          return;
+        }
+
+        if (!recognitionRef.current) return;
+
+        try {
+          recognitionRef.current.start();
+        } catch {
+          cleanupRecognition();
+        }
       };
 
       recognitionRef.current = recognition;
@@ -143,7 +213,7 @@ export function useSpeechRecognition() {
         cleanupRecognition();
       }
     },
-    [Ctor, cleanupRecognition],
+    [Ctor, cleanupRecognition, deliverTranscript, resetSession, updatePreview],
   );
 
   const toggle = useCallback(
@@ -157,5 +227,17 @@ export function useSpeechRecognition() {
     [listening, start, stop],
   );
 
-  return { supported, listening, toggle, stop, abort, speechError, clearSpeechError: () => setSpeechError(null) };
+  return {
+    supported,
+    unsupportedReason,
+    listening,
+    finalText,
+    interimText,
+    start,
+    stop,
+    toggle,
+    abort,
+    speechError,
+    clearSpeechError: () => setSpeechError(null),
+  };
 }
