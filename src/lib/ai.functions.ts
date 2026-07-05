@@ -219,3 +219,126 @@ async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDay
 export const analyzeDayText = createServerFn({ method: "POST" })
   .inputValidator((data) => analyzeDayTextInputSchema.parse(data))
   .handler(async ({ data }): Promise<AnalyzeDayTextResult> => runAnalyzeDayText(data));
+
+const suggestRecipesInputSchema = z.object({
+  goal: z.string().trim().min(1, "Укажите цель пользователя"),
+  conditions: z.string().trim().optional(),
+  restrictions: z.string().trim().optional(),
+  age: z.number().int().positive().optional(),
+});
+
+export type SuggestRecipesInput = z.infer<typeof suggestRecipesInputSchema>;
+
+export type RecipeSuggestion = {
+  recipeId: string;
+  reason: string;
+};
+
+export type SuggestRecipesSuccess = {
+  ok: true;
+  summary: string;
+  recommendations: RecipeSuggestion[];
+};
+
+export type SuggestRecipesResult = SuggestRecipesSuccess | AnalyzeMealFailure;
+
+function buildSuggestRecipesPrompt(input: SuggestRecipesInput, catalogJson: string): string {
+  const lines = [
+    "Подбери 3–5 рецептов из каталога ниже для пользователя приложения «Баланс жизни».",
+    "Выбирай ТОЛЬКО recipeId из каталога. Не придумывай новые блюда.",
+    "Учитывай цель, заболевания и ограничения. Не ставь диагнозы.",
+    "Для каждого рецепта объясни коротко (1–2 предложения), почему он подходит.",
+    "Пиши на русском языке.",
+    "",
+    `Цель: ${input.goal}`,
+    input.conditions ? `Заболевания и особенности здоровья: ${input.conditions}` : "Заболевания: не указаны",
+    input.restrictions ? `Ограничения: ${input.restrictions}` : "Ограничения: не указаны",
+    input.age ? `Возраст: ${input.age} лет` : "",
+    "",
+    `Каталог рецептов (JSON): ${catalogJson}`,
+    "",
+    "Ответь строго в формате JSON:",
+    '{"summary":"краткое вступление для пользователя","recommendations":[{"recipeId":"id из каталога","reason":"почему подходит"}]}',
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
+function parseSuggestRecipesResponse(content: string): SuggestRecipesSuccess {
+  const parsed = JSON.parse(content) as {
+    summary?: unknown;
+    recommendations?: unknown;
+  };
+
+  if (typeof parsed.summary !== "string" || !parsed.summary.trim()) {
+    throw new Error("OpenAI вернул ответ без поля summary");
+  }
+
+  if (!Array.isArray(parsed.recommendations) || parsed.recommendations.length === 0) {
+    throw new Error("OpenAI вернул пустой список рекомендаций");
+  }
+
+  const recommendations: RecipeSuggestion[] = parsed.recommendations
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as { recipeId?: unknown; reason?: unknown };
+      if (typeof row.recipeId !== "string" || !row.recipeId.trim()) return null;
+      if (typeof row.reason !== "string" || !row.reason.trim()) return null;
+      return { recipeId: row.recipeId.trim(), reason: row.reason.trim() };
+    })
+    .filter((item): item is RecipeSuggestion => item !== null);
+
+  if (!recommendations.length) {
+    throw new Error("OpenAI вернул некорректный список рекомендаций");
+  }
+
+  return {
+    ok: true,
+    summary: parsed.summary.trim(),
+    recommendations,
+  };
+}
+
+async function runSuggestRecipes(input: SuggestRecipesInput): Promise<SuggestRecipesResult> {
+  const { isOpenAIConfigured, openai, getOpenAIModel } = await import(
+    "@/integrations/openai/client.server"
+  );
+  const { buildRecipeCatalogForAI } = await import("@/lib/recipes/ai-catalog");
+
+  if (!isOpenAIConfigured()) {
+    return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+  }
+
+  try {
+    const catalogJson = buildRecipeCatalogForAI();
+    const completion = await openai.chat.completions.create({
+      model: getOpenAIModel(),
+      temperature: 0.4,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: buildAIConsultantSystemPrompt(),
+        },
+        {
+          role: "user",
+          content: buildSuggestRecipesPrompt(input, catalogJson),
+        },
+      ],
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      return { ok: false, error: "OpenAI вернул пустой ответ" };
+    }
+
+    return parseSuggestRecipesResponse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось подобрать рецепты";
+    console.error("[AI] suggestRecipes failed:", error);
+    return { ok: false, error: message };
+  }
+}
+
+export const suggestRecipes = createServerFn({ method: "POST" })
+  .inputValidator((data) => suggestRecipesInputSchema.parse(data))
+  .handler(async ({ data }): Promise<SuggestRecipesResult> => runSuggestRecipes(data));

@@ -51,7 +51,7 @@ export const recipeCatalog: RecipeCatalogService = {
   filter: (filters) => filterRecipes(filters),
 };
 
-/** Заготовка для AI-подбора — пока возвращает фильтрованный каталог. */
-export function suggestRecipes(filters: RecipeFilters): Recipe[] {
+/** Локальный подбор по фильтрам каталога (без OpenAI). */
+export function suggestRecipesByFilters(filters: RecipeFilters): Recipe[] {
   return filterRecipes(filters);
 }
