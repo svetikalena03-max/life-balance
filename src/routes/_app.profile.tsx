@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { useProfile, type Gender, type Goal, GOAL_LABELS, summarizeHealthFeatures } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { LogOut, ChevronRight, Heart, HeartPulse, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, ChevronRight, Heart, HeartPulse, Settings as SettingsIcon, ChefHat } from "lucide-react";
 
 
 export const Route = createFileRoute("/_app/profile")({
@@ -133,6 +133,19 @@ function ProfilePage() {
           <Button type="submit" size="lg" className="h-12 font-semibold">Сохранить</Button>
         </form>
       </Card>
+
+      <Link to="/recipes" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+            <ChefHat className="h-5 w-5" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Рецепты</p>
+            <p className="text-xs text-muted-foreground">Подбор блюд по цели и особенностям здоровья</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
 
       <Link to="/health-features" className="block">
         <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">

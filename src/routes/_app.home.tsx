@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Mic, GlassWater } from "lucide-react";
+import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Mic, GlassWater, ChefHat } from "lucide-react";
 import { useEntries, useProfile, todayISO, formatDateWeekday } from "@/lib/store";
 import { VoiceDayDialog } from "@/components/VoiceDayDialog";
 
@@ -56,6 +56,18 @@ function HomePage() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">Восстановление</p>
             <p className="text-xs text-muted-foreground">Расслабление, дыхание, медитация</p>
+          </div>
+        </Card>
+      </Link>
+
+      <Link to="/recipes" className="block">
+        <Card className="flex items-center gap-3 border-orange-500/20 bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-yellow-500/10 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-500/15 text-orange-600 dark:text-orange-400">
+            <ChefHat className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">Рецепты</p>
+            <p className="text-xs text-muted-foreground">Поиск по цели, здоровью и ингредиентам</p>
           </div>
         </Card>
       </Link>

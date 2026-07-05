@@ -20,6 +20,7 @@ import { Route as AppVoiceRouteImport } from './routes/_app.voice'
 import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppRecoveryRouteImport } from './routes/_app.recovery'
+import { Route as AppRecipesRouteImport } from './routes/_app.recipes'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
@@ -31,6 +32,7 @@ import { Route as AppChartsRouteImport } from './routes/_app.charts'
 import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppRecoveryIdRouteImport } from './routes/_app.recovery.$id'
+import { Route as AppRecipesIdRouteImport } from './routes/_app.recipes.$id'
 import { Route as AppHistoryDateRouteImport } from './routes/_app.history.$date'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -85,6 +87,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppRecoveryRoute = AppRecoveryRouteImport.update({
   id: '/recovery',
   path: '/recovery',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecipesRoute = AppRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -142,6 +149,11 @@ const AppRecoveryIdRoute = AppRecoveryIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppRecoveryRoute,
 } as any)
+const AppRecipesIdRoute = AppRecipesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppRecipesRoute,
+} as any)
 const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
   id: '/$date',
   path: '/$date',
@@ -164,12 +176,14 @@ export interface FileRoutesByFullPath {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/recipes': typeof AppRecipesRouteWithChildren
   '/recovery': typeof AppRecoveryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
+  '/recipes/$id': typeof AppRecipesIdRoute
   '/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRoutesByTo {
@@ -188,12 +202,14 @@ export interface FileRoutesByTo {
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
+  '/recipes': typeof AppRecipesRouteWithChildren
   '/recovery': typeof AppRecoveryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
+  '/recipes/$id': typeof AppRecipesIdRoute
   '/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRoutesById {
@@ -214,12 +230,14 @@ export interface FileRoutesById {
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
+  '/_app/recipes': typeof AppRecipesRouteWithChildren
   '/_app/recovery': typeof AppRecoveryRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subscription': typeof AppSubscriptionRoute
   '/_app/voice': typeof AppVoiceRoute
   '/legal/$doc': typeof LegalDocRoute
   '/_app/history/$date': typeof AppHistoryDateRoute
+  '/_app/recipes/$id': typeof AppRecipesIdRoute
   '/_app/recovery/$id': typeof AppRecoveryIdRoute
 }
 export interface FileRouteTypes {
@@ -240,12 +258,14 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/recipes'
     | '/recovery'
     | '/settings'
     | '/subscription'
     | '/voice'
     | '/legal/$doc'
     | '/history/$date'
+    | '/recipes/$id'
     | '/recovery/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -264,12 +284,14 @@ export interface FileRouteTypes {
     | '/history'
     | '/home'
     | '/profile'
+    | '/recipes'
     | '/recovery'
     | '/settings'
     | '/subscription'
     | '/voice'
     | '/legal/$doc'
     | '/history/$date'
+    | '/recipes/$id'
     | '/recovery/$id'
   id:
     | '__root__'
@@ -289,12 +311,14 @@ export interface FileRouteTypes {
     | '/_app/history'
     | '/_app/home'
     | '/_app/profile'
+    | '/_app/recipes'
     | '/_app/recovery'
     | '/_app/settings'
     | '/_app/subscription'
     | '/_app/voice'
     | '/legal/$doc'
     | '/_app/history/$date'
+    | '/_app/recipes/$id'
     | '/_app/recovery/$id'
   fileRoutesById: FileRoutesById
 }
@@ -387,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecoveryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/recipes': {
+      id: '/_app/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof AppRecipesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/profile': {
       id: '/_app/profile'
       path: '/profile'
@@ -464,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecoveryIdRouteImport
       parentRoute: typeof AppRecoveryRoute
     }
+    '/_app/recipes/$id': {
+      id: '/_app/recipes/$id'
+      path: '/$id'
+      fullPath: '/recipes/$id'
+      preLoaderRoute: typeof AppRecipesIdRouteImport
+      parentRoute: typeof AppRecipesRoute
+    }
     '/_app/history/$date': {
       id: '/_app/history/$date'
       path: '/$date'
@@ -484,6 +522,18 @@ const AppHistoryRouteChildren: AppHistoryRouteChildren = {
 
 const AppHistoryRouteWithChildren = AppHistoryRoute._addFileChildren(
   AppHistoryRouteChildren,
+)
+
+interface AppRecipesRouteChildren {
+  AppRecipesIdRoute: typeof AppRecipesIdRoute
+}
+
+const AppRecipesRouteChildren: AppRecipesRouteChildren = {
+  AppRecipesIdRoute: AppRecipesIdRoute,
+}
+
+const AppRecipesRouteWithChildren = AppRecipesRoute._addFileChildren(
+  AppRecipesRouteChildren,
 )
 
 interface AppRecoveryRouteChildren {
@@ -509,6 +559,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppRecipesRoute: typeof AppRecipesRouteWithChildren
   AppRecoveryRoute: typeof AppRecoveryRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
@@ -526,6 +577,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppProfileRoute: AppProfileRoute,
+  AppRecipesRoute: AppRecipesRouteWithChildren,
   AppRecoveryRoute: AppRecoveryRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
