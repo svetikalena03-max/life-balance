@@ -749,29 +749,46 @@ export function useEntries() {
   const [entries, setEntries] = useState<DayEntry[]>([]);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const uidRef = useRef<string | null | undefined>(undefined);
   uidRef.current = uid;
 
   useEffect(() => {
-    if (uid === undefined) { setReady(false); return; }
-    if (uid === null) { setEntries([]); setReady(true); return; }
+    if (uid === undefined) { setReady(false); setError(null); return; }
+    if (uid === null) { setEntries([]); setReady(true); setError(null); return; }
     setReady(false);
+    setError(null);
     (async () => {
-      const [{ data: daily }, { data: health }] = await Promise.all([
-        supabase.from("daily_entries").select("*").eq("user_id", uid).order("date"),
-        supabase.from("health_entries").select("*").eq("user_id", uid).order("date"),
-      ]);
-      const byDate = new Map<string, DayEntry>();
-      (daily ?? []).forEach((d: any) => {
-        const e = dailyRowToEntry(d) as DayEntry;
-        byDate.set(e.date, { ...(byDate.get(e.date) ?? { date: e.date }), ...e });
-      });
-      (health ?? []).forEach((h: any) => {
-        const e = healthRowToEntry(h) as DayEntry;
-        byDate.set(e.date, { ...(byDate.get(e.date) ?? { date: e.date }), ...e });
-      });
-      setEntries(Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date)));
-      setReady(true);
+      try {
+        const [{ data: daily, error: dailyError }, { data: health, error: healthError }] =
+          await Promise.all([
+            supabase.from("daily_entries").select("*").eq("user_id", uid).order("date"),
+            supabase.from("health_entries").select("*").eq("user_id", uid).order("date"),
+          ]);
+        const loadError = dailyError ?? healthError;
+        if (loadError) {
+          setEntries([]);
+          setError(loadError.message);
+          setReady(true);
+          return;
+        }
+        const byDate = new Map<string, DayEntry>();
+        (daily ?? []).forEach((d: any) => {
+          const e = dailyRowToEntry(d) as DayEntry;
+          byDate.set(e.date, { ...(byDate.get(e.date) ?? { date: e.date }), ...e });
+        });
+        (health ?? []).forEach((h: any) => {
+          const e = healthRowToEntry(h) as DayEntry;
+          byDate.set(e.date, { ...(byDate.get(e.date) ?? { date: e.date }), ...e });
+        });
+        setEntries(Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date)));
+        setError(null);
+        setReady(true);
+      } catch (loadError) {
+        setEntries([]);
+        setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить дневник");
+        setReady(true);
+      }
     })();
   }, [uid]);
 
@@ -825,7 +842,7 @@ export function useEntries() {
     }
   }, []);
 
-  return { entries, saveEntry, ready, saving };
+  return { entries, saveEntry, ready, saving, error };
 }
 
 export function todayISO() {
