@@ -38,7 +38,7 @@ export function VoiceDayContent({
   onActiveChange?: (active: boolean) => void;
 }) {
   const analyzeDayTextFn = useServerFn(analyzeDayText);
-  const { entries, saveEntry } = useEntries();
+  const { entries, saveEntry, ready: entriesReady, error: entriesError } = useEntries();
   const {
     supported,
     unsupportedReason,
@@ -123,6 +123,18 @@ export function VoiceDayContent({
   const runSave = async () => {
     if (!result?.ok) return;
 
+    if (!entriesReady) {
+      toast.error("Дневник ещё загружается. Подождите немного и попробуйте сохранить снова.");
+      return;
+    }
+
+    if (entriesError) {
+      toast.error(
+        "Не удалось загрузить текущий дневник. Сохранение остановлено, чтобы не потерять уже записанные данные.",
+      );
+      return;
+    }
+
     if (!hasStructuredContent(result.structured)) {
       toast.error("AI не извлёк данные для сохранения. Уточните описание дня и попробуйте снова.");
       return;
@@ -145,7 +157,8 @@ export function VoiceDayContent({
     }
   };
 
-  const canSave = result?.ok && hasStructuredContent(result.structured);
+  const diaryReadyForSave = entriesReady && !entriesError;
+  const canSave = result?.ok && hasStructuredContent(result.structured) && diaryReadyForSave;
 
   return (
     <div className={className}>
@@ -242,9 +255,26 @@ export function VoiceDayContent({
             <AlertDescription>{result.analysis.advice}</AlertDescription>
           </Alert>
           <Button type="button" onClick={runSave} disabled={saving || saved || !canSave} size="lg">
-            {saving ? "Сохранение..." : saved ? "Сохранено" : "Сохранить в дневник"}
+            {saving
+              ? "Сохранение..."
+              : saved
+                ? "Сохранено"
+                : !entriesReady
+                  ? "Дневник загружается..."
+                  : "Сохранить в дневник"}
           </Button>
-          {result.ok && !canSave && (
+          {result.ok && entriesError && (
+            <p className="text-sm text-destructive">
+              Не удалось загрузить текущий дневник. Сохранение временно недоступно, чтобы не перезаписать уже
+              сохранённые данные.
+            </p>
+          )}
+          {result.ok && !entriesError && !entriesReady && (
+            <p className="text-sm text-muted-foreground">
+              Дождитесь загрузки дневника перед сохранением результата AI.
+            </p>
+          )}
+          {result.ok && diaryReadyForSave && !canSave && (
             <p className="text-sm text-muted-foreground">
               AI не нашёл структурированных данных для сохранения. Дополните описание дня.
             </p>

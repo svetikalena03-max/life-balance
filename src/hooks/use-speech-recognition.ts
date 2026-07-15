@@ -1,12 +1,46 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+type SpeechRecognitionErrorCode =
+  | "aborted"
+  | "audio-capture"
+  | "bad-grammar"
+  | "language-not-supported"
+  | "network"
+  | "no-speech"
+  | "not-allowed"
+  | "service-not-allowed"
+  | (string & {});
+
+type SpeechRecognitionAlternative = {
+  transcript: string;
+};
+
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  [index: number]: SpeechRecognitionAlternative | undefined;
+};
+
+type SpeechRecognitionResultListLike = {
+  length: number;
+  [index: number]: SpeechRecognitionResultLike | undefined;
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: SpeechRecognitionResultListLike;
+};
+
+type SpeechRecognitionErrorEventLike = {
+  error: SpeechRecognitionErrorCode;
+};
+
 type SpeechRecognitionInstance = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
@@ -98,6 +132,7 @@ export function useSpeechRecognition() {
     const spoken = joinTranscriptParts([finalTranscriptRef.current, interimTranscriptRef.current]);
     if (spoken) onTranscriptRef.current?.(spoken);
     finalTranscriptRef.current = "";
+    interimTranscriptRef.current = "";
   }, []);
 
   const abort = useCallback(() => {
@@ -159,6 +194,7 @@ export function useSpeechRecognition() {
 
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
           const result = event.results[i];
+          if (!result) continue;
           const chunk = result[0]?.transcript ?? "";
           if (result.isFinal) {
             finalTranscriptRef.current = joinTranscriptParts([finalTranscriptRef.current, chunk]);
@@ -182,8 +218,8 @@ export function useSpeechRecognition() {
 
         const message = mapSpeechError(event.error);
         if (message) setSpeechError(message);
+        deliverTranscript();
         onTranscriptRef.current = null;
-        finalTranscriptRef.current = "";
         cleanupRecognition();
       };
 
