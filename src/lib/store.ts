@@ -481,6 +481,73 @@ function hfToRow(hf: HealthFeatures, userId: string) {
 
 export type SaveEntryResult = { ok: true } | { ok: false; error: string };
 
+export type DeleteUserDataResult =
+  | { ok: true; deletedTables: string[] }
+  | { ok: false; deletedTables: string[]; failedTables: string[]; error: string };
+
+const USER_DATA_TABLE_LABELS: Record<string, string> = {
+  daily_entries: "дневник",
+  health_entries: "показатели здоровья",
+  habits: "привычки",
+  health_features: "особенности здоровья",
+  profiles: "профиль",
+};
+
+export async function deleteCurrentUserData(): Promise<DeleteUserDataResult> {
+  const { data, error: userError } = await supabase.auth.getUser();
+  if (userError || !data.user) {
+    return {
+      ok: false,
+      deletedTables: [],
+      failedTables: [],
+      error: userError?.message ?? "Не удалось определить текущего пользователя",
+    };
+  }
+
+  const userId = data.user.id;
+  const deletedTables: string[] = [];
+  const failedTables: string[] = [];
+  const errors: string[] = [];
+  const deleteFrom = async (table: "daily_entries" | "health_entries" | "habits" | "health_features") => {
+    const { error } = await supabase.from(table).delete().eq("user_id", userId);
+    if (error) {
+      failedTables.push(table);
+      errors.push(`${USER_DATA_TABLE_LABELS[table]}: ${error.message}`);
+    } else {
+      deletedTables.push(table);
+    }
+  };
+
+  // Delete the profile last so a partial failure does not leave the account without its main record.
+  for (const table of ["daily_entries", "health_entries", "habits", "health_features"] as const) {
+    await deleteFrom(table);
+  }
+
+  if (failedTables.length === 0) {
+    const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
+    if (error) {
+      failedTables.push("profiles");
+      errors.push(`${USER_DATA_TABLE_LABELS.profiles}: ${error.message}`);
+    } else {
+      deletedTables.push("profiles");
+    }
+  }
+
+  if (failedTables.length > 0) {
+    return {
+      ok: false,
+      deletedTables,
+      failedTables,
+      error: `Не удалось удалить все данные. ${errors.join("; ")}`,
+    };
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("hg-user-data-deleted"));
+  }
+  return { ok: true, deletedTables };
+}
+
 function newMealId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now() + Math.random());
 }
@@ -585,7 +652,7 @@ export function hasStructuredContent(structured: Partial<Omit<DayEntry, "date">>
 // ============ hooks ============
 
 function useUserId() {
-  const [uid, setUid] = useState<string | null>(null);
+  const [uid, setUid] = useState<string | null | undefined>(undefined);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUid(data.session?.user.id ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -600,36 +667,81 @@ export function useProfile() {
   const uid = useUserId();
   const [profile, setProfileState] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (userId: string) => {
-    const [{ data: p }, { data: h }, { data: hf }] = await Promise.all([
+    setReady(false);
+    setError(null);
+    const [profileResult, habitsResult, healthFeaturesResult] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("habits").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("health_features").select("*").eq("user_id", userId).maybeSingle(),
     ]);
-    setProfileState(p ? rowToProfile(p, h, hf) : null);
+    const firstError = profileResult.error ?? habitsResult.error ?? healthFeaturesResult.error;
+    if (firstError) {
+      setProfileState(null);
+      setError(firstError.message);
+      setReady(true);
+      return;
+    }
+    setProfileState(
+      profileResult.data
+        ? rowToProfile(profileResult.data, habitsResult.data, healthFeaturesResult.data)
+        : null,
+    );
     setReady(true);
   }, []);
 
   useEffect(() => {
-    if (!uid) { setProfileState(null); setReady(true); return; }
-    setReady(false);
+    if (uid === undefined) { setReady(false); return; }
+    if (uid === null) { setProfileState(null); setReady(true); return; }
     reload(uid);
   }, [uid, reload]);
 
-  const setProfile = useCallback(async (p: Profile) => {
-    if (!uid) return;
-    setProfileState(p);
-    await supabase.from("profiles").upsert(profileToRow(p, uid), { onConflict: "user_id" });
-    if (p.habits) {
-      await supabase.from("habits").upsert(habitsToRow(p.habits, uid), { onConflict: "user_id" });
-    }
-    if (p.healthFeatures) {
-      await supabase.from("health_features").upsert(hfToRow(p.healthFeatures, uid), { onConflict: "user_id" });
-    }
+  useEffect(() => {
+    if (!uid || typeof window === "undefined") return;
+    const handleDeleted = () => {
+      setProfileState(null);
+      setError(null);
+      setReady(true);
+    };
+    window.addEventListener("hg-user-data-deleted", handleDeleted);
+    return () => window.removeEventListener("hg-user-data-deleted", handleDeleted);
   }, [uid]);
 
-  return { profile, setProfile, ready };
+  const setProfile = useCallback(async (p: Profile): Promise<SaveEntryResult> => {
+    if (!uid) return { ok: false, error: "Войдите в аккаунт, чтобы сохранить профиль" };
+    const previous = profile;
+    setProfileState(p);
+    setError(null);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(profileToRow(p, uid), { onConflict: "user_id" });
+    if (profileError) {
+      setProfileState(previous);
+      setError(profileError.message);
+      return { ok: false, error: profileError.message };
+    }
+    if (p.habits) {
+      const { error: habitsError } = await supabase
+        .from("habits")
+        .upsert(habitsToRow(p.habits, uid), { onConflict: "user_id" });
+      if (habitsError) return { ok: false, error: habitsError.message };
+    }
+    if (p.healthFeatures) {
+      const { error: healthFeaturesError } = await supabase
+        .from("health_features")
+        .upsert(hfToRow(p.healthFeatures, uid), { onConflict: "user_id" });
+      if (healthFeaturesError) return { ok: false, error: healthFeaturesError.message };
+    }
+    return { ok: true };
+  }, [uid, profile]);
+
+  const retry = useCallback(() => {
+    if (uid) void reload(uid);
+  }, [uid, reload]);
+
+  return { profile, setProfile, ready, error, retry };
 }
 
 export function useEntries() {
@@ -637,11 +749,12 @@ export function useEntries() {
   const [entries, setEntries] = useState<DayEntry[]>([]);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
-  const uidRef = useRef<string | null>(null);
+  const uidRef = useRef<string | null | undefined>(undefined);
   uidRef.current = uid;
 
   useEffect(() => {
-    if (!uid) { setEntries([]); setReady(true); return; }
+    if (uid === undefined) { setReady(false); return; }
+    if (uid === null) { setEntries([]); setReady(true); return; }
     setReady(false);
     (async () => {
       const [{ data: daily }, { data: health }] = await Promise.all([

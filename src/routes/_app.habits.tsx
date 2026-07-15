@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ const STRESS: OptList = [["low", "Низкий"], ["medium", "Средний"], 
 const SCREEN: OptList = [["lt4", "до 4 часов"], ["4to8", "4–8 часов"], ["gt8", "более 8 часов"]];
 
 function HabitsPage() {
-  const { profile, setProfile } = useProfile();
+  const { profile, setProfile, ready, error, retry } = useProfile();
   const navigate = useNavigate();
   const [h, setH] = useState<Habits>({});
 
@@ -36,15 +36,55 @@ function HabitsPage() {
     if (profile?.habits) setH(profile.habits);
   }, [profile?.name]);
 
-  if (!profile) return null;
+  if (!ready) {
+    return (
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Мои привычки" subtitle="Загружаем ваши данные" backTo="/profile" />
+        <Card className="p-6 text-center text-sm text-muted-foreground">Загрузка профиля…</Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Мои привычки" subtitle="Не удалось загрузить данные" backTo="/profile" />
+        <Card className="flex flex-col gap-4 p-6 text-center">
+          <p className="text-sm text-destructive">Ошибка загрузки профиля: {error}</p>
+          <Button type="button" variant="outline" onClick={retry}>Повторить</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex flex-col gap-4">
+        <PageHeader title="Мои привычки" subtitle="Сначала заполните профиль" backTo="/profile" />
+        <Card className="flex flex-col gap-4 p-6 text-center">
+          <div>
+            <p className="font-semibold">Профиль ещё не создан</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Создайте и заполните профиль, после этого можно будет сохранить привычки.
+            </p>
+          </div>
+          <Button asChild><Link to="/profile">Перейти к профилю</Link></Button>
+        </Card>
+      </div>
+    );
+  }
 
   const upd = <K extends keyof Habits>(k: K, v: Habits[K]) => setH((p) => ({ ...p, [k]: v }));
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setProfile({ ...profile, habits: h });
-    toast.success("Привычки сохранены");
-    navigate({ to: "/profile" });
+    const result = await setProfile({ ...profile, habits: h });
+    if (result.ok) {
+      toast.success("Привычки сохранены");
+      navigate({ to: "/profile" });
+    } else {
+      toast.error(`Не удалось сохранить привычки: ${result.error}`);
+    }
   };
 
   return (
