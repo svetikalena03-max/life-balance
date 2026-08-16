@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
+import { DayAiAnalysisCard } from "@/components/DayAiAnalysisCard";
 import { useEntries, formatDateRu, MEAL_LABELS, SUGAR_LABELS } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/history/$date")({
@@ -30,6 +31,8 @@ function HistoryDetail() {
         <Card className="p-6 text-center text-muted-foreground">Запись не найдена</Card>
       ) : (
         <div className="flex flex-col gap-3">
+          <DayAiAnalysisCard date={date} />
+
           <div className="grid grid-cols-2 gap-3">
             {entry.weight != null && <Metric label="Вес" value={`${entry.weight.toFixed(1)} кг`} />}
             {entry.water != null && <Metric label="Вода" value={`${(entry.water / 1000).toFixed(1)} л`} />}

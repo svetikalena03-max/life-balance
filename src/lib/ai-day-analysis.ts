@@ -139,7 +139,13 @@ export const dayEntryExtractSchema = z
   })
   .strip()
   .transform((entry) => {
-    const meals = entry.meals?.filter((m): m is NonNullable<typeof m> => m !== null);
+    const meals = entry.meals
+      ?.filter((m): m is NonNullable<typeof m> => m !== null)
+      .map((meal) => ({
+        ...meal,
+        id: crypto.randomUUID(),
+        type: meal.type ?? "extra",
+      }));
     const cleaned: DayEntryExtract = {};
 
     if (meals && meals.length > 0) cleaned.meals = meals;
