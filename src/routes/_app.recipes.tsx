@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_app/recipes")({
 });
 
 function RecipesPage() {
+  const detailMatch = useMatch({ from: "/_app/recipes/$id", shouldThrow: false });
   const { profile } = useProfile();
   const suggestRecipesFn = useServerFn(suggestRecipes);
   const [filters, setFilters] = useState<RecipeFilters>(() => ({
@@ -63,6 +64,8 @@ function RecipesPage() {
     }
   };
 
+  if (detailMatch) return <Outlet />;
+
   return (
     <div className="flex flex-col gap-4 animate-fade-in">
       <PageHeader
@@ -87,13 +90,7 @@ function RecipesPage() {
         </div>
       </Card>
 
-      <Button
-        type="button"
-        size="lg"
-        onClick={runAiSuggest}
-        disabled={aiLoading}
-        className="gap-2"
-      >
+      <Button type="button" size="lg" onClick={runAiSuggest} disabled={aiLoading} className="gap-2">
         <Sparkles className="h-4 w-4" />
         {aiLoading ? "Подбираю рецепты..." : "Подобрать рецепты"}
       </Button>
@@ -123,7 +120,8 @@ function RecipesPage() {
 
           {aiSuggestions.matched.length === 0 ? (
             <Card className="p-6 text-center text-sm text-muted-foreground">
-              AI не смог сопоставить рецепты с каталогом. Попробуйте ещё раз или используйте фильтры ниже.
+              AI не смог сопоставить рецепты с каталогом. Попробуйте ещё раз или используйте фильтры
+              ниже.
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

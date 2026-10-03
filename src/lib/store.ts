@@ -629,7 +629,7 @@ export function mergeStructuredIntoDayEntry(
     const value = structured[key];
     if (value === undefined || value === null) continue;
     if (merged[key] === undefined || merged[key] === null) {
-      (merged as Record<string, unknown>)[key] = value;
+      (merged as unknown as Record<string, unknown>)[key] = value;
     }
   }
 

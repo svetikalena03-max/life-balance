@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { ChevronRight, Droplet, Moon, Smile, Heart } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -9,8 +9,11 @@ export const Route = createFileRoute("/_app/history")({
 });
 
 function HistoryPage() {
+  const detailMatch = useMatch({ from: "/_app/history/$date", shouldThrow: false });
   const { entries } = useEntries();
   const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+
+  if (detailMatch) return <Outlet />;
 
   return (
     <div className="flex flex-col gap-4">
