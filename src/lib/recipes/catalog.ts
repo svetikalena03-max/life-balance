@@ -32,8 +32,9 @@ export function filterRecipes(filters: RecipeFilters, source: Recipe[] = RECIPES
     }
 
     if (ingredientQ) {
-      const match = recipe.searchIngredients.some((i) => i.includes(ingredientQ))
-        || recipe.ingredients.some((i) => normalize(i.name).includes(ingredientQ));
+      const match =
+        recipe.searchIngredients.some((i) => i.includes(ingredientQ)) ||
+        recipe.ingredients.some((i) => normalize(i.name).includes(ingredientQ));
       if (!match) return false;
     }
 
@@ -51,7 +52,7 @@ export const recipeCatalog: RecipeCatalogService = {
   filter: (filters) => filterRecipes(filters),
 };
 
-/** Локальный подбор по фильтрам каталога (без OpenAI). */
+/** Локальный подбор по фильтрам каталога (без YandexGPT). */
 export function suggestRecipesByFilters(filters: RecipeFilters): Recipe[] {
   return filterRecipes(filters);
 }

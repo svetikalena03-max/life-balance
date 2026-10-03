@@ -27,8 +27,8 @@ export type DaySummaryAnalysis = z.infer<typeof daySummaryAnalysisSchema>;
 export type AnalyzeDaySummaryResult =
   { ok: true; analysis: DaySummaryAnalysis } | { ok: false; error: string };
 
-const OPENAI_NOT_CONFIGURED_ERROR =
-  "OpenAI API не настроен. Добавьте OPENAI_API_KEY в серверное окружение.";
+const YANDEXGPT_NOT_CONFIGURED_ERROR =
+  "YandexGPT API не настроен. Добавьте серверные переменные Yandex Cloud.";
 
 function withoutEmptyValues(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -271,12 +271,11 @@ export const analyzeDaySummary = createServerFn({ method: "POST" })
       return { ok: false, error: "Для выбранной даты нет сохранённых данных" };
     }
 
-    const { isOpenAIConfigured, openai, getOpenAIModel } =
-      await import("@/integrations/openai/client.server");
-    const { zodResponseFormat } = await import("openai/helpers/zod");
+    const { isYandexGPTConfigured, generateYandexGPTCompletion } =
+      await import("@/integrations/yandexgpt/client.server");
 
-    if (!isOpenAIConfigured()) {
-      return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+    if (!isYandexGPTConfigured()) {
+      return { ok: false, error: YANDEXGPT_NOT_CONFIGURED_ERROR };
     }
 
     const analysisContext = buildAnalysisContext({
@@ -289,32 +288,32 @@ export const analyzeDaySummary = createServerFn({ method: "POST" })
     });
 
     try {
-      const completion = await openai.chat.completions.parse({
-        model: getOpenAIModel(),
+      const content = await generateYandexGPTCompletion({
         temperature: 0.3,
-        response_format: zodResponseFormat(daySummaryAnalysisSchema, "day_summary_analysis"),
         messages: [
-          { role: "system", content: buildSystemPrompt() },
+          { role: "system", text: buildSystemPrompt() },
           {
             role: "user",
-            content: [
+            text: [
               `Сформируй анализ сохранённого дня ${data.date}.`,
-              "Верни только данные, соответствующие заданной схеме.",
+              "Верни только JSON-объект, соответствующий заданной структуре: summary, positives, attention, tomorrow и score с полями value, label, explanation.",
               `Данные пользователя (JSON): ${JSON.stringify(analysisContext)}`,
             ].join("\n\n"),
           },
         ],
       });
 
-      const message = completion.choices[0]?.message;
-      if (message?.refusal) {
-        return { ok: false, error: "OpenAI отказался сформировать анализ для этих данных" };
+      let raw: unknown;
+      try {
+        raw = JSON.parse(content);
+      } catch {
+        return { ok: false, error: "YandexGPT вернул невалидный JSON" };
       }
 
-      const validated = daySummaryAnalysisSchema.safeParse(message?.parsed);
+      const validated = daySummaryAnalysisSchema.safeParse(raw);
       if (!validated.success) {
         console.error("[AI] analyzeDaySummary response validation failed:", validated.error);
-        return { ok: false, error: "OpenAI вернул ответ в неожиданном формате" };
+        return { ok: false, error: "YandexGPT вернул ответ в неожиданном формате" };
       }
 
       return { ok: true, analysis: validated.data };
