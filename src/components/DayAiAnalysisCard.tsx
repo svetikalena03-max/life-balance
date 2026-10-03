@@ -1,5 +1,5 @@
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Sparkles, Target, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -7,28 +7,42 @@ import { Card } from "@/components/ui/card";
 import { analyzeDaySummary, type AnalyzeDaySummaryResult } from "@/lib/day-summary.functions";
 
 export function DayAiAnalysisCard({ date }: { date: string }) {
+  return <DayAiAnalysisCardForDate key={date} date={date} />;
+}
+
+function DayAiAnalysisCardForDate({ date }: { date: string }) {
   const analyzeDaySummaryFn = useServerFn(analyzeDaySummary);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeDaySummaryResult | null>(null);
+  const activeRequestRef = useRef(0);
 
   useEffect(() => {
-    setResult(null);
-    setLoading(false);
-  }, [date]);
+    return () => {
+      activeRequestRef.current += 1;
+    };
+  }, []);
 
   const runAnalysis = async () => {
+    const requestId = activeRequestRef.current + 1;
+    activeRequestRef.current = requestId;
     setLoading(true);
     setResult(null);
+
     try {
-      setResult(await analyzeDaySummaryFn({ data: { date } }));
+      const nextResult = await analyzeDaySummaryFn({ data: { date } });
+      if (activeRequestRef.current !== requestId) return;
+      setResult(nextResult);
     } catch (error) {
+      if (activeRequestRef.current !== requestId) return;
       console.error("AI day summary request failed:", error);
       setResult({
         ok: false,
         error: "Не удалось запустить AI-анализ. Проверьте подключение и попробуйте ещё раз.",
       });
     } finally {
-      setLoading(false);
+      if (activeRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings } from "@/lib/settings";
@@ -9,8 +9,11 @@ export const Route = createFileRoute("/_app/recovery")({
 });
 
 function RecoveryPage() {
+  const detailMatch = useMatch({ from: "/_app/recovery/$id", shouldThrow: false });
   const { lang } = useSettings();
   const ru = lang === "ru";
+
+  if (detailMatch) return <Outlet />;
 
   return (
     <div className="flex flex-col gap-5 animate-fade-in">
@@ -50,12 +53,7 @@ function RecoveryPage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {RECOVERY_ITEMS.map((item) => (
-            <Link
-              key={item.id}
-              to="/recovery/$id"
-              params={{ id: item.id }}
-              className="group"
-            >
+            <Link key={item.id} to="/recovery/$id" params={{ id: item.id }} className="group">
               <Card className="h-full p-4 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30 bg-gradient-to-br from-card to-card/60">
                 <div className="flex items-start gap-3">
                   <div className="text-3xl">{item.icon}</div>

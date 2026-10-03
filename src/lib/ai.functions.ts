@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   buildAnalyzeDayTextPromptExample,
   parseAnalyzeDayTextResponse,
@@ -79,9 +80,8 @@ function parseAnalyzeMealResponse(content: string): AnalyzeMealSuccess {
 }
 
 async function runAnalyzeMeal(input: AnalyzeMealInput): Promise<AnalyzeMealResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } = await import(
-    "@/integrations/openai/client.server"
-  );
+  const { isOpenAIConfigured, openai, getOpenAIModel } =
+    await import("@/integrations/openai/client.server");
 
   if (!isOpenAIConfigured()) {
     return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
@@ -118,6 +118,7 @@ async function runAnalyzeMeal(input: AnalyzeMealInput): Promise<AnalyzeMealResul
 }
 
 export const analyzeMeal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => analyzeMealInputSchema.parse(data))
   .handler(async ({ data }): Promise<AnalyzeMealResult> => runAnalyzeMeal(data));
 
@@ -178,9 +179,8 @@ function parseAnalyzeDayTextSuccess(content: string): AnalyzeDayTextSuccess {
 }
 
 async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDayTextResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } = await import(
-    "@/integrations/openai/client.server"
-  );
+  const { isOpenAIConfigured, openai, getOpenAIModel } =
+    await import("@/integrations/openai/client.server");
 
   if (!isOpenAIConfigured()) {
     return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
@@ -217,6 +217,7 @@ async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDay
 }
 
 export const analyzeDayText = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => analyzeDayTextInputSchema.parse(data))
   .handler(async ({ data }): Promise<AnalyzeDayTextResult> => runAnalyzeDayText(data));
 
@@ -251,7 +252,9 @@ function buildSuggestRecipesPrompt(input: SuggestRecipesInput, catalogJson: stri
     "Пиши на русском языке.",
     "",
     `Цель: ${input.goal}`,
-    input.conditions ? `Заболевания и особенности здоровья: ${input.conditions}` : "Заболевания: не указаны",
+    input.conditions
+      ? `Заболевания и особенности здоровья: ${input.conditions}`
+      : "Заболевания: не указаны",
     input.restrictions ? `Ограничения: ${input.restrictions}` : "Ограничения: не указаны",
     input.age ? `Возраст: ${input.age} лет` : "",
     "",
@@ -299,9 +302,8 @@ function parseSuggestRecipesResponse(content: string): SuggestRecipesSuccess {
 }
 
 async function runSuggestRecipes(input: SuggestRecipesInput): Promise<SuggestRecipesResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } = await import(
-    "@/integrations/openai/client.server"
-  );
+  const { isOpenAIConfigured, openai, getOpenAIModel } =
+    await import("@/integrations/openai/client.server");
   const { buildRecipeCatalogForAI } = await import("@/lib/recipes/ai-catalog");
 
   if (!isOpenAIConfigured()) {
@@ -340,5 +342,6 @@ async function runSuggestRecipes(input: SuggestRecipesInput): Promise<SuggestRec
 }
 
 export const suggestRecipes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => suggestRecipesInputSchema.parse(data))
   .handler(async ({ data }): Promise<SuggestRecipesResult> => runSuggestRecipes(data));
