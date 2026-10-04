@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const YANDEX_AI_COMPLETION_URL = "https://ai.api.cloud.yandex.net/foundationModels/v1/completion";
 const DEFAULT_YANDEX_AI_MODEL = "yandexgpt/latest";
+const YANDEX_AI_REQUEST_TIMEOUT_MS = 60_000;
 
 type YandexGPTMessage = {
   role: "system" | "user" | "assistant";
@@ -66,24 +67,39 @@ export async function generateYandexGPTCompletion({
   maxTokens = 2_000,
 }: YandexGPTCompletionOptions): Promise<string> {
   const { apiKey, folderId, model } = readYandexGPTConfig();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), YANDEX_AI_REQUEST_TIMEOUT_MS);
 
-  const response = await fetch(YANDEX_AI_COMPLETION_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Api-Key ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      modelUri: buildModelUri(folderId, model),
-      completionOptions: {
-        stream: false,
-        temperature,
-        maxTokens: String(maxTokens),
+  let response: Response;
+  try {
+    response = await fetch(YANDEX_AI_COMPLETION_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Api-Key ${apiKey}`,
+        "Content-Type": "application/json",
+        "x-data-logging-enabled": "false",
       },
-      messages,
-      jsonObject: true,
-    }),
-  });
+      body: JSON.stringify({
+        modelUri: buildModelUri(folderId, model),
+        completionOptions: {
+          stream: false,
+          temperature,
+          maxTokens: String(maxTokens),
+        },
+        messages,
+        jsonObject: true,
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error("YandexGPT не ответил за 60 секунд. Попробуйте повторить запрос позже.");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     throw new Error(`YandexGPT request failed with status ${response.status}`);
