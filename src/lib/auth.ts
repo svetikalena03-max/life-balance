@@ -14,10 +14,13 @@ export interface AuthResult {
   serverError?: string;
   code?: string;
   user?: AuthUser | null;
+  requiresEmailConfirmation?: boolean;
 }
 
-const EXISTING_USER_MESSAGE = "Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.";
-const LOGIN_FAILED_MESSAGE = "Не удалось войти. Проверьте email и пароль. Если вы уже регистрировались несколько раз, попробуйте восстановить пароль или создать новый тестовый аккаунт.";
+const EXISTING_USER_MESSAGE =
+  "Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.";
+const LOGIN_FAILED_MESSAGE =
+  "Не удалось войти. Проверьте email и пароль. Если вы уже регистрировались несколько раз, попробуйте восстановить пароль или создать новый тестовый аккаунт.";
 
 export function normalizeAuthEmail(email: string) {
   return email.trim().toLowerCase();
@@ -25,7 +28,9 @@ export function normalizeAuthEmail(email: string) {
 
 function isExistingUserError(message?: string, code?: string) {
   const text = `${message ?? ""} ${code ?? ""}`.toLowerCase();
-  return text.includes("already") || text.includes("registered") || text.includes("user_already_exists");
+  return (
+    text.includes("already") || text.includes("registered") || text.includes("user_already_exists")
+  );
 }
 
 function isInvalidCredentialsError(message?: string, code?: string) {
@@ -33,7 +38,9 @@ function isInvalidCredentialsError(message?: string, code?: string) {
   return text.includes("invalid login credentials") || text.includes("invalid_credentials");
 }
 
-function toAuthUser(u: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null): AuthUser | null {
+function toAuthUser(
+  u: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null,
+): AuthUser | null {
   if (!u) return null;
   const meta = u.user_metadata ?? {};
   const name = (meta.name as string | undefined) ?? (meta.full_name as string | undefined);
@@ -76,75 +83,74 @@ export function useAuth() {
           name: error.name,
         });
         if (isExistingUserError(error.message, error.code)) {
-          return { ok: false, error: EXISTING_USER_MESSAGE, serverError: error.message, code: error.code };
+          return {
+            ok: false,
+            error: EXISTING_USER_MESSAGE,
+            serverError: error.message,
+            code: error.code,
+          };
         }
         return { ok: false, error: error.message, code: error.code };
       }
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-        console.warn("Supabase Auth signUp existing user response", { email: e, userId: data.user.id });
-        return { ok: false, error: EXISTING_USER_MESSAGE, serverError: "User already registered", code: "user_already_exists" };
+        console.warn("Supabase Auth signUp existing user response", {
+          email: e,
+          userId: data.user.id,
+        });
+        return {
+          ok: false,
+          error: EXISTING_USER_MESSAGE,
+          serverError: "User already registered",
+          code: "user_already_exists",
+        };
       }
-      let session = data.session;
-      let signedUser = data.user;
-      if (!session) {
-        const retry = await supabase.auth.signInWithPassword({ email: e, password: p });
-        if (retry.error) {
-          console.error("Supabase Auth signInWithPassword after signUp error", {
-            email: e,
-            message: retry.error.message,
-            code: retry.error.code,
-            status: retry.error.status,
-            name: retry.error.name,
-          });
-          if (isInvalidCredentialsError(retry.error.message, retry.error.code)) {
-            return { ok: false, error: LOGIN_FAILED_MESSAGE, serverError: retry.error.message, code: retry.error.code };
-          }
-          return { ok: false, error: retry.error.message, code: retry.error.code };
-        }
-        session = retry.data.session;
-        signedUser = retry.data.user;
+      if (!data.user) {
+        return {
+          ok: false,
+          error: "Сервер не вернул пользователя. Попробуйте зарегистрироваться ещё раз.",
+        };
       }
-      console.info("Supabase Auth signUp success", {
-        userId: signedUser?.id,
-        email: signedUser?.email,
-        hasSession: Boolean(session),
-        emailConfirmedAt: signedUser?.email_confirmed_at,
-      });
-      return { ok: true, user: toAuthUser(signedUser) };
+      return {
+        ok: true,
+        user: toAuthUser(data.user),
+        requiresEmailConfirmation: !data.session,
+      };
     },
     [],
   );
 
-  const signIn = useCallback(
-    async (email: string, password: string): Promise<AuthResult> => {
-      const e = normalizeAuthEmail(email);
-      const p = password;
-      const { data, error } = await supabase.auth.signInWithPassword({
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    const e = normalizeAuthEmail(email);
+    const p = password;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: e,
+      password: p,
+    });
+    if (error) {
+      console.error("Supabase Auth signInWithPassword error", {
         email: e,
-        password: p,
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        name: error.name,
       });
-      if (error) {
-        console.error("Supabase Auth signInWithPassword error", {
-          email: e,
-          message: error.message,
+      if (isInvalidCredentialsError(error.message, error.code)) {
+        return {
+          ok: false,
+          error: LOGIN_FAILED_MESSAGE,
+          serverError: error.message,
           code: error.code,
-          status: error.status,
-          name: error.name,
-        });
-        if (isInvalidCredentialsError(error.message, error.code)) {
-          return { ok: false, error: LOGIN_FAILED_MESSAGE, serverError: error.message, code: error.code };
-        }
-        return { ok: false, error: error.message, code: error.code };
+        };
       }
-      console.info("Supabase Auth signInWithPassword success", {
-        userId: data.user?.id,
-        email: data.user?.email,
-        hasSession: Boolean(data.session),
-      });
-      return { ok: true, user: toAuthUser(data.user) };
-    },
-    [],
-  );
+      return { ok: false, error: error.message, code: error.code };
+    }
+    console.info("Supabase Auth signInWithPassword success", {
+      userId: data.user?.id,
+      email: data.user?.email,
+      hasSession: Boolean(data.session),
+    });
+    return { ok: true, user: toAuthUser(data.user) };
+  }, []);
 
   const resetPassword = useCallback(
     async (email: string): Promise<{ ok: boolean; error?: string }> => {
