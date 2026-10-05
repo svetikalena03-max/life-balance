@@ -15,12 +15,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import {
   DEFAULT_PROFILE,
-  deleteCurrentUserData,
   useProfile,
   type Gender,
   type Goal,
@@ -28,8 +33,16 @@ import {
   summarizeHealthFeatures,
 } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-import { LogOut, ChevronRight, Heart, HeartPulse, Settings as SettingsIcon, ChefHat } from "lucide-react";
-
+import { deleteCurrentAccount } from "@/lib/account.functions";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  LogOut,
+  ChevronRight,
+  Heart,
+  HeartPulse,
+  Settings as SettingsIcon,
+  ChefHat,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/profile")({
   component: ProfilePage,
@@ -76,7 +89,9 @@ function ProfilePage() {
         <PageHeader title="Профиль" subtitle="Не удалось загрузить данные" />
         <Card className="flex flex-col gap-4 p-6 text-center">
           <p className="text-sm text-destructive">Ошибка загрузки профиля: {error}</p>
-          <Button type="button" variant="outline" onClick={retry}>Повторить</Button>
+          <Button type="button" variant="outline" onClick={retry}>
+            Повторить
+          </Button>
         </Card>
       </div>
     );
@@ -111,7 +126,10 @@ function ProfilePage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const age = birthDate
-      ? Math.max(1, Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 3600 * 1000)))
+      ? Math.max(
+          1,
+          Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 3600 * 1000)),
+        )
       : profile.age;
     const result = await setProfile({
       ...profile,
@@ -135,18 +153,43 @@ function ProfilePage() {
   };
 
   const wipe = async () => {
+    if (deleting) return;
     setDeleting(true);
-    const result = await deleteCurrentUserData();
-    setDeleting(false);
-    if (!result.ok) {
-      toast.error(result.error, { duration: 8000 });
-      return;
+    try {
+      const result = await deleteCurrentAccount({ data: { confirmed: true } });
+      if (!result.ok) {
+        toast.error(result.error, { duration: 8000 });
+        return;
+      }
+      // Auth has already deleted the user. Logout may fail because the token
+      // is no longer valid or the network is unavailable; still clear storage.
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } finally {
+        const projectRef = new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split(".")[0];
+        const storageKey = `sb-${projectRef}-auth-token`;
+        for (const key of [
+          storageKey,
+          `${storageKey}-code-verifier`,
+          `${storageKey}-user`,
+          "hg_profile",
+          "hg_entries",
+          "hg_entries_v2",
+          "hg_meal_templates_v1",
+          "hg_theme",
+          "hg_lang",
+        ]) {
+          localStorage.removeItem(key);
+        }
+        // Reload to discard in-memory sessions and caches and avoid layout
+        // redirects racing with navigation after the SIGNED_OUT event.
+        window.location.replace("/login");
+      }
+    } catch {
+      toast.error("Не удалось выполнить запрос. Проверьте соединение и попробуйте снова.");
+    } finally {
+      setDeleting(false);
     }
-    localStorage.removeItem("hg_profile");
-    localStorage.removeItem("hg_entries");
-    localStorage.removeItem("hg_entries_v2");
-    window.dispatchEvent(new CustomEvent("hg-storage"));
-    toast.success("Все данные приложения удалены. Учётная запись сохранена.");
   };
 
   return (
@@ -163,12 +206,19 @@ function ProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="bd">Дата рождения</Label>
-              <Input id="bd" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+              <Input
+                id="bd"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+              />
             </div>
             <div className="flex min-w-0 flex-col gap-2">
               <Label>Пол</Label>
               <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="female">Женский</SelectItem>
                   <SelectItem value="male">Мужской</SelectItem>
@@ -178,31 +228,54 @@ function ProfilePage() {
             </div>
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="h">Рост, см</Label>
-              <Input id="h" type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
+              <Input
+                id="h"
+                type="number"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+              />
             </div>
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="cw">Текущий вес</Label>
-              <Input id="cw" type="number" step="0.1" value={cw} onChange={(e) => setCw(e.target.value)} />
+              <Input
+                id="cw"
+                type="number"
+                step="0.1"
+                value={cw}
+                onChange={(e) => setCw(e.target.value)}
+              />
             </div>
             <div className="col-span-2 flex min-w-0 flex-col gap-2">
               <Label htmlFor="tw">Целевой вес</Label>
-              <Input id="tw" type="number" step="0.1" value={tw} onChange={(e) => setTw(e.target.value)} />
+              <Input
+                id="tw"
+                type="number"
+                step="0.1"
+                value={tw}
+                onChange={(e) => setTw(e.target.value)}
+              />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <Label>Цель</Label>
             <Select value={goal} onValueChange={(v) => setGoal(v as Goal)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {(Object.keys(GOAL_LABELS) as Goal[]).map((g) => (
-                  <SelectItem key={g} value={g}>{GOAL_LABELS[g]}</SelectItem>
+                  <SelectItem key={g} value={g}>
+                    {GOAL_LABELS[g]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <Button type="submit" size="lg" className="h-12 font-semibold">Сохранить</Button>
+          <Button type="submit" size="lg" className="h-12 font-semibold">
+            Сохранить
+          </Button>
         </form>
       </Card>
 
@@ -213,7 +286,9 @@ function ProfilePage() {
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Рецепты</p>
-            <p className="text-xs text-muted-foreground">Подбор блюд по цели и особенностям здоровья</p>
+            <p className="text-xs text-muted-foreground">
+              Подбор блюд по цели и особенностям здоровья
+            </p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </Card>
@@ -241,7 +316,9 @@ function ProfilePage() {
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Мои привычки</p>
-            <p className="text-xs text-muted-foreground">Курение, алкоголь, кофе, стресс, экранное время</p>
+            <p className="text-xs text-muted-foreground">
+              Курение, алкоголь, кофе, стресс, экранное время
+            </p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </Card>
@@ -271,24 +348,26 @@ function ProfilePage() {
               disabled={deleting}
               className="text-center text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
             >
-              {deleting ? "Удаляем данные…" : "Удалить все данные"}
+              {deleting ? "Удаляем аккаунт…" : "Удалить аккаунт и все данные"}
             </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Удалить все данные приложения?</AlertDialogTitle>
+              <AlertDialogTitle>Удалить аккаунт безвозвратно?</AlertDialogTitle>
               <AlertDialogDescription>
-                Будут безвозвратно удалены профиль, дневник, показатели здоровья, привычки и особенности здоровья.
-                Учётная запись, вход и сохранённые юридические согласия останутся.
+                Будут безвозвратно удалены ваша учётная запись, профиль, дневник, показатели
+                здоровья, привычки, особенности здоровья и юридические согласия. Восстановить
+                аккаунт и данные нельзя. После удаления вы выйдете из системы.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Отмена</AlertDialogCancel>
               <AlertDialogAction
+                disabled={deleting}
                 onClick={() => void wipe()}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Да, удалить данные
+                Да, удалить мой аккаунт навсегда
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -297,4 +376,3 @@ function ProfilePage() {
     </div>
   );
 }
-
