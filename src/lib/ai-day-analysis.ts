@@ -196,7 +196,7 @@ export const dayTextDisplaySchema = z.object({
   advice: dayTextDisplayFieldSchema,
 });
 
-/** Сырой JSON от OpenAI до нормализации. */
+/** Сырой JSON от YandexGPT до нормализации. */
 export const rawAnalyzeDayTextResponseSchema = z
   .object({
     nutrition: z.unknown().optional(),
@@ -221,7 +221,7 @@ function emptyStructured(): DayEntryExtract {
 }
 
 /**
- * Безопасный парсинг ответа OpenAI: текстовые поля для UI + structured для DayEntry.
+ * Безопасный парсинг ответа YandexGPT: текстовые поля для UI + structured для DayEntry.
  * При ошибке structured возвращает пустой объект, UI-поля всё равно заполняются.
  */
 export function parseAnalyzeDayTextResponse(content: string): ParsedAnalyzeDayText {
@@ -229,12 +229,12 @@ export function parseAnalyzeDayTextResponse(content: string): ParsedAnalyzeDayTe
   try {
     raw = JSON.parse(content);
   } catch {
-    throw new Error("OpenAI вернул невалидный JSON");
+    throw new Error("YandexGPT вернул невалидный JSON");
   }
 
   const rawResult = rawAnalyzeDayTextResponseSchema.safeParse(raw);
   if (!rawResult.success) {
-    throw new Error("OpenAI вернул JSON неожиданной структуры");
+    throw new Error("YandexGPT вернул JSON неожиданной структуры");
   }
 
   const displayResult = dayTextDisplaySchema.safeParse(rawResult.data);

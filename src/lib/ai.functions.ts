@@ -32,8 +32,8 @@ export type AnalyzeMealFailure = {
 
 export type AnalyzeMealResult = AnalyzeMealSuccess | AnalyzeMealFailure;
 
-const OPENAI_NOT_CONFIGURED_ERROR =
-  "OpenAI API не настроен. Добавьте OPENAI_API_KEY в файл .env (см. .env.example).";
+const YANDEXGPT_NOT_CONFIGURED_ERROR =
+  "YandexGPT API не настроен. Добавьте серверные переменные Yandex Cloud (см. .env.example).";
 
 function buildAnalyzeMealPrompt(input: AnalyzeMealInput): string {
   const diseasesLine = input.diseases?.length
@@ -61,11 +61,11 @@ function parseAnalyzeMealResponse(content: string): AnalyzeMealSuccess {
   const parsed = JSON.parse(content) as { summary?: unknown; recommendations?: unknown };
 
   if (typeof parsed.summary !== "string" || !parsed.summary.trim()) {
-    throw new Error("OpenAI вернул ответ без поля summary");
+    throw new Error("YandexGPT вернул ответ без поля summary");
   }
 
   if (!Array.isArray(parsed.recommendations)) {
-    throw new Error("OpenAI вернул ответ без списка recommendations");
+    throw new Error("YandexGPT вернул ответ без списка recommendations");
   }
 
   const recommendations = parsed.recommendations
@@ -80,34 +80,27 @@ function parseAnalyzeMealResponse(content: string): AnalyzeMealSuccess {
 }
 
 async function runAnalyzeMeal(input: AnalyzeMealInput): Promise<AnalyzeMealResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } =
-    await import("@/integrations/openai/client.server");
+  const { isYandexGPTConfigured, generateYandexGPTCompletion } =
+    await import("@/integrations/yandexgpt/client.server");
 
-  if (!isOpenAIConfigured()) {
-    return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+  if (!isYandexGPTConfigured()) {
+    return { ok: false, error: YANDEXGPT_NOT_CONFIGURED_ERROR };
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: getOpenAIModel(),
+    const content = await generateYandexGPTCompletion({
       temperature: 0.4,
-      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: buildAIConsultantSystemPrompt(),
+          text: buildAIConsultantSystemPrompt(),
         },
         {
           role: "user",
-          content: buildAnalyzeMealPrompt(input),
+          text: buildAnalyzeMealPrompt(input),
         },
       ],
     });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return { ok: false, error: "OpenAI вернул пустой ответ" };
-    }
 
     return parseAnalyzeMealResponse(content);
   } catch (error) {
@@ -179,34 +172,27 @@ function parseAnalyzeDayTextSuccess(content: string): AnalyzeDayTextSuccess {
 }
 
 async function runAnalyzeDayText(input: AnalyzeDayTextInput): Promise<AnalyzeDayTextResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } =
-    await import("@/integrations/openai/client.server");
+  const { isYandexGPTConfigured, generateYandexGPTCompletion } =
+    await import("@/integrations/yandexgpt/client.server");
 
-  if (!isOpenAIConfigured()) {
-    return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+  if (!isYandexGPTConfigured()) {
+    return { ok: false, error: YANDEXGPT_NOT_CONFIGURED_ERROR };
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: getOpenAIModel(),
+    const content = await generateYandexGPTCompletion({
       temperature: 0.3,
-      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: buildAIConsultantSystemPrompt(),
+          text: buildAIConsultantSystemPrompt(),
         },
         {
           role: "user",
-          content: buildAnalyzeDayTextPrompt(input.dayText),
+          text: buildAnalyzeDayTextPrompt(input.dayText),
         },
       ],
     });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return { ok: false, error: "OpenAI вернул пустой ответ" };
-    }
 
     return parseAnalyzeDayTextSuccess(content);
   } catch (error) {
@@ -273,11 +259,11 @@ function parseSuggestRecipesResponse(content: string): SuggestRecipesSuccess {
   };
 
   if (typeof parsed.summary !== "string" || !parsed.summary.trim()) {
-    throw new Error("OpenAI вернул ответ без поля summary");
+    throw new Error("YandexGPT вернул ответ без поля summary");
   }
 
   if (!Array.isArray(parsed.recommendations) || parsed.recommendations.length === 0) {
-    throw new Error("OpenAI вернул пустой список рекомендаций");
+    throw new Error("YandexGPT вернул пустой список рекомендаций");
   }
 
   const recommendations: RecipeSuggestion[] = parsed.recommendations
@@ -291,7 +277,7 @@ function parseSuggestRecipesResponse(content: string): SuggestRecipesSuccess {
     .filter((item): item is RecipeSuggestion => item !== null);
 
   if (!recommendations.length) {
-    throw new Error("OpenAI вернул некорректный список рекомендаций");
+    throw new Error("YandexGPT вернул некорректный список рекомендаций");
   }
 
   return {
@@ -302,36 +288,29 @@ function parseSuggestRecipesResponse(content: string): SuggestRecipesSuccess {
 }
 
 async function runSuggestRecipes(input: SuggestRecipesInput): Promise<SuggestRecipesResult> {
-  const { isOpenAIConfigured, openai, getOpenAIModel } =
-    await import("@/integrations/openai/client.server");
+  const { isYandexGPTConfigured, generateYandexGPTCompletion } =
+    await import("@/integrations/yandexgpt/client.server");
   const { buildRecipeCatalogForAI } = await import("@/lib/recipes/ai-catalog");
 
-  if (!isOpenAIConfigured()) {
-    return { ok: false, error: OPENAI_NOT_CONFIGURED_ERROR };
+  if (!isYandexGPTConfigured()) {
+    return { ok: false, error: YANDEXGPT_NOT_CONFIGURED_ERROR };
   }
 
   try {
     const catalogJson = buildRecipeCatalogForAI();
-    const completion = await openai.chat.completions.create({
-      model: getOpenAIModel(),
+    const content = await generateYandexGPTCompletion({
       temperature: 0.4,
-      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: buildAIConsultantSystemPrompt(),
+          text: buildAIConsultantSystemPrompt(),
         },
         {
           role: "user",
-          content: buildSuggestRecipesPrompt(input, catalogJson),
+          text: buildSuggestRecipesPrompt(input, catalogJson),
         },
       ],
     });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      return { ok: false, error: "OpenAI вернул пустой ответ" };
-    }
 
     return parseSuggestRecipesResponse(content);
   } catch (error) {

@@ -11,7 +11,7 @@
 |----------|----------|
 | **Стек** | React 19, TypeScript, TanStack Start/Router, Vite, Tailwind 4, shadcn/ui |
 | **Данные** | Supabase (Auth + PostgreSQL) |
-| **AI** | OpenAI API (server-side, `gpt-4o-mini`) |
+| **AI** | YandexGPT API (server-side) |
 | **Графики** | Recharts |
 | **Платформа** | Веб (PWA/APK/Capacitor — не подключены) |
 | **Создание** | Lovable + Cursor (синхронизация с Lovable — см. `AGENTS.md`) |
@@ -97,7 +97,7 @@
 
 - TanStack Start SSR + server functions
 - Supabase RLS на всех таблицах
-- OpenAI только на сервере (без утечки ключа на клиент)
+- YandexGPT только на сервере (без утечки ключа на клиент)
 - Mobile-first UI, нижняя навигация (6 пунктов)
 - i18n: RU/EN частично (nav, landing + DOM-translator)
 
@@ -108,7 +108,7 @@
 ### Высокий приоритет
 
 - [ ] Страница AI-рекомендаций (`/ai`) — ежедневный/недельный отчёт
-- [ ] AI-подбор рецептов (`suggestRecipes` + OpenAI)
+- [ ] AI-подбор рецептов (`suggestRecipes` + YandexGPT)
 - [ ] Исправление багов профиля (пустой экран, удаление данных из Supabase)
 - [ ] Фильтры графиков по периоду (7 / 30 / 90 дней)
 
@@ -208,7 +208,7 @@
 | Server functions | `src/lib/ai.functions.ts` |
 | Промпты | `src/lib/ai-prompts.ts` |
 | Парсинг дня | `src/lib/ai-day-analysis.ts` |
-| OpenAI клиент | `src/integrations/openai/client.server.ts` |
+| YandexGPT клиент | `src/integrations/yandexgpt/client.server.ts` |
 | Страница (stub) | `src/routes/_app.ai.tsx` |
 | Legacy (мёртвый код) | `src/lib/aiStubs.ts` |
 
@@ -277,7 +277,7 @@
 |--------|------------|------------------|----------------------|
 | **Supabase Auth** | Регистрация, вход, сессии | `src/lib/auth.ts`, все `_app` routes | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` |
 | **Supabase PostgreSQL** | Профиль, дневник, здоровье, привычки | `src/lib/store.ts` | те же + RLS |
-| **OpenAI Chat Completions** | AI-анализ дня и приёма пищи | `src/lib/ai.functions.ts` | `OPENAI_API_KEY`, `OPENAI_MODEL` |
+| **YandexGPT Text Generation** | AI-анализ дня и приёма пищи | `src/lib/ai.functions.ts` | `YANDEX_CLOUD_API_KEY`, `YANDEX_CLOUD_FOLDER_ID`, `YANDEX_AI_MODEL` |
 | **Web Speech API** | Распознавание речи в браузере | `src/hooks/use-speech-recognition.ts` | HTTPS + микрофон (без API-ключа) |
 | **Lovable Events** | Отчёт об ошибках | `src/lib/lovable-error-reporting.ts` | — |
 
@@ -302,7 +302,7 @@
 
 | Сервис | Назначение | Модуль | Приоритет |
 |--------|------------|--------|-----------|
-| **OpenAI** (расширение) | AI-подбор рецептов, меню на день/неделю, замена ингредиентов, ежедневный отчёт | Рецепты, `/ai` | Высокий |
+| **YandexGPT** (расширение) | AI-подбор рецептов, меню на день/неделю, замена ингредиентов, ежедневный отчёт | Рецепты, `/ai` | Высокий |
 | **OpenAI Whisper** | Надёжное распознавание речи (Android, offline-сценарии) | Голосовой дневник | Средний |
 | **Supabase Storage** | Фото рецептов, аватары, медиа recovery | Рецепты, Recovery | Средний |
 | **Stripe / ЮKassa / др.** | Подписка и оплата | `/subscription` | Низкий |
@@ -328,7 +328,7 @@
 |------|----------|-----------|
 | **Удаление данных в профиле** | Кнопка «Удалить все данные» чистит localStorage, не Supabase | Переписать на DELETE из Supabase |
 | **Пустой профиль** | `if (!profile) return null` — белый экран | Показывать форму создания с `DEFAULT_PROFILE` |
-| **Зависимость от OpenAI** | Без ключа AI недоступен; нет fallback | Кэш, offline-режим, graceful degradation (частично есть) |
+| **Зависимость от YandexGPT** | Без ключа AI недоступен; нет fallback | Кэш, offline-режим, graceful degradation (частично есть) |
 
 ### Средние
 

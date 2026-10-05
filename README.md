@@ -54,7 +54,8 @@ npm run build
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_URL`
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`
+- `YANDEX_CLOUD_API_KEY`
+- `YANDEX_CLOUD_FOLDER_ID`
+- `YANDEX_AI_MODEL`
 
 Не коммитьте реальные значения ключей и токенов в репозиторий.
