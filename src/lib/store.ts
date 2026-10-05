@@ -2,13 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Gender = "male" | "female" | "other";
-export type Goal =
-  | "lose"
-  | "maintain"
-  | "gain"
-  | "health"
-  | "pressure"
-  | "sleep";
+export type Goal = "lose" | "maintain" | "gain" | "health" | "pressure" | "sleep";
 
 export const GOAL_LABELS: Record<Goal, string> = {
   lose: "Похудение",
@@ -165,14 +159,7 @@ export const DEFAULT_PROFILE: Profile = {
 };
 
 export type MealType =
-  | "breakfast1"
-  | "breakfast2"
-  | "snack1"
-  | "lunch"
-  | "snack2"
-  | "dinner"
-  | "lateSnack"
-  | "extra";
+  "breakfast1" | "breakfast2" | "snack1" | "lunch" | "snack2" | "dinner" | "lateSnack" | "extra";
 
 export const MEAL_LABELS: Record<MealType, string> = {
   breakfast1: "Завтрак 1",
@@ -270,37 +257,41 @@ function rowToProfile(p: any, h: any, hf: any): Profile {
     waterGoal: p?.water_goal ?? undefined,
     birthDate: p?.birth_date ?? undefined,
     goal: (p?.goal as Goal) ?? undefined,
-    habits: h ? {
-      smoking: h.smoking ?? undefined,
-      vape: h.vape ?? undefined,
-      alcohol: h.alcohol ?? undefined,
-      coffeeFreq: h.coffee_per_day ?? undefined,
-      coffeeMl: h.coffee_ml ?? undefined,
-      teaCups: h.tea_cups ?? undefined,
-      teaMl: h.tea_ml ?? undefined,
-      teaSugar: h.tea_sugar ?? undefined,
-      energyDrinks: h.energy_drinks ?? undefined,
-      sweets: h.sweets ?? undefined,
-      fastfood: h.fast_food ?? undefined,
-      nightSnacks: h.night_snacks ?? undefined,
-      stressLevel: h.stress_level ?? undefined,
-      screenTime: h.screen_time ?? undefined,
-      dailySteps: h.usual_steps ?? undefined,
-    } : undefined,
-    healthFeatures: hf ? {
-      chronic: hf.chronic_conditions ?? undefined,
-      chronicOther: hf.chronic_other ?? undefined,
-      musculo: hf.movement_limitations ?? undefined,
-      gi: hf.gi_issues ?? undefined,
-      giIntolerances: hf.food_intolerances ?? undefined,
-      women: hf.women_health ?? undefined,
-      takesMeds: hf.takes_meds ?? undefined,
-      medsList: hf.medications ?? undefined,
-      hasDoctorRec: hf.has_doctor_rec ?? undefined,
-      doctorRec: hf.doctor_recommendations ?? undefined,
-      training: hf.workout_limits ?? undefined,
-      comment: hf.comment ?? undefined,
-    } : undefined,
+    habits: h
+      ? {
+          smoking: h.smoking ?? undefined,
+          vape: h.vape ?? undefined,
+          alcohol: h.alcohol ?? undefined,
+          coffeeFreq: h.coffee_per_day ?? undefined,
+          coffeeMl: h.coffee_ml ?? undefined,
+          teaCups: h.tea_cups ?? undefined,
+          teaMl: h.tea_ml ?? undefined,
+          teaSugar: h.tea_sugar ?? undefined,
+          energyDrinks: h.energy_drinks ?? undefined,
+          sweets: h.sweets ?? undefined,
+          fastfood: h.fast_food ?? undefined,
+          nightSnacks: h.night_snacks ?? undefined,
+          stressLevel: h.stress_level ?? undefined,
+          screenTime: h.screen_time ?? undefined,
+          dailySteps: h.usual_steps ?? undefined,
+        }
+      : undefined,
+    healthFeatures: hf
+      ? {
+          chronic: hf.chronic_conditions ?? undefined,
+          chronicOther: hf.chronic_other ?? undefined,
+          musculo: hf.movement_limitations ?? undefined,
+          gi: hf.gi_issues ?? undefined,
+          giIntolerances: hf.food_intolerances ?? undefined,
+          women: hf.women_health ?? undefined,
+          takesMeds: hf.takes_meds ?? undefined,
+          medsList: hf.medications ?? undefined,
+          hasDoctorRec: hf.has_doctor_rec ?? undefined,
+          doctorRec: hf.doctor_recommendations ?? undefined,
+          training: hf.workout_limits ?? undefined,
+          comment: hf.comment ?? undefined,
+        }
+      : undefined,
   };
 }
 
@@ -367,27 +358,52 @@ function entryToDailyRow(e: DayEntry, userId: string) {
     row.extra_meals = extras;
   }
   const map: Array<[keyof DayEntry, string]> = [
-    ["water", "water_ml"], ["tea", "tea_ml"], ["coffee", "coffee_ml"],
-    ["soda", "soda_ml"], ["juice", "juice_ml"], ["otherDrinks", "other_drinks"],
-    ["sugar", "sugar"], ["sugarOther", "sugar_other"], ["milk", "milk_or_cream"],
-    ["breadUnits", "bread_crisps_count"], ["sleep", "sleep_hours"],
-    ["mood", "mood"], ["steps", "steps"], ["workout", "workout"],
-    ["workoutMinutes", "workout_minutes"], ["weight", "weight"], ["wellbeing", "wellbeing"],
+    ["water", "water_ml"],
+    ["tea", "tea_ml"],
+    ["coffee", "coffee_ml"],
+    ["soda", "soda_ml"],
+    ["juice", "juice_ml"],
+    ["otherDrinks", "other_drinks"],
+    ["sugar", "sugar"],
+    ["sugarOther", "sugar_other"],
+    ["milk", "milk_or_cream"],
+    ["breadUnits", "bread_crisps_count"],
+    ["sleep", "sleep_hours"],
+    ["mood", "mood"],
+    ["steps", "steps"],
+    ["workout", "workout"],
+    ["workoutMinutes", "workout_minutes"],
+    ["weight", "weight"],
+    ["wellbeing", "wellbeing"],
   ];
-  map.forEach(([k, c]) => { if (e[k] !== undefined) row[c] = e[k]; });
+  map.forEach(([k, c]) => {
+    if (e[k] !== undefined) row[c] = e[k];
+  });
   return row;
 }
 
 function entryToHealthRow(e: DayEntry, userId: string) {
   const row: Record<string, any> = { user_id: userId, date: e.date };
   const map: Array<[keyof DayEntry, string]> = [
-    ["systolic", "systolic_pressure"], ["diastolic", "diastolic_pressure"],
-    ["pulse", "pulse"], ["energy", "energy"], ["edema", "swelling"],
-    ["heartburn", "heartburn"], ["bloating", "bloating"], ["backPain", "back_pain"],
-    ["kneePain", "knee_pain"], ["stressed", "stress"], ["healthComment", "health_comment"],
+    ["systolic", "systolic_pressure"],
+    ["diastolic", "diastolic_pressure"],
+    ["pulse", "pulse"],
+    ["energy", "energy"],
+    ["edema", "swelling"],
+    ["heartburn", "heartburn"],
+    ["bloating", "bloating"],
+    ["backPain", "back_pain"],
+    ["kneePain", "knee_pain"],
+    ["stressed", "stress"],
+    ["healthComment", "health_comment"],
   ];
   let has = false;
-  map.forEach(([k, c]) => { if (e[k] !== undefined) { row[c] = e[k]; has = true; } });
+  map.forEach(([k, c]) => {
+    if (e[k] !== undefined) {
+      row[c] = e[k];
+      has = true;
+    }
+  });
   return has ? row : null;
 }
 
@@ -406,7 +422,9 @@ function profileToRow(p: Profile, userId: string) {
   };
 }
 
-export async function ensureCurrentUserProfile(profile: Profile): Promise<{ ok: boolean; error?: string }> {
+export async function ensureCurrentUserProfile(
+  profile: Profile,
+): Promise<{ ok: boolean; error?: string }> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError) {
     console.error("Supabase Auth getUser error while creating profile", {
@@ -481,75 +499,10 @@ function hfToRow(hf: HealthFeatures, userId: string) {
 
 export type SaveEntryResult = { ok: true } | { ok: false; error: string };
 
-export type DeleteUserDataResult =
-  | { ok: true; deletedTables: string[] }
-  | { ok: false; deletedTables: string[]; failedTables: string[]; error: string };
-
-const USER_DATA_TABLE_LABELS: Record<string, string> = {
-  daily_entries: "дневник",
-  health_entries: "показатели здоровья",
-  habits: "привычки",
-  health_features: "особенности здоровья",
-  profiles: "профиль",
-};
-
-export async function deleteCurrentUserData(): Promise<DeleteUserDataResult> {
-  const { data, error: userError } = await supabase.auth.getUser();
-  if (userError || !data.user) {
-    return {
-      ok: false,
-      deletedTables: [],
-      failedTables: [],
-      error: userError?.message ?? "Не удалось определить текущего пользователя",
-    };
-  }
-
-  const userId = data.user.id;
-  const deletedTables: string[] = [];
-  const failedTables: string[] = [];
-  const errors: string[] = [];
-  const deleteFrom = async (table: "daily_entries" | "health_entries" | "habits" | "health_features") => {
-    const { error } = await supabase.from(table).delete().eq("user_id", userId);
-    if (error) {
-      failedTables.push(table);
-      errors.push(`${USER_DATA_TABLE_LABELS[table]}: ${error.message}`);
-    } else {
-      deletedTables.push(table);
-    }
-  };
-
-  // Delete the profile last so a partial failure does not leave the account without its main record.
-  for (const table of ["daily_entries", "health_entries", "habits", "health_features"] as const) {
-    await deleteFrom(table);
-  }
-
-  if (failedTables.length === 0) {
-    const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
-    if (error) {
-      failedTables.push("profiles");
-      errors.push(`${USER_DATA_TABLE_LABELS.profiles}: ${error.message}`);
-    } else {
-      deletedTables.push("profiles");
-    }
-  }
-
-  if (failedTables.length > 0) {
-    return {
-      ok: false,
-      deletedTables,
-      failedTables,
-      error: `Не удалось удалить все данные. ${errors.join("; ")}`,
-    };
-  }
-
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("hg-user-data-deleted"));
-  }
-  return { ok: true, deletedTables };
-}
-
 function newMealId() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now() + Math.random());
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : String(Date.now() + Math.random());
 }
 
 function isMealEmpty(meal: Meal): boolean {
@@ -693,8 +646,15 @@ export function useProfile() {
   }, []);
 
   useEffect(() => {
-    if (uid === undefined) { setReady(false); return; }
-    if (uid === null) { setProfileState(null); setReady(true); return; }
+    if (uid === undefined) {
+      setReady(false);
+      return;
+    }
+    if (uid === null) {
+      setProfileState(null);
+      setReady(true);
+      return;
+    }
     reload(uid);
   }, [uid, reload]);
 
@@ -709,33 +669,36 @@ export function useProfile() {
     return () => window.removeEventListener("hg-user-data-deleted", handleDeleted);
   }, [uid]);
 
-  const setProfile = useCallback(async (p: Profile): Promise<SaveEntryResult> => {
-    if (!uid) return { ok: false, error: "Войдите в аккаунт, чтобы сохранить профиль" };
-    const previous = profile;
-    setProfileState(p);
-    setError(null);
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(profileToRow(p, uid), { onConflict: "user_id" });
-    if (profileError) {
-      setProfileState(previous);
-      setError(profileError.message);
-      return { ok: false, error: profileError.message };
-    }
-    if (p.habits) {
-      const { error: habitsError } = await supabase
-        .from("habits")
-        .upsert(habitsToRow(p.habits, uid), { onConflict: "user_id" });
-      if (habitsError) return { ok: false, error: habitsError.message };
-    }
-    if (p.healthFeatures) {
-      const { error: healthFeaturesError } = await supabase
-        .from("health_features")
-        .upsert(hfToRow(p.healthFeatures, uid), { onConflict: "user_id" });
-      if (healthFeaturesError) return { ok: false, error: healthFeaturesError.message };
-    }
-    return { ok: true };
-  }, [uid, profile]);
+  const setProfile = useCallback(
+    async (p: Profile): Promise<SaveEntryResult> => {
+      if (!uid) return { ok: false, error: "Войдите в аккаунт, чтобы сохранить профиль" };
+      const previous = profile;
+      setProfileState(p);
+      setError(null);
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(profileToRow(p, uid), { onConflict: "user_id" });
+      if (profileError) {
+        setProfileState(previous);
+        setError(profileError.message);
+        return { ok: false, error: profileError.message };
+      }
+      if (p.habits) {
+        const { error: habitsError } = await supabase
+          .from("habits")
+          .upsert(habitsToRow(p.habits, uid), { onConflict: "user_id" });
+        if (habitsError) return { ok: false, error: habitsError.message };
+      }
+      if (p.healthFeatures) {
+        const { error: healthFeaturesError } = await supabase
+          .from("health_features")
+          .upsert(hfToRow(p.healthFeatures, uid), { onConflict: "user_id" });
+        if (healthFeaturesError) return { ok: false, error: healthFeaturesError.message };
+      }
+      return { ok: true };
+    },
+    [uid, profile],
+  );
 
   const retry = useCallback(() => {
     if (uid) void reload(uid);
@@ -754,8 +717,17 @@ export function useEntries() {
   uidRef.current = uid;
 
   useEffect(() => {
-    if (uid === undefined) { setReady(false); setError(null); return; }
-    if (uid === null) { setEntries([]); setReady(true); setError(null); return; }
+    if (uid === undefined) {
+      setReady(false);
+      setError(null);
+      return;
+    }
+    if (uid === null) {
+      setEntries([]);
+      setReady(true);
+      setError(null);
+      return;
+    }
     setReady(false);
     setError(null);
     (async () => {
@@ -814,10 +786,14 @@ export function useEntries() {
     const healthRow = entryToHealthRow(merged, userId);
     const ops: Array<PromiseLike<{ error: { message: string } | null }>> = [];
     if (Object.keys(dailyRow).length > 2) {
-      ops.push(supabase.from("daily_entries").upsert(dailyRow as any, { onConflict: "user_id,date" }));
+      ops.push(
+        supabase.from("daily_entries").upsert(dailyRow as any, { onConflict: "user_id,date" }),
+      );
     }
     if (healthRow) {
-      ops.push(supabase.from("health_entries").upsert(healthRow as any, { onConflict: "user_id,date" }));
+      ops.push(
+        supabase.from("health_entries").upsert(healthRow as any, { onConflict: "user_id,date" }),
+      );
     }
 
     if (ops.length === 0) {
