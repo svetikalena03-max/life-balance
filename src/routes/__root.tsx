@@ -16,7 +16,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { SettingsProvider } from "@/lib/settings";
 import { ThemeLangToggle } from "@/components/ThemeLangToggle";
 
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,12 +80,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1",
+      },
       { title: "Баланс жизни — здоровье, питание, сон" },
-      { name: "description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
+      {
+        name: "description",
+        content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день.",
+      },
       { name: "author", content: "Баланс жизни" },
+      { name: "theme-color", content: "#f6f2e8" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Баланс жизни" },
       { property: "og:title", content: "Баланс жизни" },
-      { property: "og:description", content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день." },
+      {
+        property: "og:description",
+        content: "Питание, здоровье, сон, энергия и хорошее самочувствие каждый день.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -95,6 +107,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
