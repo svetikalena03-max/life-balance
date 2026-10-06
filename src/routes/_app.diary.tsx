@@ -47,6 +47,19 @@ function makeEmptyMeals(): Meal[] {
   return DEFAULT_MEAL_TYPES.map((t) => ({ id: newId(), type: t }));
 }
 
+function restoreMealSlots(savedMeals: Meal[]): Meal[] {
+  const remaining = [...savedMeals];
+  const standardMeals = DEFAULT_MEAL_TYPES.map((type) => {
+    const savedIndex = remaining.findIndex((meal) => meal.type === type);
+    if (savedIndex < 0) return { id: newId(), type };
+
+    const [savedMeal] = remaining.splice(savedIndex, 1);
+    return savedMeal;
+  });
+
+  return [...standardMeals, ...remaining];
+}
+
 function buildMealDescription(meal: Meal): string {
   return [meal.food, meal.portion && `порция: ${meal.portion}`, meal.comment].filter(Boolean).join(", ");
 }
@@ -85,7 +98,7 @@ function DiaryPage() {
   useEffect(() => {
     if (!existing) return;
     if (existing.meals && existing.meals.length > 0) {
-      setMeals(existing.meals);
+      setMeals(restoreMealSlots(existing.meals));
     }
     setWellbeing(existing.wellbeing ?? "");
     setWeight(existing.weight != null ? String(existing.weight) : "");
@@ -104,10 +117,10 @@ function DiaryPage() {
     setSugar(existing.sugar ?? "none");
     setSugarOther(existing.sugarOther ?? "");
     setMilk(!!existing.milk);
-  }, [ready, existing?.date]);
+  }, [ready, existing]);
 
   const applyYesterdayPayload = (payload: YesterdayCopyPayload) => {
-    if (payload.meals?.length) setMeals(payload.meals);
+    if (payload.meals?.length) setMeals(restoreMealSlots(payload.meals));
     if (payload.wellbeing != null) setWellbeing(payload.wellbeing);
     if (payload.breadUnits != null) setBreadUnits(String(payload.breadUnits));
     if (payload.steps != null) setSteps(String(payload.steps));
