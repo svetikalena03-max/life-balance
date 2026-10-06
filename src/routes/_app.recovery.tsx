@@ -1,8 +1,9 @@
 import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings } from "@/lib/settings";
-import { RECOVERY_ITEMS, RECOVERY_MOODS } from "@/lib/recovery-data";
+import { RECOVERY_ITEMS, RECOVERY_MOODS, type RecoveryItem } from "@/lib/recovery-data";
 
 export const Route = createFileRoute("/_app/recovery")({
   component: RecoveryPage,
@@ -12,6 +13,24 @@ function RecoveryPage() {
   const detailMatch = useMatch({ from: "/_app/recovery/$id", shouldThrow: false });
   const { lang } = useSettings();
   const ru = lang === "ru";
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+
+  const recommendationsByMood: Record<string, RecoveryItem["id"][]> = {
+    relax: ["meditation", "audio", "sea"],
+    sleep: ["rain", "forest", "audio"],
+    stress: ["breathing", "meditation", "rain"],
+    energy: ["breathing", "audio", "forest"],
+    meditate: ["meditation"],
+    breath: ["breathing"],
+    sounds: ["rain", "sea", "forest", "fireplace"],
+  };
+
+  const recommendedIds = selectedMood ? recommendationsByMood[selectedMood] : null;
+  const visibleItems = recommendedIds
+    ? recommendedIds
+        .map((id) => RECOVERY_ITEMS.find((item) => item.id === id))
+        .filter((item): item is RecoveryItem => !!item)
+    : RECOVERY_ITEMS;
 
   if (detailMatch) return <Outlet />;
 
@@ -38,7 +57,13 @@ function RecoveryPage() {
             <button
               key={m.id}
               type="button"
-              className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-3 text-left text-sm font-medium text-foreground transition-all hover:border-primary/40 hover:bg-card hover:scale-[1.01]"
+              aria-pressed={selectedMood === m.id}
+              onClick={() => setSelectedMood((current) => (current === m.id ? null : m.id))}
+              className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-left text-sm font-medium text-foreground transition-all hover:scale-[1.01] ${
+                selectedMood === m.id
+                  ? "border-primary bg-primary/15 shadow-sm ring-2 ring-primary/20"
+                  : "border-border bg-card/60 hover:border-primary/40 hover:bg-card"
+              }`}
             >
               <span className="text-xl">{m.icon}</span>
               <span>{ru ? m.ru : m.en}</span>
@@ -49,10 +74,16 @@ function RecoveryPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-foreground">
-          {ru ? "Рекомендации" : "Recommendations"}
+          {selectedMood
+            ? ru
+              ? "Подойдёт сейчас"
+              : "Recommended now"
+            : ru
+              ? "Рекомендации"
+              : "Recommendations"}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {RECOVERY_ITEMS.map((item) => (
+          {visibleItems.map((item) => (
             <Link key={item.id} to="/recovery/$id" params={{ id: item.id }} className="group">
               <Card className="h-full p-4 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30 bg-gradient-to-br from-card to-card/60">
                 <div className="flex items-start gap-3">
