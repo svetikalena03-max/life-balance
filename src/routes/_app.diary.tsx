@@ -8,13 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, Trash2, Utensils, Brain, Copy, BookmarkPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,10 +41,7 @@ export const Route = createFileRoute("/_app/diary")({
   component: DiaryPage,
 });
 
-const newId = () =>
-  typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : String(Date.now() + Math.random());
+const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now() + Math.random()));
 
 function makeEmptyMeals(): Meal[] {
   return DEFAULT_MEAL_TYPES.map((t) => ({ id: newId(), type: t }));
@@ -58,7 +49,6 @@ function makeEmptyMeals(): Meal[] {
 
 function restoreMealSlots(savedMeals: Meal[]): Meal[] {
   const remaining = [...savedMeals];
-
   const standardMeals = DEFAULT_MEAL_TYPES.map((type) => {
     const savedIndex = remaining.findIndex((meal) => meal.type === type);
     if (savedIndex < 0) return { id: newId(), type };
@@ -71,9 +61,7 @@ function restoreMealSlots(savedMeals: Meal[]): Meal[] {
 }
 
 function buildMealDescription(meal: Meal): string {
-  return [meal.food, meal.portion && `порция: ${meal.portion}`, meal.comment]
-    .filter(Boolean)
-    .join(", ");
+  return [meal.food, meal.portion && `порция: ${meal.portion}`, meal.comment].filter(Boolean).join(", ");
 }
 
 function DiaryPage() {
@@ -197,11 +185,7 @@ function DiaryPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const cleanMeals = meals.filter(
-      (m) =>
-        (m.food && m.food.trim()) ||
-        (m.portion && m.portion.trim()) ||
-        (m.comment && m.comment.trim()) ||
-        m.time,
+      (m) => (m.food && m.food.trim()) || (m.portion && m.portion.trim()) || (m.comment && m.comment.trim()) || m.time,
     );
     const result = await saveEntry({
       date: today,
@@ -253,13 +237,7 @@ function DiaryPage() {
             <Copy className="h-4 w-4" />
             Скопировать вчера
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 gap-2"
-            onClick={saveCurrentMealAsTemplate}
-            disabled={saving}
-          >
+          <Button type="button" variant="outline" className="flex-1 gap-2" onClick={saveCurrentMealAsTemplate} disabled={saving}>
             <BookmarkPlus className="h-4 w-4" />
             Сохранить блюдо в шаблоны
           </Button>
@@ -269,9 +247,7 @@ function DiaryPage() {
       {templates.length > 0 && (
         <Card className="p-4">
           <h2 className="mb-2 text-sm font-semibold text-foreground">Быстрые шаблоны</h2>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Нажмите, чтобы добавить блюдо в первый свободный приём пищи.
-          </p>
+          <p className="mb-3 text-xs text-muted-foreground">Нажмите, чтобы добавить блюдо в первый свободный приём пищи.</p>
           <div className="flex flex-wrap gap-2">
             {templates.map((tpl) => (
               <Button
@@ -309,13 +285,7 @@ function DiaryPage() {
               />
             ))}
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={addMeal}
-            className="mt-3 h-11 w-full"
-            disabled={saving}
-          >
+          <Button type="button" variant="secondary" onClick={addMeal} className="mt-3 h-11 w-full" disabled={saving}>
             <Plus className="mr-1 h-4 w-4" /> Добавить ещё приём пищи
           </Button>
         </Card>
@@ -323,61 +293,18 @@ function DiaryPage() {
         <Card className="p-5">
           <h2 className="mb-3 text-base font-semibold">Напитки</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Field
-              id="water"
-              label="Вода, мл"
-              value={water}
-              setValue={setWater}
-              placeholder="2000"
-              disabled={saving}
-            />
-            <Field
-              id="tea"
-              label="Чай, мл"
-              value={tea}
-              setValue={setTea}
-              placeholder="400"
-              disabled={saving}
-            />
-            <Field
-              id="coffee"
-              label="Кофе, мл"
-              value={coffee}
-              setValue={setCoffee}
-              placeholder="200"
-              disabled={saving}
-            />
-            <Field
-              id="soda"
-              label="Газировка, мл"
-              value={soda}
-              setValue={setSoda}
-              placeholder="0"
-              disabled={saving}
-            />
-            <Field
-              id="juice"
-              label="Сок, мл"
-              value={juice}
-              setValue={setJuice}
-              placeholder="0"
-              disabled={saving}
-            />
+            <Field id="water" label="Вода, мл" value={water} setValue={setWater} placeholder="2000" disabled={saving} />
+            <Field id="tea" label="Чай, мл" value={tea} setValue={setTea} placeholder="400" disabled={saving} />
+            <Field id="coffee" label="Кофе, мл" value={coffee} setValue={setCoffee} placeholder="200" disabled={saving} />
+            <Field id="soda" label="Газировка, мл" value={soda} setValue={setSoda} placeholder="0" disabled={saving} />
+            <Field id="juice" label="Сок, мл" value={juice} setValue={setJuice} placeholder="0" disabled={saving} />
             <div className="flex min-w-0 flex-col gap-2">
               <Label>Сахар</Label>
-              <Select
-                value={sugar}
-                onValueChange={(v) => setSugar(v as SugarLevel)}
-                disabled={saving}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={sugar} onValueChange={(v) => setSugar(v as SugarLevel)} disabled={saving}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(SUGAR_LABELS).map(([v, l]) => (
-                    <SelectItem key={v} value={v}>
-                      {l}
-                    </SelectItem>
+                    <SelectItem key={v} value={v}>{l}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -386,13 +313,7 @@ function DiaryPage() {
           {sugar === "other" && (
             <div className="mt-3 flex flex-col gap-2">
               <Label htmlFor="sugarOther">Уточните количество сахара</Label>
-              <Input
-                id="sugarOther"
-                value={sugarOther}
-                onChange={(e) => setSugarOther(e.target.value)}
-                placeholder="например, 3 ложки"
-                disabled={saving}
-              />
+              <Input id="sugarOther" value={sugarOther} onChange={(e) => setSugarOther(e.target.value)} placeholder="например, 3 ложки" disabled={saving} />
             </div>
           )}
           <div className="mt-3 flex items-center justify-between rounded-lg border border-border p-3">
@@ -401,96 +322,33 @@ function DiaryPage() {
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <Label htmlFor="other">Другие напитки</Label>
-            <Input
-              id="other"
-              value={otherDrinks}
-              onChange={(e) => setOtherDrinks(e.target.value)}
-              placeholder="кефир, морс…"
-              disabled={saving}
-            />
+            <Input id="other" value={otherDrinks} onChange={(e) => setOtherDrinks(e.target.value)} placeholder="кефир, морс…" disabled={saving} />
           </div>
         </Card>
 
         <Card className="p-5">
           <h2 className="mb-3 text-base font-semibold">Показатели дня</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Field
-              id="w"
-              label="Вес, кг"
-              value={weight}
-              setValue={setWeight}
-              step="0.1"
-              placeholder="70"
-              disabled={saving}
-            />
-            <Field
-              id="bu"
-              label="Хлебцы за день, шт"
-              value={breadUnits}
-              setValue={setBreadUnits}
-              placeholder="0"
-              disabled={saving}
-            />
-            <Field
-              id="sl"
-              label="Часы сна"
-              value={sleep}
-              setValue={setSleep}
-              step="0.1"
-              placeholder="7.5"
-              disabled={saving}
-            />
-            <Field
-              id="st"
-              label="Шаги"
-              value={steps}
-              setValue={setSteps}
-              placeholder="8000"
-              disabled={saving}
-            />
-            <Field
-              id="wm"
-              label="Тренировка, мин"
-              value={workoutMinutes}
-              setValue={setWorkoutMinutes}
-              placeholder="30"
-              disabled={saving}
-            />
+            <Field id="w" label="Вес, кг" value={weight} setValue={setWeight} step="0.1" placeholder="70" disabled={saving} />
+            <Field id="bu" label="Хлебцы за день, шт" value={breadUnits} setValue={setBreadUnits} placeholder="0" disabled={saving} />
+            <Field id="sl" label="Часы сна" value={sleep} setValue={setSleep} step="0.1" placeholder="7.5" disabled={saving} />
+            <Field id="st" label="Шаги" value={steps} setValue={setSteps} placeholder="8000" disabled={saving} />
+            <Field id="wm" label="Тренировка, мин" value={workoutMinutes} setValue={setWorkoutMinutes} placeholder="30" disabled={saving} />
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <Label htmlFor="workout">Какая тренировка</Label>
-            <Input
-              id="workout"
-              value={workout}
-              onChange={(e) => setWorkout(e.target.value)}
-              placeholder="Йога, бег, силовая…"
-              disabled={saving}
-            />
+            <Input id="workout" value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Йога, бег, силовая…" disabled={saving} />
           </div>
           <div className="mt-3 flex flex-col gap-2">
             <Label htmlFor="well">Самочувствие</Label>
-            <Textarea
-              id="well"
-              rows={2}
-              value={wellbeing}
-              onChange={(e) => setWellbeing(e.target.value)}
-              placeholder="Как себя чувствуете?"
-              disabled={saving}
-            />
+            <Textarea id="well" rows={2} value={wellbeing} onChange={(e) => setWellbeing(e.target.value)} placeholder="Как себя чувствуете?" disabled={saving} />
           </div>
           <div className="mt-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label>Настроение</Label>
               <span className="text-sm font-semibold text-primary">{mood}/10</span>
             </div>
-            <Slider
-              min={1}
-              max={10}
-              step={1}
-              value={[mood]}
-              onValueChange={(v) => setMood(v[0])}
-              disabled={saving}
-            />
+            <Slider min={1} max={10} step={1} value={[mood]} onValueChange={(v) => setMood(v[0])} disabled={saving} />
           </div>
         </Card>
 
@@ -510,11 +368,7 @@ function DiaryPage() {
 }
 
 function MealBlock({
-  meal,
-  onChange,
-  onRemove,
-  canRemove,
-  disabled,
+  meal, onChange, onRemove, canRemove, disabled,
 }: {
   meal: Meal;
   index: number;
@@ -531,22 +385,13 @@ function MealBlock({
           {MEAL_LABELS[meal.type]}
         </p>
         {canRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onRemove}
-            className="h-8 px-2 text-muted-foreground"
-            disabled={disabled}
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-8 px-2 text-muted-foreground" disabled={disabled}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${baseId}-food`} className="text-xs text-muted-foreground">
-          Что ел
-        </Label>
+        <Label htmlFor={`${baseId}-food`} className="text-xs text-muted-foreground">Что ел</Label>
         <Textarea
           id={`${baseId}-food`}
           rows={2}
@@ -558,9 +403,7 @@ function MealBlock({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex min-w-0 flex-col gap-2">
-          <Label htmlFor={`${baseId}-portion`} className="text-xs text-muted-foreground">
-            Количество / порция
-          </Label>
+          <Label htmlFor={`${baseId}-portion`} className="text-xs text-muted-foreground">Количество / порция</Label>
           <Input
             id={`${baseId}-portion`}
             value={meal.portion ?? ""}
@@ -570,9 +413,7 @@ function MealBlock({
           />
         </div>
         <div className="flex min-w-0 flex-col gap-2">
-          <Label htmlFor={`${baseId}-time`} className="text-xs text-muted-foreground">
-            Время
-          </Label>
+          <Label htmlFor={`${baseId}-time`} className="text-xs text-muted-foreground">Время</Label>
           <Input
             id={`${baseId}-time`}
             type="time"
@@ -583,9 +424,7 @@ function MealBlock({
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`${baseId}-comment`} className="text-xs text-muted-foreground">
-          Комментарий
-        </Label>
+        <Label htmlFor={`${baseId}-comment`} className="text-xs text-muted-foreground">Комментарий</Label>
         <Input
           id={`${baseId}-comment`}
           value={meal.comment ?? ""}
@@ -681,21 +520,9 @@ function MealAiAnalysis({ meal, disabled }: { meal: Meal; disabled?: boolean }) 
 }
 
 function Field({
-  id,
-  label,
-  value,
-  setValue,
-  step,
-  placeholder,
-  disabled,
+  id, label, value, setValue, step, placeholder, disabled,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  setValue: (v: string) => void;
-  step?: string;
-  placeholder?: string;
-  disabled?: boolean;
+  id: string; label: string; value: string; setValue: (v: string) => void; step?: string; placeholder?: string; disabled?: boolean;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
