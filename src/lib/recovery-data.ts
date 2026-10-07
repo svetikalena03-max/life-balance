@@ -22,6 +22,12 @@ export type RecoveryItem = {
   mode: "guided" | "breathing" | "ambient";
   steps?: RecoveryStep[];
   breathing?: { inhale: number; hold: number; exhale: number };
+  audio?: {
+    src: string;
+    sourceUrl: string;
+    creditRu: string;
+    creditEn: string;
+  };
   safetyRu?: string;
   safetyEn?: string;
 };
@@ -207,6 +213,12 @@ export const RECOVERY_ITEMS: RecoveryItem[] = [
     descEn: "Soft rain sounds for relaxation and peaceful sleep.",
     duration: 30,
     mode: "ambient",
+    audio: {
+      src: "/audio/rain.mp3",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Rain_(1).ogg",
+      creditRu: "Запись: ezwa · общественное достояние",
+      creditEn: "Recording: ezwa · public domain",
+    },
   },
   {
     id: "sea",
@@ -217,6 +229,12 @@ export const RECOVERY_ITEMS: RecoveryItem[] = [
     descEn: "Sea wave sounds help you slow down and let thoughts go.",
     duration: 30,
     mode: "ambient",
+    audio: {
+      src: "/audio/sea.mp3",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Waves.ogg",
+      creditRu: "Запись: Dsw4 · общественное достояние",
+      creditEn: "Recording: Dsw4 · public domain",
+    },
   },
   {
     id: "forest",
@@ -227,6 +245,12 @@ export const RECOVERY_ITEMS: RecoveryItem[] = [
     descEn: "Forest sounds for deep calm and recovery.",
     duration: 30,
     mode: "ambient",
+    audio: {
+      src: "/audio/forest.mp3",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:20090610_0_ambience.ogg",
+      creditRu: "Запись: nille · общественное достояние",
+      creditEn: "Recording: nille · public domain",
+    },
   },
   {
     id: "fireplace",
@@ -237,6 +261,12 @@ export const RECOVERY_ITEMS: RecoveryItem[] = [
     descEn: "Warm crackling fireplace creates a cozy atmosphere for rest.",
     duration: 45,
     mode: "ambient",
+    audio: {
+      src: "/audio/fireplace.mp3",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Dry_grass_burning_in_open_fireplace.ogg",
+      creditRu: "Запись: ezwa · общественное достояние",
+      creditEn: "Recording: ezwa · public domain",
+    },
   },
 ];
 

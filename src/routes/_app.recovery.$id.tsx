@@ -1,6 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import {
+  AlertTriangle,
+  ExternalLink,
+  Pause,
+  Play,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
@@ -71,20 +79,219 @@ function RecoveryDetailPage() {
       )}
 
       {item.mode === "ambient" ? (
-        <Card className="p-5 text-center">
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {ru
-              ? "Настоящие звуки природы добавим следующим обновлением. Пока выберите медитацию, расслабление тела или дыхательную практику — они уже работают."
-              : "Nature audio is coming in the next update. Meditation, body relaxation and breathing are already available."}
-          </p>
-          <Button className="mt-4 w-full" onClick={() => navigate({ to: "/recovery" })}>
-            {ru ? "Выбрать работающую практику" : "Choose an available practice"}
-          </Button>
-        </Card>
+        <AmbientPlayer item={item} ru={ru} />
       ) : (
         <PracticePlayer item={item} ru={ru} />
       )}
     </div>
+  );
+}
+
+function AmbientPlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
+  const totalSeconds = item.duration * 60;
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [volume, setVolume] = useState(0.7);
+  const [playbackError, setPlaybackError] = useState(false);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) audio.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    if (!running) return;
+
+    const timer = window.setInterval(() => {
+      setElapsed((current) => {
+        const next = current + 1;
+        if (next >= totalSeconds) {
+          audioRef.current?.pause();
+          setRunning(false);
+          setCompleted(true);
+          return totalSeconds;
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [running, totalSeconds]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => audio?.pause();
+  }, []);
+
+  const start = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (completed || elapsed >= totalSeconds) {
+      setElapsed(0);
+      setCompleted(false);
+      audio.currentTime = 0;
+    }
+
+    setPlaybackError(false);
+    try {
+      await audio.play();
+      setRunning(true);
+    } catch {
+      setPlaybackError(true);
+      setRunning(false);
+    }
+  };
+
+  const toggleRunning = () => {
+    if (running) {
+      audioRef.current?.pause();
+      setRunning(false);
+      return;
+    }
+    void start();
+  };
+
+  const reset = () => {
+    const audio = audioRef.current;
+    audio?.pause();
+    if (audio) audio.currentTime = 0;
+    setRunning(false);
+    setElapsed(0);
+    setCompleted(false);
+    setPlaybackError(false);
+  };
+
+  const progress = Math.min(100, (elapsed / totalSeconds) * 100);
+
+  return (
+    <Card className="overflow-hidden p-5">
+      <audio ref={audioRef} src={item.audio?.src} loop preload="metadata" />
+
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {completed
+              ? ru
+                ? "Прослушивание завершено"
+                : "Listening complete"
+              : ru
+                ? "Осталось"
+                : "Remaining"}
+          </p>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">
+            {formatTime(Math.max(0, totalSeconds - elapsed))}
+          </p>
+        </div>
+        <div
+          className={`flex h-16 w-16 items-center justify-center rounded-full text-3xl transition-all ${
+            running ? "scale-110 bg-emerald-500/20 shadow-lg" : "bg-muted"
+          }`}
+          aria-hidden="true"
+        >
+          {item.icon}
+        </div>
+      </div>
+
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="my-6 rounded-2xl bg-emerald-500/10 p-4">
+        <label className="flex items-center gap-3 text-sm font-medium text-foreground">
+          {volume === 0 ? (
+            <VolumeX className="h-5 w-5 shrink-0" />
+          ) : (
+            <Volume2 className="h-5 w-5 shrink-0" />
+          )}
+          <span className="sr-only">{ru ? "Громкость" : "Volume"}</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={(event) => setVolume(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer accent-emerald-600"
+            aria-label={ru ? "Громкость" : "Volume"}
+          />
+          <span className="w-10 text-right tabular-nums">{Math.round(volume * 100)}%</span>
+        </label>
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          {completed
+            ? ru
+              ? "Готово. Можно повторить или выбрать другой звук."
+              : "Done. You can repeat or choose another sound."
+            : running
+              ? ru
+                ? "Звук играет и будет повторяться до конца таймера."
+                : "The sound is playing and will loop until the timer ends."
+              : ru
+                ? "Нажмите «Включить звук», когда будете готовы."
+                : "Press Play sound when you are ready."}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <Button
+          size="lg"
+          className="h-14 bg-gradient-to-r from-emerald-500 to-teal-500 text-base text-white"
+          onClick={toggleRunning}
+        >
+          {running ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
+          {running
+            ? ru
+              ? "Пауза"
+              : "Pause"
+            : completed
+              ? ru
+                ? "Повторить"
+                : "Repeat"
+              : elapsed > 0
+                ? ru
+                  ? "Продолжить"
+                  : "Continue"
+                : ru
+                  ? "Включить звук"
+                  : "Play sound"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-14 w-14"
+          aria-label={ru ? "Начать заново" : "Reset"}
+          onClick={reset}
+        >
+          <RotateCcw className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {playbackError && (
+        <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+          {ru
+            ? "Не удалось включить звук. Проверьте интернет и попробуйте ещё раз."
+            : "Could not play the sound. Check your connection and try again."}
+        </p>
+      )}
+
+      {item.audio && (
+        <a
+          href={item.audio.sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          {ru ? item.audio.creditRu : item.audio.creditEn}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
+    </Card>
   );
 }
 
