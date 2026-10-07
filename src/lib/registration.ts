@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { LEGAL_DOCUMENT_VERSION } from "@/lib/legal";
 
 export type RegistrationProfile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -14,7 +15,7 @@ export async function loadRegistrationState(client: SupabaseClient<Database>, us
       .eq("personal_data_accepted", true)
       .eq("user_agreement_accepted", true)
       .eq("medical_disclaimer_accepted", true)
-      .eq("document_version", "v1")
+      .eq("document_version", LEGAL_DOCUMENT_VERSION)
       .limit(1),
   ]);
   if (profile.error) throw new Error(profile.error.message);

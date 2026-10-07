@@ -66,6 +66,7 @@ function AppLayout() {
           userId={user.id}
           initialName={user.name}
           initialProfile={registration.profile}
+          initialConsents={user.registrationConsents}
           onComplete={() => setAttempt((value) => value + 1)}
         />
         <Button variant="outline" onClick={() => void signOut()}>

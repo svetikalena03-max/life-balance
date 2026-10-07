@@ -16,16 +16,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DEFAULT_PROFILE, ensureCurrentUserProfile, type Gender } from "@/lib/store";
 import type { RegistrationProfile } from "@/lib/registration";
 import { supabase } from "@/integrations/supabase/client";
+import { LEGAL_DOCUMENT_VERSION, type RegistrationConsents } from "@/lib/legal";
 
 export function RegistrationCompletion({
   userId,
   initialName,
   initialProfile,
+  initialConsents,
   onComplete,
 }: {
   userId: string;
   initialName?: string;
   initialProfile: RegistrationProfile | null;
+  initialConsents?: RegistrationConsents | null;
   onComplete: () => void;
 }) {
   const [name, setName] = useState(initialProfile?.name ?? initialName ?? "");
@@ -34,9 +37,9 @@ export function RegistrationCompletion({
   const [height, setHeight] = useState(initialProfile?.height?.toString() ?? "");
   const [weight, setWeight] = useState(initialProfile?.current_weight?.toString() ?? "");
   const [target, setTarget] = useState(initialProfile?.target_weight?.toString() ?? "");
-  const [agreeData, setAgreeData] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [agreeMedical, setAgreeMedical] = useState(false);
+  const [agreeData, setAgreeData] = useState(initialConsents?.privacyAndData ?? false);
+  const [agreeTerms, setAgreeTerms] = useState(initialConsents?.terms ?? false);
+  const [agreeMedical, setAgreeMedical] = useState(initialConsents?.medical ?? false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -80,7 +83,7 @@ export function RegistrationCompletion({
         personal_data_accepted: agreeData,
         user_agreement_accepted: agreeTerms,
         medical_disclaimer_accepted: agreeMedical,
-        document_version: "v1",
+        document_version: LEGAL_DOCUMENT_VERSION,
       });
       if (consentError) throw new Error(consentError.message);
       onComplete();
@@ -179,6 +182,8 @@ export function RegistrationCompletion({
                 <Link
                   to="/legal/$doc"
                   params={{ doc: "consent" }}
+                  target="_blank"
+                  rel="noreferrer"
                   className="text-primary underline"
                 >
                   обработкой персональных данных
@@ -192,7 +197,13 @@ export function RegistrationCompletion({
             label={
               <>
                 Принимаю{" "}
-                <Link to="/legal/$doc" params={{ doc: "terms" }} className="text-primary underline">
+                <Link
+                  to="/legal/$doc"
+                  params={{ doc: "terms" }}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline"
+                >
                   пользовательское соглашение
                 </Link>
               </>
@@ -207,6 +218,8 @@ export function RegistrationCompletion({
                 <Link
                   to="/legal/$doc"
                   params={{ doc: "medical" }}
+                  target="_blank"
+                  rel="noreferrer"
                   className="text-primary underline"
                 >
                   отказом от медицинской ответственности

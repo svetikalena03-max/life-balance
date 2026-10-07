@@ -25,8 +25,7 @@ export const Route = createFileRoute("/")({
       { title: "Баланс жизни — здоровье, питание, сон" },
       {
         name: "description",
-        content:
-          "Персональный помощник по здоровью, питанию, активности и хорошему самочувствию.",
+        content: "Персональный помощник по здоровью, питанию, активности и хорошему самочувствию.",
       },
     ],
   }),
@@ -69,9 +68,7 @@ function LandingPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Баланс жизни
           </h1>
-          <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-            {t("landing_subtitle")}
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("landing_subtitle")}</p>
         </header>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -153,6 +150,9 @@ function LandingPage() {
           </Link>
           <Link to="/legal/$doc" params={{ doc: "medical" }} className="hover:text-foreground">
             {t("legal_medical")}
+          </Link>
+          <Link to="/legal/$doc" params={{ doc: "cookies" }} className="hover:text-foreground">
+            Политика cookies
           </Link>
         </footer>
       </div>

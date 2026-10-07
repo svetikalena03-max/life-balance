@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Eye, EyeOff } from "lucide-react";
 import { normalizeAuthEmail, useAuth } from "@/lib/auth";
+import { createRegistrationConsents } from "@/lib/legal";
 
 export const Route = createFileRoute("/register")({
   head: () => ({ meta: [{ title: "Регистрация — Баланс жизни" }] }),
@@ -22,6 +24,9 @@ function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreeData, setAgreeData] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeMedical, setAgreeMedical] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,9 +43,18 @@ function RegisterPage() {
       setError("Пароли не совпадают");
       return;
     }
+    if (!agreeData || !agreeTerms || !agreeMedical) {
+      setError("Поставьте все обязательные галочки перед созданием аккаунта");
+      return;
+    }
     setSubmitting(true);
     try {
-      const result = await signUp(normalizeAuthEmail(email), password, name.trim() || undefined);
+      const result = await signUp(
+        normalizeAuthEmail(email),
+        password,
+        name.trim() || undefined,
+        createRegistrationConsents(),
+      );
       if (!result.ok) {
         setError(result.error ?? "Ошибка регистрации");
         return;
@@ -152,16 +166,88 @@ function RegisterPage() {
                 </button>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Анкета и обязательные согласия заполняются после подтверждения email и входа в
-              аккаунт.
-            </p>
-            <Button type="submit" disabled={submitting}>
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-secondary/40 p-3">
+              <Agree
+                checked={agreeData}
+                onChange={setAgreeData}
+                label={
+                  <>
+                    Я ознакомилась с{" "}
+                    <LegalLink doc="privacy">Политикой конфиденциальности</LegalLink> и даю{" "}
+                    <LegalLink doc="consent">
+                      согласие на обработку персональных данных, включая данные о здоровье
+                    </LegalLink>
+                  </>
+                }
+              />
+              <Agree
+                checked={agreeTerms}
+                onChange={setAgreeTerms}
+                label={
+                  <>
+                    Я принимаю <LegalLink doc="terms">Пользовательское соглашение</LegalLink>
+                  </>
+                }
+              />
+              <Agree
+                checked={agreeMedical}
+                onChange={setAgreeMedical}
+                label={
+                  <>
+                    Я ознакомилась с{" "}
+                    <LegalLink doc="medical">Медицинским предупреждением</LegalLink>
+                  </>
+                }
+              />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Нажимая кнопку ниже, вы также подтверждаете, что ознакомились с{" "}
+                <LegalLink doc="cookies">Политикой cookies</LegalLink>.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={submitting || !agreeData || !agreeTerms || !agreeMedical}
+            >
               {submitting ? "Создаём..." : "Создать аккаунт"}
             </Button>
           </form>
         )}
       </Card>
     </div>
+  );
+}
+
+function Agree({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: React.ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 text-sm text-foreground">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(value) => onChange(value === true)}
+        className="mt-0.5"
+      />
+      <span className="min-w-0 flex-1 leading-snug">{label}</span>
+    </label>
+  );
+}
+
+function LegalLink({ doc, children }: { doc: string; children: React.ReactNode }) {
+  return (
+    <Link
+      to="/legal/$doc"
+      params={{ doc }}
+      target="_blank"
+      rel="noreferrer"
+      className="text-primary underline underline-offset-2"
+    >
+      {children}
+    </Link>
   );
 }
