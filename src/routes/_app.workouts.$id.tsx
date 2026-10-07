@@ -15,12 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { todayISO, useEntries } from "@/lib/store";
-import {
-  getWorkout,
-  getWorkoutMinutes,
-  type WorkoutExercise,
-  type WorkoutVisual,
-} from "@/lib/workout-data";
+import { getWorkout, getWorkoutMinutes, type WorkoutVisual } from "@/lib/workout-data";
 
 export const Route = createFileRoute("/_app/workouts/$id")({
   component: WorkoutPlayerPage,
@@ -266,98 +261,118 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
 }
 
 function WorkoutVisualDemo({ visual, running }: { visual: WorkoutVisual; running: boolean }) {
-  const labels: Record<WorkoutVisual, string> = {
-    warmup: "Плавное движение",
-    march: "Поочерёдно",
-    squat: "Таз назад и вверх",
-    push: "К опоре и обратно",
-    step: "Вправо и влево",
-    chair: "С устойчивой опорой",
-    stretch: "Мягко потянуться",
-    breath: "Спокойный вдох и выдох",
+  const media: Record<
+    WorkoutVisual,
+    { src: string; kind: "video" | "image"; alt: string; source: string }
+  > = {
+    arms: {
+      src: "/workouts/arms-stretch.mp4",
+      kind: "video",
+      alt: "Женщина мягко растягивает руки и плечи",
+      source: "https://www.pexels.com/video/woman-stretching-arms-6446121/",
+    },
+    march: {
+      src: "/workouts/march.mp4",
+      kind: "video",
+      alt: "Женщина выполняет шаги на месте",
+      source: "https://www.pexels.com/video/a-woman-stationary-walking-exercise-at-home-4267362/",
+    },
+    squat: {
+      src: "/workouts/squat.mp4",
+      kind: "video",
+      alt: "Женщина показывает неглубокое приседание",
+      source: "https://www.pexels.com/video/woman-doing-squats-8026509/",
+    },
+    wallPushup: {
+      src: "/workouts/wall-pushup.gif",
+      kind: "image",
+      alt: "Демонстрация отжимания от стены",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Wallpushup-CDC_strength_training_for_older_adults.gif",
+    },
+    sideStretch: {
+      src: "/workouts/side-stretch.mp4",
+      kind: "video",
+      alt: "Женщина выполняет мягкое потягивание в сторону",
+      source: "https://www.pexels.com/video/a-woman-doing-side-to-side-body-stretches-3048925/",
+    },
+    hipAbduction: {
+      src: "/workouts/hip-abduction.gif",
+      kind: "image",
+      alt: "Демонстрация отведения ноги в сторону у опоры",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Hip_abduction-CDC_strength_training_for_older_adults.gif",
+    },
+    kneeExtension: {
+      src: "/workouts/knee-extension.gif",
+      kind: "image",
+      alt: "Демонстрация разгибания ноги сидя",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Knee_extension-CDC_strength_training_for_older_adults.gif",
+    },
+    overheadPress: {
+      src: "/workouts/overhead-press.gif",
+      kind: "image",
+      alt: "Демонстрация подъёма рук вверх сидя",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Overhead_press-CDC_strength_training_for_older_adults.gif",
+    },
+    toeStand: {
+      src: "/workouts/toe-stand.gif",
+      kind: "image",
+      alt: "Демонстрация подъёма на носки у опоры",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Toe_stand-CDC_strength_training_for_older_adults.gif",
+    },
+    backStretch: {
+      src: "/workouts/back-stretch.gif",
+      kind: "image",
+      alt: "Демонстрация мягкой растяжки плеч и спины",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Backstretch-CDC_strength_training_for_older_adults.gif",
+    },
+    hamstringStretch: {
+      src: "/workouts/hamstring-stretch.gif",
+      kind: "image",
+      alt: "Демонстрация растяжки задней поверхности бедра сидя",
+      source:
+        "https://commons.wikimedia.org/wiki/File:Hamstring_stretch-CDC_strength_training_for_older_adults.gif",
+    },
   };
+  const current = media[visual];
 
   return (
-    <div className="mb-4 flex min-h-64 flex-col items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-emerald-500/10 to-sky-500/10">
-      <svg
-        viewBox="0 0 220 210"
-        className={`h-48 w-48 ${running ? `workout-${visual}` : ""}`}
-        role="img"
-        aria-label={`Схема движения: ${labels[visual]}`}
-      >
-        {visual === "chair" ? (
-          <>
-            <g stroke="currentColor" strokeWidth="6" opacity="0.3" strokeLinecap="round">
-              <line x1="70" y1="118" x2="154" y2="118" />
-              <line x1="74" y1="118" x2="74" y2="190" />
-              <line x1="154" y1="70" x2="154" y2="190" />
-            </g>
-            <g
-              className="workout-body"
-              stroke="currentColor"
-              strokeWidth="12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="108" cy="36" r="19" className="fill-emerald-400 stroke-none" />
-              <line x1="108" y1="63" x2="108" y2="113" />
-              <line className="workout-arm-left" x1="106" y1="76" x2="72" y2="104" />
-              <line className="workout-arm-right" x1="110" y1="76" x2="143" y2="104" />
-              <polyline className="workout-leg-left" points="105,112 68,135 68,178" fill="none" />
-              <polyline
-                className="workout-leg-right"
-                points="111,112 145,135 145,178"
-                fill="none"
-              />
-            </g>
-          </>
-        ) : visual === "push" ? (
-          <>
-            <line
-              x1="178"
-              y1="28"
-              x2="178"
-              y2="190"
-              stroke="currentColor"
-              strokeWidth="7"
-              opacity="0.25"
-              strokeLinecap="round"
-            />
-            <g
-              className="workout-body"
-              stroke="currentColor"
-              strokeWidth="12"
-              strokeLinecap="round"
-            >
-              <circle cx="104" cy="43" r="19" className="fill-emerald-400 stroke-none" />
-              <line x1="110" y1="69" x2="122" y2="126" />
-              <line className="workout-arm-left" x1="112" y1="76" x2="168" y2="91" />
-              <line className="workout-arm-right" x1="113" y1="84" x2="168" y2="104" />
-              <line x1="122" y1="126" x2="82" y2="180" />
-              <line x1="123" y1="126" x2="132" y2="181" />
-            </g>
-          </>
+    <div className="relative mb-4 overflow-hidden rounded-3xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/10 to-sky-500/10 shadow-sm">
+      <div className="flex h-72 items-center justify-center bg-white/75 dark:bg-slate-950/40">
+        {current.kind === "video" ? (
+          <video
+            key={current.src}
+            src={current.src}
+            className="h-full w-full object-contain"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={current.alt}
+          />
         ) : (
-          <g className="workout-body" stroke="currentColor" strokeWidth="12" strokeLinecap="round">
-            <circle cx="110" cy="38" r="19" className="fill-emerald-400 stroke-none" />
-            <line x1="110" y1="64" x2="110" y2="123" />
-            <line className="workout-arm-left" x1="108" y1="78" x2="70" y2="112" />
-            <line className="workout-arm-right" x1="112" y1="78" x2="150" y2="112" />
-            <line className="workout-leg-left" x1="108" y1="122" x2="78" y2="178" />
-            <line className="workout-leg-right" x1="112" y1="122" x2="142" y2="178" />
-          </g>
+          <img src={current.src} alt={current.alt} className="h-full w-full object-contain p-3" />
         )}
-        <path
-          d={visual === "step" ? "M38 185h144" : "M62 192h96"}
-          stroke="currentColor"
-          strokeWidth="5"
-          strokeLinecap="round"
-          opacity="0.2"
-        />
-      </svg>
-      <span className="mb-4 rounded-full bg-card/85 px-4 py-2 text-sm font-medium text-foreground shadow-sm">
-        {running ? labels[visual] : "Нажмите «Начать»"}
-      </span>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-10 text-white">
+        <span className="rounded-full bg-black/35 px-3 py-1.5 text-sm font-medium backdrop-blur-sm">
+          {running ? "Повторяйте в своём темпе" : "Посмотрите движение"}
+        </span>
+        <a
+          href={current.source}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-white/80 underline decoration-white/40 underline-offset-2"
+        >
+          Источник
+        </a>
+      </div>
     </div>
   );
 }

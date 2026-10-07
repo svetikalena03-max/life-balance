@@ -1,5 +1,15 @@
 export type WorkoutVisual =
-  "warmup" | "march" | "squat" | "push" | "step" | "chair" | "stretch" | "breath";
+  | "arms"
+  | "march"
+  | "squat"
+  | "wallPushup"
+  | "sideStretch"
+  | "hipAbduction"
+  | "kneeExtension"
+  | "overheadPress"
+  | "toeStand"
+  | "backStretch"
+  | "hamstringStretch";
 
 export type WorkoutExercise = {
   id: string;
@@ -35,7 +45,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Стойте устойчиво или сядьте. Расправьте плечи и спокойно подышите.",
         tip: "Не запрокидывайте голову и не задерживайте дыхание.",
-        visual: "breath",
+        visual: "arms",
       },
       {
         id: "shoulders",
@@ -43,7 +53,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Поднимайте плечи вверх, мягко отводите назад и опускайте.",
         tip: "Движение медленное, шея остаётся свободной.",
-        visual: "warmup",
+        visual: "arms",
       },
       {
         id: "easy-march",
@@ -59,15 +69,15 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Медленно встаньте со стула и так же плавно сядьте обратно.",
         tip: "Колени направлены вперёд. Можно помогать себе руками.",
-        visual: "chair",
+        visual: "squat",
       },
       {
         id: "side-step-easy",
-        title: "Шаги в стороны",
+        title: "Отведение ноги в сторону",
         seconds: 90,
-        instruction: "Сделайте шаг вправо, приставьте ногу, затем повторите влево.",
-        tip: "Шаг небольшой, стопы смотрят вперёд.",
-        visual: "step",
+        instruction: "Держась за опору, мягко отводите прямую ногу в сторону и возвращайте.",
+        tip: "Корпус остаётся ровным. Затем поменяйте ногу.",
+        visual: "hipAbduction",
       },
       {
         id: "gentle-stretch",
@@ -75,7 +85,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Потянитесь макушкой вверх и мягко вытяните руки по очереди.",
         tip: "Тянитесь до приятного ощущения, не через боль.",
-        visual: "stretch",
+        visual: "sideStretch",
       },
     ],
   },
@@ -93,7 +103,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Шагайте легко, постепенно подключая движения руками.",
         tip: "Начинайте медленно и ускоряйтесь только при хорошем самочувствии.",
-        visual: "warmup",
+        visual: "march",
       },
       {
         id: "fast-march",
@@ -117,7 +127,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Ладони на стене. Согните локти и плавно оттолкнитесь.",
         tip: "Тело держите прямой линией, плечи не поднимайте.",
-        visual: "push",
+        visual: "wallPushup",
       },
       {
         id: "knee-lift",
@@ -129,19 +139,19 @@ export const WORKOUTS: WorkoutProgram[] = [
       },
       {
         id: "wide-step",
-        title: "Шаги в стороны с руками",
+        title: "Махи ногой в сторону",
         seconds: 120,
-        instruction: "Шагайте вправо и влево, одновременно раскрывая руки.",
-        tip: "Не заваливайте колени внутрь.",
-        visual: "step",
+        instruction: "Отводите ногу в сторону до комфортной высоты и плавно возвращайте.",
+        tip: "Держитесь за опору и не наклоняйте корпус.",
+        visual: "hipAbduction",
       },
       {
         id: "back-step",
-        title: "Шаг назад",
+        title: "Подъём на носки",
         seconds: 90,
-        instruction: "Поочерёдно отставляйте ногу назад, сохраняя вес на передней ноге.",
-        tip: "Шаг короткий. При неустойчивости держитесь за стул.",
-        visual: "step",
+        instruction: "Держась за опору, медленно поднимитесь на носки и опустите пятки.",
+        tip: "Не торопитесь и сохраняйте устойчивое положение.",
+        visual: "toeStand",
       },
       {
         id: "active-cooldown",
@@ -149,7 +159,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Замедлите шаг и сделайте несколько спокойных выдохов.",
         tip: "Не останавливайтесь резко после активной части.",
-        visual: "breath",
+        visual: "arms",
       },
     ],
   },
@@ -167,31 +177,31 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Сядьте ближе к краю устойчивого стула, стопы полностью на полу.",
         tip: "Не используйте стул на колёсах.",
-        visual: "chair",
+        visual: "kneeExtension",
       },
       {
         id: "seated-march",
-        title: "Марш сидя",
+        title: "Разгибание правой ноги",
         seconds: 120,
-        instruction: "Поднимайте колени по очереди в комфортной амплитуде.",
+        instruction: "Медленно выпрямляйте правую ногу и возвращайте стопу на пол.",
         tip: "Спина вытянута, руками можно держаться за сиденье.",
-        visual: "chair",
+        visual: "kneeExtension",
       },
       {
         id: "knee-extension",
-        title: "Разгибание ног",
+        title: "Разгибание левой ноги",
         seconds: 90,
-        instruction: "Поочерёдно выпрямляйте ногу и возвращайте стопу на пол.",
+        instruction: "Медленно выпрямляйте левую ногу и возвращайте стопу на пол.",
         tip: "Не выпрямляйте колено через боль.",
-        visual: "chair",
+        visual: "kneeExtension",
       },
       {
         id: "seated-punch",
-        title: "Руки вперёд",
+        title: "Подъём рук вверх",
         seconds: 90,
-        instruction: "Мягко вытягивайте руки вперёд по очереди, без рывков.",
-        tip: "Плечи опущены, локти полностью не блокируйте.",
-        visual: "push",
+        instruction: "Поднимайте обе руки вверх до комфортной высоты и плавно опускайте.",
+        tip: "Плечи не тяните к ушам, двигайтесь без рывков.",
+        visual: "overheadPress",
       },
       {
         id: "heel-toe",
@@ -199,7 +209,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Поочерёдно поднимайте пятки, затем носки, не отрывая стопы целиком.",
         tip: "Двигайтесь в удобном ритме.",
-        visual: "chair",
+        visual: "toeStand",
       },
       {
         id: "seated-stretch",
@@ -207,7 +217,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Тянитесь руками вверх по очереди, сохраняя устойчивое положение.",
         tip: "Если кружится голова, держите руки ниже.",
-        visual: "stretch",
+        visual: "arms",
       },
       {
         id: "chair-breath",
@@ -215,7 +225,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Опустите руки, расслабьте плечи и восстановите дыхание.",
         tip: "Вставайте со стула не спеша.",
-        visual: "breath",
+        visual: "arms",
       },
     ],
   },
@@ -233,7 +243,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Мягко поворачивайте голову вправо и влево в небольшой амплитуде.",
         tip: "Не делайте полные круги головой.",
-        visual: "warmup",
+        visual: "backStretch",
       },
       {
         id: "shoulder-release",
@@ -241,7 +251,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Сведите лопатки, задержитесь на секунду и расслабьтесь.",
         tip: "Не прогибайтесь в пояснице.",
-        visual: "warmup",
+        visual: "backStretch",
       },
       {
         id: "side-reach",
@@ -249,23 +259,23 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 90,
         instruction: "Поднимите руку и слегка потянитесь в противоположную сторону.",
         tip: "Не уходите в глубокий наклон.",
-        visual: "stretch",
+        visual: "sideStretch",
       },
       {
         id: "hip-mobility",
-        title: "Подвижность таза",
+        title: "Отведение ноги в сторону",
         seconds: 90,
-        instruction: "Переносите вес с ноги на ногу небольшими плавными движениями.",
-        tip: "Стопы стоят устойчиво, колени мягкие.",
-        visual: "step",
+        instruction: "Держась за опору, плавно отводите ногу в сторону и возвращайте.",
+        tip: "Носок смотрит вперёд, корпус не наклоняется.",
+        visual: "hipAbduction",
       },
       {
         id: "calf-stretch",
-        title: "Икры у опоры",
+        title: "Подъёмы на носки у опоры",
         seconds: 90,
-        instruction: "Отставьте одну ногу назад и мягко прижмите пятку к полу.",
-        tip: "Обе стопы смотрят вперёд. Затем поменяйте сторону.",
-        visual: "stretch",
+        instruction: "Медленно поднимитесь на носки и так же плавно опустите пятки.",
+        tip: "Держитесь за устойчивую опору и не торопитесь.",
+        visual: "toeStand",
       },
       {
         id: "chair-hamstring",
@@ -273,7 +283,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 60,
         instruction: "Сидя, выпрямите одну ногу и слегка потянитесь грудью вперёд.",
         tip: "Спина длинная, глубокий наклон не нужен.",
-        visual: "chair",
+        visual: "hamstringStretch",
       },
       {
         id: "stretch-finish",
@@ -281,7 +291,7 @@ export const WORKOUTS: WorkoutProgram[] = [
         seconds: 30,
         instruction: "Вернитесь в удобное положение и спокойно подышите.",
         tip: "Отметьте, где в теле стало свободнее.",
-        visual: "breath",
+        visual: "arms",
       },
     ],
   },
