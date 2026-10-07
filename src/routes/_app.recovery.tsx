@@ -20,6 +20,7 @@ function RecoveryPage() {
     sleep: ["rain", "forest", "audio"],
     stress: ["breathing", "meditation", "rain"],
     energy: ["breathing", "audio", "forest"],
+    craving: ["craving", "breathing", "meditation"],
     meditate: ["meditation"],
     breath: ["breathing"],
     sounds: ["rain", "sea", "forest", "fireplace"],
@@ -95,6 +96,21 @@ function RecoveryPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.duration} {ru ? "мин" : "min"}
                     </p>
+                    <span
+                      className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        item.mode === "ambient"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                      }`}
+                    >
+                      {item.mode === "ambient"
+                        ? ru
+                          ? "аудио скоро"
+                          : "audio soon"
+                        : ru
+                          ? "доступно"
+                          : "available"}
+                    </span>
                   </div>
                 </div>
               </Card>
