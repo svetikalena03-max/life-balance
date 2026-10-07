@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ExternalLink,
@@ -14,7 +14,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings } from "@/lib/settings";
-import { findRecoveryItem, getRecoveryStep, type RecoveryItem } from "@/lib/recovery-data";
+import {
+  findRecoveryItem,
+  getRecoveryStep,
+  type RecoveryItem,
+  type RecoveryStep,
+} from "@/lib/recovery-data";
 
 export const Route = createFileRoute("/_app/recovery/$id")({
   component: RecoveryDetailPage,
@@ -306,9 +311,44 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [musicVolume, setMusicVolume] = useState(0.16);
   const lastSpokenStep = useRef(-1);
+  const runningRef = useRef(false);
+  const voiceEnabledRef = useRef(true);
+  const musicEnabledRef = useRef(true);
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
   const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  const resumeMusic = useCallback(() => {
+    const music = musicRef.current;
+    if (!music || !runningRef.current || !musicEnabledRef.current) return;
+    void music.play().catch(() => {
+      musicEnabledRef.current = false;
+      setMusicEnabled(false);
+    });
+  }, []);
+
+  const speakStep = useCallback(
+    (step: RecoveryStep, stepIndex: number) => {
+      if (!speechAvailable || !voiceEnabledRef.current) return false;
+
+      musicRef.current?.pause();
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(ru ? step.ru : step.en);
+      utterance.lang = ru ? "ru-RU" : "en-US";
+      utterance.rate = 0.86;
+      utterance.pitch = 0.95;
+      const matchingVoice = window.speechSynthesis
+        .getVoices()
+        .find((voice) => voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"));
+      if (matchingVoice) utterance.voice = matchingVoice;
+      utterance.onend = resumeMusic;
+      utterance.onerror = resumeMusic;
+      window.speechSynthesis.speak(utterance);
+      lastSpokenStep.current = stepIndex;
+      return true;
+    },
+    [resumeMusic, ru, speechAvailable],
+  );
 
   useEffect(() => {
     if (!running) return;
@@ -318,6 +358,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
         const next = current + 1;
         if (next >= totalSeconds) {
           musicRef.current?.pause();
+          runningRef.current = false;
           setRunning(false);
           setCompleted(true);
           return totalSeconds;
@@ -346,47 +387,60 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(ru ? currentStep.ru : currentStep.en);
-    utterance.lang = ru ? "ru-RU" : "en-US";
-    utterance.rate = 0.86;
-    utterance.pitch = 0.95;
-    const matchingVoice = window.speechSynthesis
-      .getVoices()
-      .find((voice) => voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"));
-    if (matchingVoice) utterance.voice = matchingVoice;
-    window.speechSynthesis.speak(utterance);
-    lastSpokenStep.current = currentStepIndex;
-  }, [currentStep, currentStepIndex, item.mode, ru, running, speechAvailable, voiceEnabled]);
+    speakStep(currentStep, currentStepIndex);
+  }, [currentStep, currentStepIndex, item.mode, running, speakStep, speechAvailable, voiceEnabled]);
 
   useEffect(() => {
     const music = musicRef.current;
     return () => {
+      runningRef.current = false;
       music?.pause();
       if (speechAvailable) window.speechSynthesis.cancel();
     };
   }, [speechAvailable]);
 
   const start = async () => {
+    let stepToSpeak = currentStep;
+    let stepIndexToSpeak = currentStepIndex;
+
     if (completed || elapsed >= totalSeconds) {
       setElapsed(0);
       setCompleted(false);
       lastSpokenStep.current = -1;
       if (musicRef.current) musicRef.current.currentTime = 0;
+      stepToSpeak = item.steps?.[0];
+      stepIndexToSpeak = stepToSpeak ? 0 : -1;
     }
 
-    if (musicEnabled && musicRef.current) {
+    runningRef.current = true;
+    setRunning(true);
+
+    const musicStart =
+      musicEnabledRef.current && musicRef.current ? musicRef.current.play() : undefined;
+
+    const spoke =
+      item.mode === "guided" &&
+      !!stepToSpeak &&
+      stepIndexToSpeak !== lastSpokenStep.current &&
+      speakStep(stepToSpeak, stepIndexToSpeak);
+
+    if (spoke) {
+      void musicStart?.catch(() => {
+        // Паузу ставим сразу намеренно: так iPhone разрешает продолжить музыку после фразы.
+      });
+    } else if (musicStart) {
       try {
-        await musicRef.current.play();
+        await musicStart;
       } catch {
+        musicEnabledRef.current = false;
         setMusicEnabled(false);
       }
     }
-    setRunning(true);
   };
 
   const toggleRunning = () => {
     if (running) {
+      runningRef.current = false;
       musicRef.current?.pause();
       if (speechAvailable) window.speechSynthesis.cancel();
       setRunning(false);
@@ -396,6 +450,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   };
 
   const reset = () => {
+    runningRef.current = false;
     setRunning(false);
     setElapsed(0);
     setCompleted(false);
@@ -406,23 +461,28 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   };
 
   const toggleVoice = () => {
-    setVoiceEnabled((current) => {
-      if (current && speechAvailable) window.speechSynthesis.cancel();
-      if (!current) lastSpokenStep.current = -1;
-      return !current;
-    });
+    const next = !voiceEnabled;
+    voiceEnabledRef.current = next;
+    setVoiceEnabled(next);
+
+    if (!next && speechAvailable) {
+      window.speechSynthesis.cancel();
+      resumeMusic();
+    } else if (next && runningRef.current && currentStep) {
+      lastSpokenStep.current = -1;
+      speakStep(currentStep, currentStepIndex);
+    }
   };
 
   const toggleMusic = () => {
-    setMusicEnabled((current) => {
-      const next = !current;
-      if (!next) {
-        musicRef.current?.pause();
-      } else if (running) {
-        void musicRef.current?.play();
-      }
-      return next;
-    });
+    const next = !musicEnabled;
+    musicEnabledRef.current = next;
+    setMusicEnabled(next);
+    if (!next) {
+      musicRef.current?.pause();
+    } else if (runningRef.current && !(speechAvailable && window.speechSynthesis.speaking)) {
+      resumeMusic();
+    }
   };
 
   const progress = Math.min(100, (elapsed / totalSeconds) * 100);
@@ -575,6 +635,13 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
           {ru
             ? "На этом устройстве голос недоступен, но текст и таймер работают."
             : "Voice is unavailable on this device, but text and timer still work."}
+        </p>
+      )}
+      {item.mode === "guided" && speechAvailable && voiceEnabled && musicEnabled && (
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {ru
+            ? "Во время голосовой подсказки музыка ставится на паузу, затем включается снова."
+            : "Music pauses during each voice prompt, then resumes automatically."}
         </p>
       )}
     </Card>

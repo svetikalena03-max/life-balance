@@ -261,82 +261,31 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
 }
 
 function WorkoutVisualDemo({ visual, running }: { visual: WorkoutVisual; running: boolean }) {
-  const media: Record<
-    WorkoutVisual,
-    { src: string; kind: "video" | "image"; alt: string; source: string }
-  > = {
+  const media: Record<WorkoutVisual, { src: string; alt: string; source: string }> = {
     arms: {
       src: "/workouts/arms-stretch.mp4",
-      kind: "video",
       alt: "Женщина мягко растягивает руки и плечи",
       source: "https://www.pexels.com/video/woman-stretching-arms-6446121/",
     },
     march: {
       src: "/workouts/march.mp4",
-      kind: "video",
       alt: "Женщина выполняет шаги на месте",
       source: "https://www.pexels.com/video/a-woman-stationary-walking-exercise-at-home-4267362/",
     },
     squat: {
       src: "/workouts/squat.mp4",
-      kind: "video",
       alt: "Женщина показывает неглубокое приседание",
       source: "https://www.pexels.com/video/woman-doing-squats-8026509/",
     },
     wallPushup: {
-      src: "/workouts/wall-pushup.gif",
-      kind: "image",
-      alt: "Демонстрация отжимания от стены",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Wallpushup-CDC_strength_training_for_older_adults.gif",
+      src: "/workouts/wall-pushup.mp4",
+      alt: "Мужчина показывает отжимание от стены",
+      source: "https://www.pexels.com/video/a-man-doing-wall-push-ups-5034563/",
     },
     sideStretch: {
       src: "/workouts/side-stretch.mp4",
-      kind: "video",
       alt: "Женщина выполняет мягкое потягивание в сторону",
       source: "https://www.pexels.com/video/a-woman-doing-side-to-side-body-stretches-3048925/",
-    },
-    hipAbduction: {
-      src: "/workouts/hip-abduction.gif",
-      kind: "image",
-      alt: "Демонстрация отведения ноги в сторону у опоры",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Hip_abduction-CDC_strength_training_for_older_adults.gif",
-    },
-    kneeExtension: {
-      src: "/workouts/knee-extension.gif",
-      kind: "image",
-      alt: "Демонстрация разгибания ноги сидя",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Knee_extension-CDC_strength_training_for_older_adults.gif",
-    },
-    overheadPress: {
-      src: "/workouts/overhead-press.gif",
-      kind: "image",
-      alt: "Демонстрация подъёма рук вверх сидя",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Overhead_press-CDC_strength_training_for_older_adults.gif",
-    },
-    toeStand: {
-      src: "/workouts/toe-stand.gif",
-      kind: "image",
-      alt: "Демонстрация подъёма на носки у опоры",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Toe_stand-CDC_strength_training_for_older_adults.gif",
-    },
-    backStretch: {
-      src: "/workouts/back-stretch.gif",
-      kind: "image",
-      alt: "Демонстрация мягкой растяжки плеч и спины",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Backstretch-CDC_strength_training_for_older_adults.gif",
-    },
-    hamstringStretch: {
-      src: "/workouts/hamstring-stretch.gif",
-      kind: "image",
-      alt: "Демонстрация растяжки задней поверхности бедра сидя",
-      source:
-        "https://commons.wikimedia.org/wiki/File:Hamstring_stretch-CDC_strength_training_for_older_adults.gif",
     },
   };
   const current = media[visual];
@@ -344,21 +293,17 @@ function WorkoutVisualDemo({ visual, running }: { visual: WorkoutVisual; running
   return (
     <div className="relative mb-4 overflow-hidden rounded-3xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/10 to-sky-500/10 shadow-sm">
       <div className="flex h-72 items-center justify-center bg-white/75 dark:bg-slate-950/40">
-        {current.kind === "video" ? (
-          <video
-            key={current.src}
-            src={current.src}
-            className="h-full w-full object-contain"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-label={current.alt}
-          />
-        ) : (
-          <img src={current.src} alt={current.alt} className="h-full w-full object-contain p-3" />
-        )}
+        <video
+          key={current.src}
+          src={current.src}
+          className="h-full w-full object-contain"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label={current.alt}
+        />
       </div>
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-10 text-white">
         <span className="rounded-full bg-black/35 px-3 py-1.5 text-sm font-medium backdrop-blur-sm">

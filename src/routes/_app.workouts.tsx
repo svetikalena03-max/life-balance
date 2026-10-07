@@ -42,7 +42,7 @@ function WorkoutsPage() {
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 {needsDoctorPlan
                   ? "Готовые комплексы не заменяют назначенную ЛФК. Выполняйте только упражнения, которые разрешил специалист."
-                  : "Начните с тренировки сидя или мягкого комплекса. Пропускайте любое движение, которое вызывает боль."}
+                  : "Начните с мягкого комплекса. Пропускайте любое движение, которое вызывает боль."}
               </p>
             </div>
           </div>
@@ -51,9 +51,7 @@ function WorkoutsPage() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {WORKOUTS.map((workout) => {
-          const recommended =
-            (needsDoctorPlan || needsGentle) &&
-            ["chair-workout", "gentle-morning"].includes(workout.id);
+          const recommended = (needsDoctorPlan || needsGentle) && workout.id === "gentle-morning";
           return (
             <Link key={workout.id} to="/workouts/$id" params={{ id: workout.id }}>
               <Card
