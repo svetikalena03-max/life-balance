@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ExternalLink,
+  Music2,
   Pause,
   Play,
   RotateCcw,
@@ -297,10 +298,13 @@ function AmbientPlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 
 function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const totalSeconds = item.duration * 60;
+  const musicRef = useRef<HTMLAudioElement>(null);
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [musicVolume, setMusicVolume] = useState(0.16);
   const lastSpokenStep = useRef(-1);
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
@@ -313,6 +317,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       setElapsed((current) => {
         const next = current + 1;
         if (next >= totalSeconds) {
+          musicRef.current?.pause();
           setRunning(false);
           setCompleted(true);
           return totalSeconds;
@@ -323,6 +328,11 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 
     return () => window.clearInterval(timer);
   }, [running, totalSeconds]);
+
+  useEffect(() => {
+    const music = musicRef.current;
+    if (music) music.volume = musicVolume;
+  }, [musicVolume]);
 
   useEffect(() => {
     if (
@@ -350,19 +360,39 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   }, [currentStep, currentStepIndex, item.mode, ru, running, speechAvailable, voiceEnabled]);
 
   useEffect(() => {
+    const music = musicRef.current;
     return () => {
+      music?.pause();
       if (speechAvailable) window.speechSynthesis.cancel();
     };
   }, [speechAvailable]);
 
-  const toggleRunning = () => {
+  const start = async () => {
     if (completed || elapsed >= totalSeconds) {
       setElapsed(0);
       setCompleted(false);
       lastSpokenStep.current = -1;
+      if (musicRef.current) musicRef.current.currentTime = 0;
     }
-    if (running && speechAvailable) window.speechSynthesis.cancel();
-    setRunning((current) => !current);
+
+    if (musicEnabled && musicRef.current) {
+      try {
+        await musicRef.current.play();
+      } catch {
+        setMusicEnabled(false);
+      }
+    }
+    setRunning(true);
+  };
+
+  const toggleRunning = () => {
+    if (running) {
+      musicRef.current?.pause();
+      if (speechAvailable) window.speechSynthesis.cancel();
+      setRunning(false);
+      return;
+    }
+    void start();
   };
 
   const reset = () => {
@@ -370,6 +400,8 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     setElapsed(0);
     setCompleted(false);
     lastSpokenStep.current = -1;
+    musicRef.current?.pause();
+    if (musicRef.current) musicRef.current.currentTime = 0;
     if (speechAvailable) window.speechSynthesis.cancel();
   };
 
@@ -381,10 +413,24 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     });
   };
 
+  const toggleMusic = () => {
+    setMusicEnabled((current) => {
+      const next = !current;
+      if (!next) {
+        musicRef.current?.pause();
+      } else if (running) {
+        void musicRef.current?.play();
+      }
+      return next;
+    });
+  };
+
   const progress = Math.min(100, (elapsed / totalSeconds) * 100);
 
   return (
     <Card className="overflow-hidden p-5">
+      <audio ref={musicRef} src="/audio/calm-background.mp3" loop preload="metadata" />
+
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -400,26 +446,45 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
             {formatTime(Math.max(0, totalSeconds - elapsed))}
           </p>
         </div>
-        {item.mode === "guided" && (
+        <div className="flex gap-2">
+          {item.mode === "guided" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label={
+                voiceEnabled
+                  ? ru
+                    ? "Выключить голос"
+                    : "Mute voice"
+                  : ru
+                    ? "Включить голос"
+                    : "Enable voice"
+              }
+              onClick={toggleVoice}
+              disabled={!speechAvailable}
+            >
+              {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
             size="icon"
             aria-label={
-              voiceEnabled
+              musicEnabled
                 ? ru
-                  ? "Выключить голос"
-                  : "Mute voice"
+                  ? "Выключить музыку"
+                  : "Mute music"
                 : ru
-                  ? "Включить голос"
-                  : "Enable voice"
+                  ? "Включить музыку"
+                  : "Enable music"
             }
-            onClick={toggleVoice}
-            disabled={!speechAvailable}
+            onClick={toggleMusic}
           >
-            {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            {musicEnabled ? <Music2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
           </Button>
-        )}
+        </div>
       </div>
 
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
@@ -427,6 +492,27 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
           className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500"
           style={{ width: `${progress}%` }}
         />
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-sky-500/10 px-4 py-3">
+        <label className="flex items-center gap-3 text-sm font-medium text-foreground">
+          <Music2 className="h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" />
+          <span className="shrink-0">{ru ? "Музыка" : "Music"}</span>
+          <input
+            type="range"
+            min="0"
+            max="0.35"
+            step="0.01"
+            value={musicVolume}
+            onChange={(event) => setMusicVolume(Number(event.target.value))}
+            disabled={!musicEnabled}
+            className="h-2 w-full cursor-pointer accent-sky-600 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={ru ? "Громкость фоновой музыки" : "Background music volume"}
+          />
+          <span className="w-10 text-right tabular-nums">
+            {musicEnabled ? `${Math.round((musicVolume / 0.35) * 100)}%` : "0%"}
+          </span>
+        </label>
       </div>
 
       {item.mode === "breathing" ? (
