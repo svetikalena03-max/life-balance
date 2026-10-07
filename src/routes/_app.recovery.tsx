@@ -97,19 +97,9 @@ function RecoveryPage() {
                       {item.duration} {ru ? "мин" : "min"}
                     </p>
                     <span
-                      className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        item.mode === "ambient"
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                      }`}
+                      className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${"bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}
                     >
-                      {item.mode === "ambient"
-                        ? ru
-                          ? "аудио скоро"
-                          : "audio soon"
-                        : ru
-                          ? "доступно"
-                          : "available"}
+                      {ru ? "доступно" : "available"}
                     </span>
                   </div>
                 </div>
