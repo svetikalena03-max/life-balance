@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { SettingsProvider } from "@/lib/settings";
 import { ThemeLangToggle } from "@/components/ThemeLangToggle";
+import { CookieNotice } from "@/components/CookieNotice";
 
 function NotFoundComponent() {
   return (
@@ -141,6 +142,7 @@ function RootComponent() {
         <ThemeLangToggle />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <CookieNotice />
         <Toaster position="top-center" />
       </SettingsProvider>
     </QueryClientProvider>

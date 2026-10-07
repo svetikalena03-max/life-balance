@@ -1,11 +1,18 @@
 // Авторизация через Lovable Cloud (Supabase Auth).
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  allRequiredConsentsAccepted,
+  legalConsentMetadata,
+  readRegistrationConsents,
+  type RegistrationConsents,
+} from "@/lib/legal";
 
 export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  registrationConsents?: RegistrationConsents | null;
 }
 
 export interface AuthResult {
@@ -44,7 +51,12 @@ function toAuthUser(
   if (!u) return null;
   const meta = u.user_metadata ?? {};
   const name = (meta.name as string | undefined) ?? (meta.full_name as string | undefined);
-  return { id: u.id, email: u.email ?? "", name };
+  return {
+    id: u.id,
+    email: u.email ?? "",
+    name,
+    registrationConsents: readRegistrationConsents(meta),
+  };
 }
 
 export function useAuth() {
@@ -63,16 +75,27 @@ export function useAuth() {
   }, []);
 
   const signUp = useCallback(
-    async (email: string, password: string, name?: string): Promise<AuthResult> => {
+    async (
+      email: string,
+      password: string,
+      name?: string,
+      consents?: RegistrationConsents,
+    ): Promise<AuthResult> => {
       const e = normalizeAuthEmail(email);
       const p = password;
       if (!e || !p) return { ok: false, error: "Введите email и пароль" };
+      if (!consents || !allRequiredConsentsAccepted(consents)) {
+        return { ok: false, error: "Подтвердите все обязательные документы" };
+      }
       const { data, error } = await supabase.auth.signUp({
         email: e,
         password: p,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: name ? { name: name.trim() } : {},
+          data: {
+            ...(name ? { name: name.trim() } : {}),
+            ...legalConsentMetadata(consents),
+          },
         },
       });
       if (error) {

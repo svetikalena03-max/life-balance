@@ -26,6 +26,37 @@ function loadModule(path, dependencies) {
 }
 
 const react = { useState: (value) => [value, () => {}], useEffect() {}, useCallback: (fn) => fn };
+const consent = {
+  privacyAndData: true,
+  terms: true,
+  medical: true,
+  documentVersion: "2026-10-07",
+  acceptedAt: "2026-10-07T00:00:00.000Z",
+};
+const legal = {
+  LEGAL_DOCUMENT_VERSION: "2026-10-07",
+  allRequiredConsentsAccepted(value) {
+    return Boolean(
+      value?.privacyAndData &&
+      value?.terms &&
+      value?.medical &&
+      value?.documentVersion === "2026-10-07",
+    );
+  },
+  legalConsentMetadata(value) {
+    return {
+      privacy_policy_accepted: value.privacyAndData,
+      personal_data_accepted: value.privacyAndData,
+      user_agreement_accepted: value.terms,
+      medical_disclaimer_accepted: value.medical,
+      legal_document_version: value.documentVersion,
+      legal_accepted_at: value.acceptedAt,
+    };
+  },
+  readRegistrationConsents() {
+    return null;
+  },
+};
 // Add a browser origin to the VM without exposing application credentials.
 const originalLoad = loadModule;
 function browserAuth(response) {
@@ -41,23 +72,24 @@ function browserAuth(response) {
   vm.runInNewContext(code, {
     exports,
     window: { location: { origin: "https://example.test" } },
-    require: (name) =>
-      name === "react"
-        ? react
-        : {
-            supabase: {
-              auth: {
-                async signUp(input) {
-                  request = input;
-                  return response;
-                },
-                async signInWithPassword() {
-                  calls++;
-                  throw new Error("Unexpected login");
-                },
-              },
+    require: (name) => {
+      if (name === "react") return react;
+      if (name === "@/lib/legal") return legal;
+      return {
+        supabase: {
+          auth: {
+            async signUp(input) {
+              request = input;
+              return response;
+            },
+            async signInWithPassword() {
+              calls++;
+              throw new Error("Unexpected login");
             },
           },
+        },
+      };
+    },
     console: { info() {}, error() {}, warn() {} },
   });
   return { signUp: exports.useAuth().signUp, calls: () => calls, request: () => request };
@@ -75,12 +107,20 @@ for (const [name, session, confirmation] of [
 ]) {
   test(name, async () => {
     const scenario = browserAuth({ data: { user, session }, error: null });
-    const result = await scenario.signUp(" A@example.test ", "password", "Анна");
+    const result = await scenario.signUp(" A@example.test ", "password", "Анна", consent);
     assert.equal(result.ok, true);
     assert.equal(result.requiresEmailConfirmation, confirmation);
     assert.equal(scenario.calls(), 0);
     assert.equal(scenario.request().email, "a@example.test");
-    assert.deepEqual(Object.keys(scenario.request().options.data), ["name"]);
+    assert.deepEqual(Object.keys(scenario.request().options.data), [
+      "name",
+      "privacy_policy_accepted",
+      "personal_data_accepted",
+      "user_agreement_accepted",
+      "medical_disclaimer_accepted",
+      "legal_document_version",
+      "legal_accepted_at",
+    ]);
   });
 }
 test("existing account and signup failure are not reported as confirmation success", async () => {
@@ -90,7 +130,7 @@ test("existing account and signup failure are not reported as confirmation succe
     { data: { user: null, session: null }, error: null },
   ]) {
     const scenario = browserAuth(response);
-    assert.equal((await scenario.signUp(user.email, "password")).ok, false);
+    assert.equal((await scenario.signUp(user.email, "password", undefined, consent)).ok, false);
     assert.equal(scenario.calls(), 0);
   }
 });
@@ -120,7 +160,9 @@ function registrationClient(profile, consents, failure = null) {
     },
   };
 }
-const { loadRegistrationState } = loadModule("../src/lib/registration.ts", {});
+const { loadRegistrationState } = loadModule("../src/lib/registration.ts", {
+  "@/lib/legal": legal,
+});
 test("first login requires both filled profile and accepted consents", async () => {
   for (const [profile, consents, complete] of [
     [null, [], false],
@@ -190,6 +232,7 @@ function completionScenario({
         },
       },
     },
+    "@/lib/legal": legal,
   };
   for (const [file, names] of Object.entries({
     button: ["Button"],
