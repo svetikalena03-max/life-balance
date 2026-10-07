@@ -97,7 +97,6 @@
   --sidebar-ring: oklch(0.65 0.12 180);
 }
 
-
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -138,7 +137,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     overflow-x: hidden;
@@ -146,5 +146,117 @@
 
   body {
     overscroll-behavior-y: none;
+  }
+}
+
+@keyframes workout-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes workout-sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes workout-left-limb {
+  0%,
+  100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(-18deg);
+  }
+}
+
+@keyframes workout-right-limb {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+}
+
+@keyframes workout-reach-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(55deg);
+  }
+}
+
+@keyframes workout-reach-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-55deg);
+  }
+}
+
+.workout-march .workout-arm-left,
+.workout-march .workout-leg-right,
+.workout-step .workout-arm-left,
+.workout-step .workout-leg-right {
+  transform-origin: 110px 90px;
+  animation: workout-left-limb 1s ease-in-out infinite;
+}
+
+.workout-march .workout-arm-right,
+.workout-march .workout-leg-left,
+.workout-step .workout-arm-right,
+.workout-step .workout-leg-left {
+  transform-origin: 110px 90px;
+  animation: workout-right-limb 1s ease-in-out infinite;
+}
+
+.workout-squat .workout-body,
+.workout-chair .workout-body {
+  animation: workout-bob 1.5s ease-in-out infinite;
+}
+
+.workout-push .workout-body,
+.workout-warmup .workout-body {
+  transform-origin: 110px 122px;
+  animation: workout-sway 1.5s ease-in-out infinite;
+}
+
+.workout-stretch .workout-arm-left {
+  transform-origin: 108px 78px;
+  animation: workout-reach-left 1.7s ease-in-out infinite;
+}
+
+.workout-stretch .workout-arm-right {
+  transform-origin: 112px 78px;
+  animation: workout-reach-right 1.7s ease-in-out infinite;
+}
+
+.workout-breath .workout-body {
+  transform-origin: center;
+  animation: workout-bob 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="workout-"] .workout-body,
+  [class*="workout-"] .workout-arm-left,
+  [class*="workout-"] .workout-arm-right,
+  [class*="workout-"] .workout-leg-left,
+  [class*="workout-"] .workout-leg-right {
+    animation: none !important;
   }
 }

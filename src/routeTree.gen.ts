@@ -9,45 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LegalDocRouteImport } from './routes/legal.$doc'
-import { Route as AppVoiceRouteImport } from './routes/_app.voice'
-import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppRecoveryRouteImport } from './routes/_app.recovery'
-import { Route as AppRecipesRouteImport } from './routes/_app.recipes'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppHomeRouteImport } from './routes/_app.home'
-import { Route as AppHistoryRouteImport } from './routes/_app.history'
-import { Route as AppHealthFeaturesRouteImport } from './routes/_app.health-features'
-import { Route as AppHealthRouteImport } from './routes/_app.health'
-import { Route as AppHabitsRouteImport } from './routes/_app.habits'
-import { Route as AppDiaryRouteImport } from './routes/_app.diary'
-import { Route as AppChartsRouteImport } from './routes/_app.charts'
-import { Route as AppAiRouteImport } from './routes/_app.ai'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
-import { Route as AppRecoveryIdRouteImport } from './routes/_app.recovery.$id'
-import { Route as AppRecipesIdRouteImport } from './routes/_app.recipes.$id'
+import { Route as AppAiRouteImport } from './routes/_app.ai'
+import { Route as AppChartsRouteImport } from './routes/_app.charts'
+import { Route as AppDiaryRouteImport } from './routes/_app.diary'
+import { Route as AppHabitsRouteImport } from './routes/_app.habits'
+import { Route as AppHealthRouteImport } from './routes/_app.health'
+import { Route as AppHealthFeaturesRouteImport } from './routes/_app.health-features'
+import { Route as AppHistoryRouteImport } from './routes/_app.history'
+import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppRecipesRouteImport } from './routes/_app.recipes'
+import { Route as AppRecoveryRouteImport } from './routes/_app.recovery'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSubscriptionRouteImport } from './routes/_app.subscription'
+import { Route as AppVoiceRouteImport } from './routes/_app.voice'
+import { Route as AppWorkoutsRouteImport } from './routes/_app.workouts'
+import { Route as LegalDocRouteImport } from './routes/legal.$doc'
 import { Route as AppHistoryDateRouteImport } from './routes/_app.history.$date'
+import { Route as AppRecipesIdRouteImport } from './routes/_app.recipes.$id'
+import { Route as AppRecoveryIdRouteImport } from './routes/_app.recovery.$id'
+import { Route as AppWorkoutsIdRouteImport } from './routes/_app.workouts.$id'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -55,83 +51,24 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegalDocRoute = LegalDocRouteImport.update({
-  id: '/legal/$doc',
-  path: '/legal/$doc',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppVoiceRoute = AppVoiceRouteImport.update({
-  id: '/voice',
-  path: '/voice',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSubscriptionRoute = AppSubscriptionRouteImport.update({
-  id: '/subscription',
-  path: '/subscription',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRecoveryRoute = AppRecoveryRouteImport.update({
-  id: '/recovery',
-  path: '/recovery',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRecipesRoute = AppRecipesRouteImport.update({
-  id: '/recipes',
-  path: '/recipes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHomeRoute = AppHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHistoryRoute = AppHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHealthFeaturesRoute = AppHealthFeaturesRouteImport.update({
-  id: '/health-features',
-  path: '/health-features',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHealthRoute = AppHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHabitsRoute = AppHabitsRouteImport.update({
-  id: '/habits',
-  path: '/habits',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDiaryRoute = AppDiaryRouteImport.update({
-  id: '/diary',
-  path: '/diary',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppChartsRoute = AppChartsRouteImport.update({
-  id: '/charts',
-  path: '/charts',
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -139,25 +76,100 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminRoute = AppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AppChartsRoute = AppChartsRouteImport.update({
+  id: '/charts',
+  path: '/charts',
   getParentRoute: () => AppRoute,
 } as any)
-const AppRecoveryIdRoute = AppRecoveryIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppRecoveryRoute,
+const AppDiaryRoute = AppDiaryRouteImport.update({
+  id: '/diary',
+  path: '/diary',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHabitsRoute = AppHabitsRouteImport.update({
+  id: '/habits',
+  path: '/habits',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHealthRoute = AppHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHealthFeaturesRoute = AppHealthFeaturesRouteImport.update({
+  id: '/health-features',
+  path: '/health-features',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecipesRoute = AppRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecoveryRoute = AppRecoveryRouteImport.update({
+  id: '/recovery',
+  path: '/recovery',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubscriptionRoute = AppSubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVoiceRoute = AppVoiceRouteImport.update({
+  id: '/voice',
+  path: '/voice',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkoutsRoute = AppWorkoutsRouteImport.update({
+  id: '/workouts',
+  path: '/workouts',
+  getParentRoute: () => AppRoute,
+} as any)
+const LegalDocRoute = LegalDocRouteImport.update({
+  id: '/legal/$doc',
+  path: '/legal/$doc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
+  id: '/$date',
+  path: '/$date',
+  getParentRoute: () => AppHistoryRoute,
 } as any)
 const AppRecipesIdRoute = AppRecipesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppRecipesRoute,
 } as any)
-const AppHistoryDateRoute = AppHistoryDateRouteImport.update({
-  id: '/$date',
-  path: '/$date',
-  getParentRoute: () => AppHistoryRoute,
+const AppRecoveryIdRoute = AppRecoveryIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppRecoveryRoute,
+} as any)
+const AppWorkoutsIdRoute = AppWorkoutsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppWorkoutsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -181,10 +193,12 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
+  '/workouts': typeof AppWorkoutsRouteWithChildren
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
   '/recipes/$id': typeof AppRecipesIdRoute
   '/recovery/$id': typeof AppRecoveryIdRoute
+  '/workouts/$id': typeof AppWorkoutsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -207,10 +221,12 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/voice': typeof AppVoiceRoute
+  '/workouts': typeof AppWorkoutsRouteWithChildren
   '/legal/$doc': typeof LegalDocRoute
   '/history/$date': typeof AppHistoryDateRoute
   '/recipes/$id': typeof AppRecipesIdRoute
   '/recovery/$id': typeof AppRecoveryIdRoute
+  '/workouts/$id': typeof AppWorkoutsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,10 +251,12 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subscription': typeof AppSubscriptionRoute
   '/_app/voice': typeof AppVoiceRoute
+  '/_app/workouts': typeof AppWorkoutsRouteWithChildren
   '/legal/$doc': typeof LegalDocRoute
   '/_app/history/$date': typeof AppHistoryDateRoute
   '/_app/recipes/$id': typeof AppRecipesIdRoute
   '/_app/recovery/$id': typeof AppRecoveryIdRoute
+  '/_app/workouts/$id': typeof AppWorkoutsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -263,10 +281,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/subscription'
     | '/voice'
+    | '/workouts'
     | '/legal/$doc'
     | '/history/$date'
     | '/recipes/$id'
     | '/recovery/$id'
+    | '/workouts/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -289,10 +309,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/subscription'
     | '/voice'
+    | '/workouts'
     | '/legal/$doc'
     | '/history/$date'
     | '/recipes/$id'
     | '/recovery/$id'
+    | '/workouts/$id'
   id:
     | '__root__'
     | '/'
@@ -316,10 +338,12 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/subscription'
     | '/_app/voice'
+    | '/_app/workouts'
     | '/legal/$doc'
     | '/_app/history/$date'
     | '/_app/recipes/$id'
     | '/_app/recovery/$id'
+    | '/_app/workouts/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -334,32 +358,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -369,109 +372,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/$doc': {
-      id: '/legal/$doc'
-      path: '/legal/$doc'
-      fullPath: '/legal/$doc'
-      preLoaderRoute: typeof LegalDocRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/voice': {
-      id: '/_app/voice'
-      path: '/voice'
-      fullPath: '/voice'
-      preLoaderRoute: typeof AppVoiceRouteImport
-      parentRoute: typeof AppRoute
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/subscription': {
-      id: '/_app/subscription'
-      path: '/subscription'
-      fullPath: '/subscription'
-      preLoaderRoute: typeof AppSubscriptionRouteImport
-      parentRoute: typeof AppRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/recovery': {
-      id: '/_app/recovery'
-      path: '/recovery'
-      fullPath: '/recovery'
-      preLoaderRoute: typeof AppRecoveryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/recipes': {
-      id: '/_app/recipes'
-      path: '/recipes'
-      fullPath: '/recipes'
-      preLoaderRoute: typeof AppRecipesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/home': {
-      id: '/_app/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AppHomeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/history': {
-      id: '/_app/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof AppHistoryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/health-features': {
-      id: '/_app/health-features'
-      path: '/health-features'
-      fullPath: '/health-features'
-      preLoaderRoute: typeof AppHealthFeaturesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/health': {
-      id: '/_app/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof AppHealthRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/habits': {
-      id: '/_app/habits'
-      path: '/habits'
-      fullPath: '/habits'
-      preLoaderRoute: typeof AppHabitsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/diary': {
-      id: '/_app/diary'
-      path: '/diary'
-      fullPath: '/diary'
-      preLoaderRoute: typeof AppDiaryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/charts': {
-      id: '/_app/charts'
-      path: '/charts'
-      fullPath: '/charts'
-      preLoaderRoute: typeof AppChartsRouteImport
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ai': {
@@ -481,19 +414,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/admin': {
-      id: '/_app/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AppAdminRouteImport
+    '/_app/charts': {
+      id: '/_app/charts'
+      path: '/charts'
+      fullPath: '/charts'
+      preLoaderRoute: typeof AppChartsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/recovery/$id': {
-      id: '/_app/recovery/$id'
-      path: '/$id'
-      fullPath: '/recovery/$id'
-      preLoaderRoute: typeof AppRecoveryIdRouteImport
-      parentRoute: typeof AppRecoveryRoute
+    '/_app/diary': {
+      id: '/_app/diary'
+      path: '/diary'
+      fullPath: '/diary'
+      preLoaderRoute: typeof AppDiaryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/habits': {
+      id: '/_app/habits'
+      path: '/habits'
+      fullPath: '/habits'
+      preLoaderRoute: typeof AppHabitsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/health': {
+      id: '/_app/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof AppHealthRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/health-features': {
+      id: '/_app/health-features'
+      path: '/health-features'
+      fullPath: '/health-features'
+      preLoaderRoute: typeof AppHealthFeaturesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/history': {
+      id: '/_app/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/recipes': {
+      id: '/_app/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof AppRecipesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/recovery': {
+      id: '/_app/recovery'
+      path: '/recovery'
+      fullPath: '/recovery'
+      preLoaderRoute: typeof AppRecoveryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/subscription': {
+      id: '/_app/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AppSubscriptionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/voice': {
+      id: '/_app/voice'
+      path: '/voice'
+      fullPath: '/voice'
+      preLoaderRoute: typeof AppVoiceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/workouts': {
+      id: '/_app/workouts'
+      path: '/workouts'
+      fullPath: '/workouts'
+      preLoaderRoute: typeof AppWorkoutsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/legal/$doc': {
+      id: '/legal/$doc'
+      path: '/legal/$doc'
+      fullPath: '/legal/$doc'
+      preLoaderRoute: typeof LegalDocRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/history/$date': {
+      id: '/_app/history/$date'
+      path: '/$date'
+      fullPath: '/history/$date'
+      preLoaderRoute: typeof AppHistoryDateRouteImport
+      parentRoute: typeof AppHistoryRoute
     }
     '/_app/recipes/$id': {
       id: '/_app/recipes/$id'
@@ -502,12 +533,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecipesIdRouteImport
       parentRoute: typeof AppRecipesRoute
     }
-    '/_app/history/$date': {
-      id: '/_app/history/$date'
-      path: '/$date'
-      fullPath: '/history/$date'
-      preLoaderRoute: typeof AppHistoryDateRouteImport
-      parentRoute: typeof AppHistoryRoute
+    '/_app/recovery/$id': {
+      id: '/_app/recovery/$id'
+      path: '/$id'
+      fullPath: '/recovery/$id'
+      preLoaderRoute: typeof AppRecoveryIdRouteImport
+      parentRoute: typeof AppRecoveryRoute
+    }
+    '/_app/workouts/$id': {
+      id: '/_app/workouts/$id'
+      path: '/$id'
+      fullPath: '/workouts/$id'
+      preLoaderRoute: typeof AppWorkoutsIdRouteImport
+      parentRoute: typeof AppWorkoutsRoute
     }
   }
 }
@@ -548,6 +586,18 @@ const AppRecoveryRouteWithChildren = AppRecoveryRoute._addFileChildren(
   AppRecoveryRouteChildren,
 )
 
+interface AppWorkoutsRouteChildren {
+  AppWorkoutsIdRoute: typeof AppWorkoutsIdRoute
+}
+
+const AppWorkoutsRouteChildren: AppWorkoutsRouteChildren = {
+  AppWorkoutsIdRoute: AppWorkoutsIdRoute,
+}
+
+const AppWorkoutsRouteWithChildren = AppWorkoutsRoute._addFileChildren(
+  AppWorkoutsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAiRoute: typeof AppAiRoute
@@ -564,6 +614,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
   AppVoiceRoute: typeof AppVoiceRoute
+  AppWorkoutsRoute: typeof AppWorkoutsRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -582,6 +633,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
   AppVoiceRoute: AppVoiceRoute,
+  AppWorkoutsRoute: AppWorkoutsRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

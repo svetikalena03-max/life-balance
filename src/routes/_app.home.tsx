@@ -3,7 +3,20 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Droplet, Moon, Smile, Activity, TrendingDown, Plus, Heart, HeartPulse, Mic, GlassWater, ChefHat } from "lucide-react";
+import {
+  Droplet,
+  Moon,
+  Smile,
+  Activity,
+  TrendingDown,
+  Plus,
+  Heart,
+  HeartPulse,
+  Mic,
+  GlassWater,
+  ChefHat,
+  Dumbbell,
+} from "lucide-react";
 import { useEntries, useProfile, todayISO, formatDateWeekday } from "@/lib/store";
 import { VoiceDayDialog } from "@/components/VoiceDayDialog";
 
@@ -18,7 +31,7 @@ function HomePage() {
 
   const today = todayISO();
   const todayEntry = entries.find((e) => e.date === today);
-  const lastWith = <K extends keyof typeof entries[number]>(key: K) =>
+  const lastWith = <K extends keyof (typeof entries)[number]>(key: K) =>
     [...entries].reverse().find((e) => e[key] !== undefined && e[key] !== null);
 
   const weight = todayEntry?.weight ?? lastWith("weight")?.weight ?? profile?.currentWeight ?? 0;
@@ -60,6 +73,20 @@ function HomePage() {
         </Card>
       </Link>
 
+      <Link to="/workouts" className="block">
+        <Card className="flex items-center gap-3 border-violet-500/20 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-orange-500/10 p-4 transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-300">
+            <Dumbbell className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">Тренировки</p>
+            <p className="text-xs text-muted-foreground">
+              Анимация движений, таймер и голосовые подсказки
+            </p>
+          </div>
+        </Card>
+      </Link>
+
       <Link to="/recipes" className="block">
         <Card className="flex items-center gap-3 border-orange-500/20 bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-yellow-500/10 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-500/15 text-orange-600 dark:text-orange-400">
@@ -72,8 +99,6 @@ function HomePage() {
         </Card>
       </Link>
 
-
-
       <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-6 text-primary-foreground shadow-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -82,7 +107,8 @@ function HomePage() {
               {Number(weight).toFixed(1)} <span className="text-xl font-medium opacity-80">кг</span>
             </p>
             <p className="mt-2 text-xs opacity-90">
-              Цель: {Number(target).toFixed(1)} кг • {Number(weightDelta) >= 0 ? "+" : ""}{weightDelta} кг
+              Цель: {Number(target).toFixed(1)} кг • {Number(weightDelta) >= 0 ? "+" : ""}
+              {weightDelta} кг
             </p>
           </div>
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
@@ -149,7 +175,9 @@ function HomePage() {
         <StatCard
           icon={<Activity className="h-5 w-5" />}
           label="Самочувствие"
-          value={wellbeing && wellbeing.length > 14 ? wellbeing.slice(0, 14) + "…" : wellbeing || "—"}
+          value={
+            wellbeing && wellbeing.length > 14 ? wellbeing.slice(0, 14) + "…" : wellbeing || "—"
+          }
           hint="Краткая отметка"
           tint="bg-chart-4/15 text-chart-4"
         />
@@ -174,7 +202,12 @@ function HomePage() {
 }
 
 function StatCard({
-  icon, label, value, hint, progress, tint,
+  icon,
+  label,
+  value,
+  hint,
+  progress,
+  tint,
 }: {
   icon: React.ReactNode;
   label: string;
