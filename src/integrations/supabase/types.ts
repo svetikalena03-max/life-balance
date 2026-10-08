@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      glucose_readings: {
+        Row: {
+          id: string
+          user_id: string
+          measured_at: string
+          value_mmol_l: number
+          context: string
+          note: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          measured_at: string
+          value_mmol_l: number
+          context: string
+          note?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          measured_at?: string
+          value_mmol_l?: number
+          context?: string
+          note?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_entries: {
         Row: {
           afternoon_snack: Json | null

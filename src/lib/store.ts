@@ -41,6 +41,7 @@ export const CHRONIC_OPTIONS = [
   ["hypertension", "Гипертония"],
   ["hypotension", "Пониженное давление"],
   ["varicose", "Варикоз"],
+  ["thrombosis", "Тромб / тромбоз (по заключению врача)"],
   ["edema", "Отёки"],
   ["thyroid", "Заболевания щитовидной железы"],
   ["heart", "Заболевания сердца"],
