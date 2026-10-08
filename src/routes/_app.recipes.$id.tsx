@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
-import { RecipeMacrosBadges, RecipeMetaRow, RecipePlaceholderImage } from "@/components/recipes/RecipeMedia";
+import { RecipeImage, RecipeMacrosBadges, RecipeMetaRow } from "@/components/recipes/RecipeMedia";
 import { findRecipeById } from "@/lib/recipes";
 import { GOAL_LABELS, CHRONIC_OPTIONS } from "@/lib/store";
 import { Clock, ListOrdered, ShoppingBasket } from "lucide-react";
@@ -22,7 +22,7 @@ function RecipeDetailPage() {
 
   if (!recipe) return null;
 
-  const conditionLabels = recipe.tags.conditions
+  const conditionLabels = recipe.tags.conditions.filter((c) => c !== "none")
     .map((c) => CHRONIC_OPTIONS.find(([k]) => k === c)?.[1] ?? c)
     .join(", ");
 
@@ -32,7 +32,7 @@ function RecipeDetailPage() {
     <div className="flex flex-col gap-4 animate-fade-in">
       <PageHeader title={recipe.title} backTo="/recipes" />
 
-      <RecipePlaceholderImage emoji={recipe.imageEmoji} gradient={recipe.imageGradient} />
+      <RecipeImage recipe={recipe} />
 
       <Card className="p-4">
         <p className="text-sm leading-relaxed text-muted-foreground">{recipe.description}</p>
@@ -42,19 +42,20 @@ function RecipeDetailPage() {
         <div className="mt-3">
           <RecipeMacrosBadges macros={recipe.macros} />
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">Калории и БЖУ приблизительные и зависят от продуктов и размера порции.</p>
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-foreground">Подходит для</h2>
+        <h2 className="text-sm font-semibold text-foreground">Метки каталога</h2>
         <dl className="mt-2 grid gap-2 text-sm">
           <div>
             <dt className="text-xs text-muted-foreground">Цели</dt>
             <dd className="text-foreground">{goalLabels}</dd>
           </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Заболевания</dt>
+          {conditionLabels && <div>
+            <dt className="text-xs text-muted-foreground">Особенности здоровья</dt>
             <dd className="text-foreground">{conditionLabels}</dd>
-          </div>
+          </div>}
           <div>
             <dt className="text-xs text-muted-foreground">Время</dt>
             <dd className="inline-flex items-center gap-1 text-foreground">
@@ -63,6 +64,7 @@ function RecipeDetailPage() {
             </dd>
           </div>
         </dl>
+        <p className="mt-3 text-xs text-muted-foreground">Метки помогают искать блюда, но не заменяют назначенную врачом диету.</p>
       </Card>
 
       <Card className="p-4">

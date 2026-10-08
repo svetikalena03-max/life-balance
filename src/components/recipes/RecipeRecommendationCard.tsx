@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Recipe } from "@/lib/recipes";
 import { Sparkles } from "lucide-react";
-import { RecipeMacrosBadges, RecipeMetaRow, RecipePlaceholderImage } from "./RecipeMedia";
+import { RecipeImage, RecipeMacrosBadges, RecipeMetaRow } from "./RecipeMedia";
 
 export function RecipeRecommendationCard({
   recipe,
@@ -14,11 +14,7 @@ export function RecipeRecommendationCard({
 }) {
   return (
     <Card className="flex h-full flex-col overflow-hidden border-primary/20 shadow-sm">
-      <RecipePlaceholderImage
-        emoji={recipe.imageEmoji}
-        gradient={recipe.imageGradient}
-        className="rounded-none"
-      />
+      <RecipeImage recipe={recipe} className="rounded-none" />
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-foreground">{recipe.title}</h3>

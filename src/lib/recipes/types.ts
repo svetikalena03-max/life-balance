@@ -38,9 +38,8 @@ export type Recipe = {
   id: string;
   title: string;
   description: string;
-  /** Заглушка изображения: emoji + CSS-класс градиента */
-  imageEmoji: string;
-  imageGradient: string;
+  /** Локальное изображение готового блюда. */
+  imageUrl: string;
   prepMinutes: number;
   cookMinutes: number;
   servings: number;
