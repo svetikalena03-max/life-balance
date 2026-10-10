@@ -383,6 +383,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_recipes: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string
+          ingredients: Json
+          steps: Json
+          photo_path: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string
+          ingredients: Json
+          steps: Json
+          photo_path?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string
+          ingredients?: Json
+          steps?: Json
+          photo_path?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
