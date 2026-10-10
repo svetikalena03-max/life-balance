@@ -19,11 +19,14 @@ import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppChartsRouteImport } from './routes/_app.charts'
 import { Route as AppDiaryRouteImport } from './routes/_app.diary'
+import { Route as AppFamilyRouteImport } from './routes/_app.family'
+import { Route as AppGlucoseRouteImport } from './routes/_app.glucose'
 import { Route as AppHabitsRouteImport } from './routes/_app.habits'
 import { Route as AppHealthRouteImport } from './routes/_app.health'
 import { Route as AppHealthFeaturesRouteImport } from './routes/_app.health-features'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppPregnancyRouteImport } from './routes/_app.pregnancy'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppRecipesRouteImport } from './routes/_app.recipes'
 import { Route as AppRecoveryRouteImport } from './routes/_app.recovery'
@@ -86,6 +89,16 @@ const AppDiaryRoute = AppDiaryRouteImport.update({
   path: '/diary',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFamilyRoute = AppFamilyRouteImport.update({
+  id: '/family',
+  path: '/family',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGlucoseRoute = AppGlucoseRouteImport.update({
+  id: '/glucose',
+  path: '/glucose',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHabitsRoute = AppHabitsRouteImport.update({
   id: '/habits',
   path: '/habits',
@@ -109,6 +122,11 @@ const AppHistoryRoute = AppHistoryRouteImport.update({
 const AppHomeRoute = AppHomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPregnancyRoute = AppPregnancyRouteImport.update({
+  id: '/pregnancy',
+  path: '/pregnancy',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -182,11 +200,14 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
+  '/family': typeof AppFamilyRoute
+  '/glucose': typeof AppGlucoseRoute
   '/habits': typeof AppHabitsRoute
   '/health': typeof AppHealthRoute
   '/health-features': typeof AppHealthFeaturesRoute
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/pregnancy': typeof AppPregnancyRoute
   '/profile': typeof AppProfileRoute
   '/recipes': typeof AppRecipesRouteWithChildren
   '/recovery': typeof AppRecoveryRouteWithChildren
@@ -210,11 +231,14 @@ export interface FileRoutesByTo {
   '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
+  '/family': typeof AppFamilyRoute
+  '/glucose': typeof AppGlucoseRoute
   '/habits': typeof AppHabitsRoute
   '/health': typeof AppHealthRoute
   '/health-features': typeof AppHealthFeaturesRoute
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/pregnancy': typeof AppPregnancyRoute
   '/profile': typeof AppProfileRoute
   '/recipes': typeof AppRecipesRouteWithChildren
   '/recovery': typeof AppRecoveryRouteWithChildren
@@ -240,11 +264,14 @@ export interface FileRoutesById {
   '/_app/ai': typeof AppAiRoute
   '/_app/charts': typeof AppChartsRoute
   '/_app/diary': typeof AppDiaryRoute
+  '/_app/family': typeof AppFamilyRoute
+  '/_app/glucose': typeof AppGlucoseRoute
   '/_app/habits': typeof AppHabitsRoute
   '/_app/health': typeof AppHealthRoute
   '/_app/health-features': typeof AppHealthFeaturesRoute
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
+  '/_app/pregnancy': typeof AppPregnancyRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/recipes': typeof AppRecipesRouteWithChildren
   '/_app/recovery': typeof AppRecoveryRouteWithChildren
@@ -270,11 +297,14 @@ export interface FileRouteTypes {
     | '/ai'
     | '/charts'
     | '/diary'
+    | '/family'
+    | '/glucose'
     | '/habits'
     | '/health'
     | '/health-features'
     | '/history'
     | '/home'
+    | '/pregnancy'
     | '/profile'
     | '/recipes'
     | '/recovery'
@@ -298,11 +328,14 @@ export interface FileRouteTypes {
     | '/ai'
     | '/charts'
     | '/diary'
+    | '/family'
+    | '/glucose'
     | '/habits'
     | '/health'
     | '/health-features'
     | '/history'
     | '/home'
+    | '/pregnancy'
     | '/profile'
     | '/recipes'
     | '/recovery'
@@ -327,11 +360,14 @@ export interface FileRouteTypes {
     | '/_app/ai'
     | '/_app/charts'
     | '/_app/diary'
+    | '/_app/family'
+    | '/_app/glucose'
     | '/_app/habits'
     | '/_app/health'
     | '/_app/health-features'
     | '/_app/history'
     | '/_app/home'
+    | '/_app/pregnancy'
     | '/_app/profile'
     | '/_app/recipes'
     | '/_app/recovery'
@@ -428,6 +464,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDiaryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/family': {
+      id: '/_app/family'
+      path: '/family'
+      fullPath: '/family'
+      preLoaderRoute: typeof AppFamilyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/glucose': {
+      id: '/_app/glucose'
+      path: '/glucose'
+      fullPath: '/glucose'
+      preLoaderRoute: typeof AppGlucoseRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/habits': {
       id: '/_app/habits'
       path: '/habits'
@@ -461,6 +511,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pregnancy': {
+      id: '/_app/pregnancy'
+      path: '/pregnancy'
+      fullPath: '/pregnancy'
+      preLoaderRoute: typeof AppPregnancyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -603,11 +660,14 @@ interface AppRouteChildren {
   AppAiRoute: typeof AppAiRoute
   AppChartsRoute: typeof AppChartsRoute
   AppDiaryRoute: typeof AppDiaryRoute
+  AppFamilyRoute: typeof AppFamilyRoute
+  AppGlucoseRoute: typeof AppGlucoseRoute
   AppHabitsRoute: typeof AppHabitsRoute
   AppHealthRoute: typeof AppHealthRoute
   AppHealthFeaturesRoute: typeof AppHealthFeaturesRoute
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
+  AppPregnancyRoute: typeof AppPregnancyRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRecipesRoute: typeof AppRecipesRouteWithChildren
   AppRecoveryRoute: typeof AppRecoveryRouteWithChildren
@@ -622,11 +682,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiRoute: AppAiRoute,
   AppChartsRoute: AppChartsRoute,
   AppDiaryRoute: AppDiaryRoute,
+  AppFamilyRoute: AppFamilyRoute,
+  AppGlucoseRoute: AppGlucoseRoute,
   AppHabitsRoute: AppHabitsRoute,
   AppHealthRoute: AppHealthRoute,
   AppHealthFeaturesRoute: AppHealthFeaturesRoute,
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
+  AppPregnancyRoute: AppPregnancyRoute,
   AppProfileRoute: AppProfileRoute,
   AppRecipesRoute: AppRecipesRouteWithChildren,
   AppRecoveryRoute: AppRecoveryRouteWithChildren,

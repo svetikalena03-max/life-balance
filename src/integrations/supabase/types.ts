@@ -1,3 +1,5 @@
+import type { PregnancyRecord, PregnancySettings } from "@/lib/pregnancy";
+
 export type Json =
   | string
   | number
@@ -14,6 +16,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      pregnancy_settings: {
+        Row: PregnancySettings
+        Insert: Omit<PregnancySettings, "updated_at"> & { updated_at?: string }
+        Update: Partial<PregnancySettings>
+        Relationships: []
+      }
+      pregnancy_records: {
+        Row: PregnancyRecord
+        Insert: Pick<PregnancyRecord, "user_id" | "record_date" | "kind"> & Partial<Omit<PregnancyRecord, "user_id" | "record_date" | "kind">>
+        Update: Partial<PregnancyRecord>
+        Relationships: []
+      }
+      glucose_readings: {
+        Row: {
+          id: string
+          user_id: string
+          measured_at: string
+          value_mmol_l: number
+          context: string
+          note: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          measured_at: string
+          value_mmol_l: number
+          context: string
+          note?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          measured_at?: string
+          value_mmol_l?: number
+          context?: string
+          note?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      families: {
+        Row: { id: string; owner_user_id: string; created_at: string }
+        Insert: { id?: string; owner_user_id: string; created_at?: string }
+        Update: { id?: string; owner_user_id?: string; created_at?: string }
+        Relationships: []
+      }
+      family_members: {
+        Row: { family_id: string; user_id: string; display_name: string; joined_at: string }
+        Insert: { family_id: string; user_id: string; display_name: string; joined_at?: string }
+        Update: { family_id?: string; user_id?: string; display_name?: string; joined_at?: string }
+        Relationships: []
+      }
       daily_entries: {
         Row: {
           afternoon_snack: Json | null
@@ -424,7 +483,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_family: { Args: Record<PropertyKey, never>; Returns: string }
+      create_family_invite: { Args: { family: string }; Returns: string }
+      accept_family_invite: { Args: { invite_code: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

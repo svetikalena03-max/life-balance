@@ -1,7 +1,9 @@
 import {
   GI_OPTIONS,
+  CHRONIC_OPTIONS,
+  MUSCULO_OPTIONS,
+  WOMEN_OPTIONS,
   GOAL_LABELS,
-  summarizeHealthFeatures,
   TRAINING_OPTIONS,
   type Profile,
 } from "@/lib/store";
@@ -13,7 +15,10 @@ export type SuggestRecipesRequest = {
   age?: number;
 };
 
-function labelFromOptions(value: string, options: ReadonlyArray<readonly [string, string]>): string | null {
+function labelFromOptions(
+  value: string,
+  options: ReadonlyArray<readonly [string, string]>,
+): string | null {
   return options.find(([key]) => key === value)?.[1] ?? null;
 }
 
@@ -37,11 +42,21 @@ export function buildSuggestRecipesRequest(profile: Profile | null): SuggestReci
   if (hf?.medsList?.trim()) restrictions.push(`Лекарства: ${hf.medsList.trim()}`);
   if (hf?.doctorRec?.trim()) restrictions.push(`Рекомендации врача: ${hf.doctorRec.trim()}`);
 
-  const conditionsSummary = summarizeHealthFeatures(hf);
+  const conditions = [
+    ...(hf?.chronic ?? [])
+      .filter((value) => !["none", "other"].includes(value))
+      .map((value) => labelFromOptions(value, CHRONIC_OPTIONS)),
+    ...(hf?.musculo ?? [])
+      .filter((value) => value !== "other")
+      .map((value) => labelFromOptions(value, MUSCULO_OPTIONS)),
+    ...(hf?.women ?? [])
+      .filter((value) => !["na", "skip"].includes(value))
+      .map((value) => labelFromOptions(value, WOMEN_OPTIONS)),
+  ].filter(Boolean);
 
   return {
     goal: profile?.goal ? GOAL_LABELS[profile.goal] : "Улучшение здоровья",
-    conditions: conditionsSummary !== "Не заполнено" ? conditionsSummary : undefined,
+    conditions: conditions.length ? conditions.join("; ") : undefined,
     restrictions: restrictions.length > 0 ? restrictions.join("; ") : undefined,
     age: profile?.age && profile.age > 0 ? profile.age : undefined,
   };
