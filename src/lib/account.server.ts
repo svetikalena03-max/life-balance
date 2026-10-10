@@ -26,8 +26,28 @@ export async function deleteAuthenticatedAccount(): Promise<DeleteAccountResult>
       return { ok: false, error: "Сессия недействительна. Войдите в систему заново." };
     }
 
-    // Hard deletion cascades to all six public user tables, including consents.
-    // Do not delete their rows first: a failed Auth deletion must retain the data.
+    // Storage files do not participate in the Auth foreign-key cascade. Remove
+    // private photos before deleting Auth, so they cannot remain after account deletion.
+    // The migration may not yet exist on older installations.
+    const { data: recipes, error: recipeError } = await supabaseAdmin
+      .from("user_recipes")
+      .select("photo_path")
+      .eq("user_id", data.user.id);
+    if (recipeError && recipeError.code !== "42P01" && recipeError.code !== "PGRST205") {
+      return { ok: false, error: "Не удалось подготовить удаление фотографий. Попробуйте позже." };
+    }
+    const paths = (recipes ?? [])
+      .map((recipe) => recipe.photo_path)
+      .filter((path): path is string => !!path);
+    for (let start = 0; start < paths.length; start += 100) {
+      const { error: storageError } = await supabaseAdmin.storage
+        .from("personal-recipe-photos")
+        .remove(paths.slice(start, start + 100));
+      if (storageError)
+        return { ok: false, error: "Не удалось удалить фотографии рецептов. Попробуйте позже." };
+    }
+
+    // Hard deletion cascades to all public user tables, including recipes and consents.
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user.id, false);
     if (error) {
       return {
