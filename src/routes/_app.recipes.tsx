@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_app/recipes")({
 function RecipesPage() {
   const detailMatch = useMatch({ from: "/_app/recipes/$id", shouldThrow: false });
   const { profile } = useProfile();
+  const pregnancy = profile?.healthFeatures?.women?.includes("pregnancy") ?? false;
   const suggestRecipesFn = useServerFn(suggestRecipes);
   const [filters, setFilters] = useState<RecipeFilters>(() => ({ ...DEFAULT_RECIPE_FILTERS }));
   const [aiLoading, setAiLoading] = useState(false);
@@ -82,7 +83,23 @@ function RecipesPage() {
         </div>
       </Card>
 
-      <Button type="button" size="lg" onClick={runAiSuggest} disabled={aiLoading} className="gap-2">
+      {pregnancy && (
+        <Alert>
+          <AlertTitle>Питание во время беременности</AlertTitle>
+          <AlertDescription>
+            Каталог не проверяет безопасность блюд при беременности и повышенной глюкозе.
+            Индивидуальный план питания обсудите с лечащим врачом; AI-подбор пока отключён.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Button
+        type="button"
+        size="lg"
+        onClick={runAiSuggest}
+        disabled={aiLoading || pregnancy}
+        className="gap-2"
+      >
         <Sparkles className="h-4 w-4" />
         {aiLoading ? "Подбираю рецепты..." : "Подобрать рецепты"}
       </Button>
