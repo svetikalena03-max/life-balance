@@ -1,3 +1,5 @@
+import type { PregnancyRecord, PregnancySettings } from "@/lib/pregnancy";
+
 export type Json =
   | string
   | number
@@ -14,6 +16,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      pregnancy_settings: {
+        Row: PregnancySettings
+        Insert: Omit<PregnancySettings, "updated_at"> & { updated_at?: string }
+        Update: Partial<PregnancySettings>
+        Relationships: []
+      }
+      pregnancy_records: {
+        Row: PregnancyRecord
+        Insert: Pick<PregnancyRecord, "user_id" | "record_date" | "kind"> & Partial<Omit<PregnancyRecord, "user_id" | "record_date" | "kind">>
+        Update: Partial<PregnancyRecord>
+        Relationships: []
+      }
       glucose_readings: {
         Row: {
           id: string

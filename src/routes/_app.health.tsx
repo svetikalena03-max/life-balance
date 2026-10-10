@@ -81,6 +81,9 @@ function HealthPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Здоровье" subtitle="Давление, пульс и самочувствие" />
+      <Link to="/pregnancy" className="rounded-xl border bg-card p-4 font-semibold text-primary">
+        Беременность · дневник наблюдений →
+      </Link>
 
       {saved && <SaveSuccess onContinue={() => setSaved(false)} />}
 

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,11 @@ function HealthFeaturesPage() {
   const { profile, setProfile } = useProfile();
   const navigate = useNavigate();
   const [hf, setHf] = useState<HealthFeatures>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (profile?.healthFeatures) setHf(profile.healthFeatures);
-  }, [profile?.name]);
+  }, [profile?.healthFeatures]);
 
   const toggle = (key: keyof HealthFeatures, value: string) => {
     setHf((p) => {
@@ -41,10 +42,24 @@ function HealthFeaturesPage() {
     });
   };
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const base = profile ?? { name: "", age: 0, gender: "female" as const, height: 0, currentWeight: 0, targetWeight: 0 };
-    setProfile({ ...base, healthFeatures: hf });
+    if (saving) return;
+    setSaving(true);
+    const base = profile ?? {
+      name: "",
+      age: 0,
+      gender: "female" as const,
+      height: 0,
+      currentWeight: 0,
+      targetWeight: 0,
+    };
+    const result = await setProfile({ ...base, healthFeatures: hf });
+    setSaving(false);
+    if (!result.ok) {
+      toast.error("Не удалось сохранить особенности здоровья. Попробуйте ещё раз.");
+      return;
+    }
     toast.success("Особенности здоровья сохранены");
     navigate({ to: "/profile" });
   };
@@ -59,7 +74,11 @@ function HealthFeaturesPage() {
 
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Section title="Хронические заболевания">
-          <Boxes options={CHRONIC_OPTIONS} values={hf.chronic} onToggle={(v) => toggle("chronic", v)} />
+          <Boxes
+            options={CHRONIC_OPTIONS}
+            values={hf.chronic}
+            onToggle={(v) => toggle("chronic", v)}
+          />
           <div className="mt-3 flex flex-col gap-2">
             <Label htmlFor="chronicOther">Если другое — укажите</Label>
             <Input
@@ -71,7 +90,11 @@ function HealthFeaturesPage() {
         </Section>
 
         <Section title="Опорно-двигательный аппарат">
-          <Boxes options={MUSCULO_OPTIONS} values={hf.musculo} onToggle={(v) => toggle("musculo", v)} />
+          <Boxes
+            options={MUSCULO_OPTIONS}
+            values={hf.musculo}
+            onToggle={(v) => toggle("musculo", v)}
+          />
         </Section>
 
         <Section title="ЖКТ и питание">
@@ -86,8 +109,32 @@ function HealthFeaturesPage() {
           </div>
         </Section>
 
+        <Section title="Беременность">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={(hf.women ?? []).includes("pregnancy")}
+              onCheckedChange={() => toggle("women", "pregnancy")}
+            />
+            Беременность
+          </label>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Отметка учитывается при ограничении готовых тренировок и AI-подбора рецептов. Сохраните
+            изменения кнопкой внизу.
+          </p>
+          <Link
+            to="/pregnancy"
+            className="mt-3 inline-block text-sm font-semibold text-primary underline"
+          >
+            Открыть дневник беременности →
+          </Link>
+        </Section>
+
         <Section title="Женское здоровье">
-          <Boxes options={WOMEN_OPTIONS} values={hf.women} onToggle={(v) => toggle("women", v)} />
+          <Boxes
+            options={WOMEN_OPTIONS.filter(([value]) => value !== "pregnancy")}
+            values={hf.women}
+            onToggle={(v) => toggle("women", v)}
+          />
         </Section>
 
         <Section title="Лекарства и наблюдение врача">
@@ -126,7 +173,11 @@ function HealthFeaturesPage() {
         </Section>
 
         <Section title="Ограничения для тренировок">
-          <Boxes options={TRAINING_OPTIONS} values={hf.training} onToggle={(v) => toggle("training", v)} />
+          <Boxes
+            options={TRAINING_OPTIONS}
+            values={hf.training}
+            onToggle={(v) => toggle("training", v)}
+          />
         </Section>
 
         <Section title="Комментарий">
@@ -141,8 +192,8 @@ function HealthFeaturesPage() {
           </div>
         </Section>
 
-        <Button type="submit" size="lg" className="h-12 font-semibold">
-          Сохранить особенности здоровья
+        <Button type="submit" size="lg" disabled={saving} className="h-12 font-semibold">
+          {saving ? "Сохраняю…" : "Сохранить особенности здоровья"}
         </Button>
       </form>
     </div>
