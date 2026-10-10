@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      families: {
+        Row: { id: string; owner_user_id: string; created_at: string }
+        Insert: { id?: string; owner_user_id: string; created_at?: string }
+        Update: { id?: string; owner_user_id?: string; created_at?: string }
+        Relationships: []
+      }
+      family_members: {
+        Row: { family_id: string; user_id: string; display_name: string; joined_at: string }
+        Insert: { family_id: string; user_id: string; display_name: string; joined_at?: string }
+        Update: { family_id?: string; user_id?: string; display_name?: string; joined_at?: string }
+        Relationships: []
+      }
       daily_entries: {
         Row: {
           afternoon_snack: Json | null
@@ -424,7 +436,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_family: { Args: Record<PropertyKey, never>; Returns: string }
+      create_family_invite: { Args: { family: string }; Returns: string }
+      accept_family_invite: { Args: { invite_code: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
