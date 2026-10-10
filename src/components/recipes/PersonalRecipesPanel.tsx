@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { RecipeTextImport } from "./RecipeTextImport";
 
 type Recipe = Database["public"]["Tables"]["user_recipes"]["Row"];
 const bucket = "personal-recipe-photos";
@@ -31,6 +32,7 @@ export function PersonalRecipesPanel() {
   const [editing, setEditing] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [formReady, setFormReady] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
@@ -87,6 +89,7 @@ export function PersonalRecipesPanel() {
   }, [ready, userId]);
 
   function resetForm() {
+    setFormReady(false);
     setEditing(null);
     setTitle("");
     setDescription("");
@@ -97,6 +100,7 @@ export function PersonalRecipesPanel() {
   }
 
   function edit(recipe: Recipe) {
+    setFormReady(true);
     setEditing(recipe.id);
     setTitle(recipe.title);
     setDescription(recipe.description);
@@ -110,7 +114,7 @@ export function PersonalRecipesPanel() {
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!user || busy) return;
+    if (!user || busy || !formReady) return;
     const items = ingredients
       .split("\n")
       .map((item) => item.trim())
@@ -246,6 +250,7 @@ export function PersonalRecipesPanel() {
         </div>
         <Button
           type="button"
+          disabled={busy}
           onClick={() => {
             if (open) resetForm();
             else {
@@ -269,58 +274,84 @@ export function PersonalRecipesPanel() {
       )}
       {open && (
         <Card className="p-4">
-          <form onSubmit={save} className="space-y-3">
-            <h3 className="font-semibold">{editing ? "Редактировать рецепт" : "Новый рецепт"}</h3>
-            <label className="block text-sm">
-              Название
-              <Input
-                required
-                minLength={3}
-                maxLength={120}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+          <h3 className="mb-3 font-semibold">
+            {editing ? "Редактировать рецепт" : "Новый рецепт"}
+          </h3>
+          {!formReady && (
+            <div className="space-y-3">
+              <RecipeTextImport
+                onDraft={(draft) => {
+                  setTitle(draft.title);
+                  setDescription(draft.description);
+                  setIngredients(draft.ingredients.join("\n"));
+                  setSteps(draft.steps.join("\n"));
+                  setFormReady(true);
+                  setNotice("Карточка заполнена. Проверьте количества и шаги перед сохранением.");
+                }}
               />
-            </label>
-            <label className="block text-sm">
-              Описание (необязательно)
-              <Textarea
-                maxLength={1000}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm">
-              Ингредиенты — каждый с новой строки
-              <Textarea
-                required
-                rows={4}
-                value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
-                placeholder="Овсяные хлопья — 50 г"
-              />
-            </label>
-            <label className="block text-sm">
-              Приготовление — каждый шаг с новой строки
-              <Textarea
-                required
-                rows={4}
-                value={steps}
-                onChange={(e) => setSteps(e.target.value)}
-                placeholder="Смешать ингредиенты"
-              />
-            </label>
-            <label className="block text-sm">
-              Фото (необязательно, до 5 МБ)
-              <Input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-              />
-            </label>
-            <Button type="submit" disabled={busy}>
-              {busy ? "Сохраняю…" : "Сохранить рецепт"}
-            </Button>
-          </form>
+              <Button type="button" variant="outline" onClick={() => setFormReady(true)}>
+                Заполнить вручную
+              </Button>
+            </div>
+          )}
+          {formReady && (
+            <form onSubmit={save} className="space-y-3">
+              {!editing && (
+                <p className="text-sm text-muted-foreground">
+                  Проверьте и при необходимости исправьте рецепт.
+                </p>
+              )}
+              <label className="block text-sm">
+                Название
+                <Input
+                  required
+                  minLength={3}
+                  maxLength={120}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </label>
+              <label className="block text-sm">
+                Описание (необязательно)
+                <Textarea
+                  maxLength={1000}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </label>
+              <label className="block text-sm">
+                Ингредиенты — каждый с новой строки
+                <Textarea
+                  required
+                  rows={4}
+                  value={ingredients}
+                  onChange={(e) => setIngredients(e.target.value)}
+                  placeholder="Овсяные хлопья — 50 г"
+                />
+              </label>
+              <label className="block text-sm">
+                Приготовление — каждый шаг с новой строки
+                <Textarea
+                  required
+                  rows={4}
+                  value={steps}
+                  onChange={(e) => setSteps(e.target.value)}
+                  placeholder="Смешать ингредиенты"
+                />
+              </label>
+              <label className="block text-sm">
+                Фото (необязательно, до 5 МБ)
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <Button type="submit" disabled={busy}>
+                {busy ? "Сохраняю…" : "Сохранить рецепт"}
+              </Button>
+            </form>
+          )}
         </Card>
       )}
       {loading ? (
