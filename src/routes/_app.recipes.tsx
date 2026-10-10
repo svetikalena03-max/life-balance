@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecipeCard } from "@/components/recipes/RecipeCard";
 import { RecipeRecommendationCard } from "@/components/recipes/RecipeRecommendationCard";
 import { RecipeFiltersPanel } from "@/components/recipes/RecipeFiltersPanel";
+import { PersonalRecipesPanel } from "@/components/recipes/PersonalRecipesPanel";
 import { suggestRecipes, type SuggestRecipesResult } from "@/lib/ai.functions";
 import {
   DEFAULT_RECIPE_FILTERS,
@@ -124,10 +125,13 @@ function RecipesPage() {
         </div>
       )}
 
+      <PersonalRecipesPanel />
+
       <RecipeFiltersPanel filters={filters} onChange={setFilters} resultCount={recipes.length} />
 
       <p className="text-xs text-muted-foreground">
-        Калории и БЖУ приблизительные. При ограничениях в питании ориентируйтесь на рекомендации врача.
+        Калории и БЖУ приблизительные. При ограничениях в питании ориентируйтесь на рекомендации
+        врача.
       </p>
 
       {recipes.length === 0 ? (
