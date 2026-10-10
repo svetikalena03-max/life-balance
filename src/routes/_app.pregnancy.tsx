@@ -29,7 +29,10 @@ const emptyDraft = () => ({
 
 function PregnancyPage() {
   const { user, ready } = useAuth();
-  const owner = user?.id;
+  return <PregnancyAccount key={user?.id ?? "signed-out"} owner={user?.id} ready={ready} />;
+}
+
+function PregnancyAccount({ owner, ready }: { owner?: string; ready: boolean }) {
   const currentOwner = useRef(owner);
   currentOwner.current = owner;
   const [dueDate, setDueDate] = useState("");

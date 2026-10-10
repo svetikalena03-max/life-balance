@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_app/workouts")({
 
 function WorkoutsPage() {
   const detailMatch = useMatch({ from: "/_app/workouts/$id", shouldThrow: false });
-  const { profile } = useProfile();
+  const { profile, ready, error } = useProfile();
   const pregnancy = profile?.healthFeatures?.women?.includes("pregnancy") ?? false;
   const thrombosis = profile?.healthFeatures?.chronic?.includes("thrombosis") ?? false;
   const limits = profile?.healthFeatures?.training ?? [];
@@ -20,15 +20,25 @@ function WorkoutsPage() {
     ["soft", "nostand", "nostrength", "nojump", "norun"].includes(value),
   );
 
-  if (pregnancy || thrombosis)
+  if (!ready || error)
+    return (
+      <Card className="p-5">
+        {error
+          ? "Не удалось проверить ограничения здоровья. Попробуйте позже."
+          : "Загружаем ограничения здоровья…"}
+      </Card>
+    );
+
+  if (pregnancy || thrombosis || needsDoctorPlan)
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Тренировки" backTo="/home" />
         <Card className="border-amber-500/35 bg-amber-500/10 p-5">
           <p className="font-semibold">Готовые комплексы сейчас не показываются</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            В профиле отмечена беременность или тромб. Приложение не может определить, какие
-            упражнения вам подходят. Согласуйте активность с лечащим врачом.
+            В профиле отмечена беременность, тромб или ограничение «только ходьба / ЛФК». Приложение
+            не может определить, какие упражнения вам подходят. Согласуйте активность с лечащим
+            врачом.
           </p>
         </Card>
       </div>

@@ -42,6 +42,7 @@ import {
   HeartPulse,
   Settings as SettingsIcon,
   ChefHat,
+  UsersRound,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/profile")({
@@ -288,6 +289,21 @@ function ProfilePage() {
             <p className="text-sm font-semibold text-foreground">Рецепты</p>
             <p className="text-xs text-muted-foreground">
               Подбор блюд по цели и особенностям здоровья
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
+
+      <Link to="/family" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <UsersRound className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">Семья</p>
+            <p className="text-xs text-muted-foreground">
+              Пригласить близких, у каждого свои данные
             </p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />

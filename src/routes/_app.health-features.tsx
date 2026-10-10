@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
+import { useAuth } from "@/lib/auth";
 import {
   useProfile,
   type HealthFeatures,
@@ -25,13 +26,18 @@ export const Route = createFileRoute("/_app/health-features")({
 type Opts = ReadonlyArray<readonly [string, string]>;
 
 function HealthFeaturesPage() {
-  const { profile, setProfile } = useProfile();
+  const { user } = useAuth();
+  return <HealthFeaturesAccount key={user?.id ?? "signed-out"} />;
+}
+
+function HealthFeaturesAccount() {
+  const { profile, setProfile, ready, error } = useProfile();
   const navigate = useNavigate();
   const [hf, setHf] = useState<HealthFeatures>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (profile?.healthFeatures) setHf(profile.healthFeatures);
+    setHf(profile?.healthFeatures ?? {});
   }, [profile?.healthFeatures]);
 
   const toggle = (key: keyof HealthFeatures, value: string) => {
@@ -44,7 +50,7 @@ function HealthFeaturesPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (saving) return;
+    if (saving || !ready || error) return;
     setSaving(true);
     const base = profile ?? {
       name: "",
@@ -71,6 +77,11 @@ function HealthFeaturesPage() {
         subtitle="Заболевания, ограничения, аллергии, важные симптомы"
         backTo="/profile"
       />
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          Не удалось загрузить особенности здоровья. Попробуйте позже.
+        </p>
+      )}
 
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Section title="Хронические заболевания">
@@ -192,7 +203,12 @@ function HealthFeaturesPage() {
           </div>
         </Section>
 
-        <Button type="submit" size="lg" disabled={saving} className="h-12 font-semibold">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={saving || !ready || !!error}
+          className="h-12 font-semibold"
+        >
           {saving ? "Сохраняю…" : "Сохранить особенности здоровья"}
         </Button>
       </form>

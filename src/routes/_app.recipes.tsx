@@ -19,14 +19,20 @@ import {
 } from "@/lib/recipes";
 import { useProfile, GOAL_LABELS } from "@/lib/store";
 import { ChefHat, Sparkles } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/recipes")({
   component: RecipesPage,
 });
 
 function RecipesPage() {
+  const { user } = useAuth();
+  return <RecipesAccount key={user?.id ?? "signed-out"} />;
+}
+
+function RecipesAccount() {
   const detailMatch = useMatch({ from: "/_app/recipes/$id", shouldThrow: false });
-  const { profile } = useProfile();
+  const { profile, ready, error: profileError } = useProfile();
   const pregnancy = profile?.healthFeatures?.women?.includes("pregnancy") ?? false;
   const suggestRecipesFn = useServerFn(suggestRecipes);
   const [filters, setFilters] = useState<RecipeFilters>(() => ({ ...DEFAULT_RECIPE_FILTERS }));
@@ -41,6 +47,7 @@ function RecipesPage() {
   }, [aiResult]);
 
   const runAiSuggest = async () => {
+    if (!ready || profileError || pregnancy || aiLoading) return;
     setAiLoading(true);
     setAiResult(null);
 
@@ -97,7 +104,7 @@ function RecipesPage() {
         type="button"
         size="lg"
         onClick={runAiSuggest}
-        disabled={aiLoading || pregnancy}
+        disabled={aiLoading || pregnancy || !ready || !!profileError}
         className="gap-2"
       >
         <Sparkles className="h-4 w-4" />

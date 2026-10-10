@@ -11,6 +11,8 @@ test("gestational estimate uses calendar dates across leap day", () => {
   assert.deepEqual(pregnancyTerm("2028-03-01", "2028-02-29"), { weeks: 39, days: 6 });
   assert.deepEqual(pregnancyTerm("2026-10-10", "2026-10-10"), { weeks: 40, days: 0 });
   assert.equal(pregnancyTerm("invalid", "2026-10-10"), null);
+  assert.equal(pregnancyTerm("2026-02-30", "2026-02-28"), null);
+  assert.equal(pregnancyTerm("2026-03-01", "2026-02-30"), null);
   assert.equal(pregnancyTerm("2028-01-01", "2026-10-10"), null);
 });
 

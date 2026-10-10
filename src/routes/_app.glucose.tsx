@@ -65,7 +65,10 @@ function exportCsv(readings: Reading[]) {
 
 function GlucosePage() {
   const { user, ready } = useAuth();
-  const userId = user?.id;
+  return <GlucoseAccount key={user?.id ?? "signed-out"} userId={user?.id} ready={ready} />;
+}
+
+function GlucoseAccount({ userId, ready }: { userId?: string; ready: boolean }) {
   const [readings, setReadings] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -165,12 +168,12 @@ function GlucosePage() {
       const query = editing
         ? supabase.from("glucose_readings").update(payload).eq("id", editing).eq("user_id", userId)
         : supabase.from("glucose_readings").insert({ ...payload, user_id: userId });
-      const { error: saveError } = await query;
+      const { error: saveError } = await query.select("id").single();
       if (saveError) throw saveError;
+      reset();
+      setNotice("Измерение сохранено.");
       try {
         setReadings(await load(userId));
-        reset();
-        setNotice("Измерение сохранено.");
       } catch {
         setError("Измерение сохранено, но список не обновился. Откройте страницу ещё раз.");
       }
@@ -191,7 +194,9 @@ function GlucosePage() {
         .from("glucose_readings")
         .delete()
         .eq("id", reading.id)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select("id")
+        .single();
       if (deleteError) throw deleteError;
       setReadings((previous) => previous.filter((item) => item.id !== reading.id));
       if (editing === reading.id) reset();
