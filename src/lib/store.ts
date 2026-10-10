@@ -41,6 +41,7 @@ export const CHRONIC_OPTIONS = [
   ["hypertension", "Гипертония"],
   ["hypotension", "Пониженное давление"],
   ["varicose", "Варикоз"],
+  ["thrombosis", "Тромб / тромбоз (по заключению врача)"],
   ["edema", "Отёки"],
   ["thyroid", "Заболевания щитовидной железы"],
   ["heart", "Заболевания сердца"],
@@ -618,18 +619,22 @@ function useUserId() {
 
 export function useProfile() {
   const uid = useUserId();
+  const currentUid = useRef(uid);
+  currentUid.current = uid;
   const [profile, setProfileState] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async (userId: string) => {
     setReady(false);
+    setProfileState(null);
     setError(null);
     const [profileResult, habitsResult, healthFeaturesResult] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("habits").select("*").eq("user_id", userId).maybeSingle(),
       supabase.from("health_features").select("*").eq("user_id", userId).maybeSingle(),
     ]);
+    if (currentUid.current !== userId) return;
     const firstError = profileResult.error ?? habitsResult.error ?? healthFeaturesResult.error;
     if (firstError) {
       setProfileState(null);
@@ -673,16 +678,18 @@ export function useProfile() {
     async (p: Profile): Promise<SaveEntryResult> => {
       if (!uid) return { ok: false, error: "Войдите в аккаунт, чтобы сохранить профиль" };
       const previous = profile;
-      setProfileState(p);
       setError(null);
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert(profileToRow(p, uid), { onConflict: "user_id" });
       if (profileError) {
-        setProfileState(previous);
-        setError(profileError.message);
+        if (currentUid.current === uid) {
+          setProfileState(previous);
+          setError(profileError.message);
+        }
         return { ok: false, error: profileError.message };
       }
+      if (currentUid.current !== uid) return { ok: false, error: "Аккаунт изменился" };
       if (p.habits) {
         const { error: habitsError } = await supabase
           .from("habits")
@@ -690,11 +697,13 @@ export function useProfile() {
         if (habitsError) return { ok: false, error: habitsError.message };
       }
       if (p.healthFeatures) {
+        if (currentUid.current !== uid) return { ok: false, error: "Аккаунт изменился" };
         const { error: healthFeaturesError } = await supabase
           .from("health_features")
           .upsert(hfToRow(p.healthFeatures, uid), { onConflict: "user_id" });
         if (healthFeaturesError) return { ok: false, error: healthFeaturesError.message };
       }
+      if (currentUid.current === uid) setProfileState(p);
       return { ok: true };
     },
     [uid, profile],
