@@ -149,7 +149,9 @@ function FamilyAccount({ userId, ready }: { userId?: string; ready: boolean }) {
         .from("family_members")
         .delete()
         .eq("family_id", membership.family_id)
-        .eq("user_id", userId!);
+        .eq("user_id", userId!)
+        .select("user_id")
+        .single();
       if (leaveError) throw new Error("Не удалось выйти из группы.");
       setNotice("Вы вышли из семейной группы.");
     });
@@ -161,7 +163,9 @@ function FamilyAccount({ userId, ready }: { userId?: string; ready: boolean }) {
         .from("family_members")
         .delete()
         .eq("family_id", family.id)
-        .eq("user_id", member.user_id);
+        .eq("user_id", member.user_id)
+        .select("user_id")
+        .single();
       if (removeError) throw new Error("Не удалось исключить участника.");
       setNotice("Участник исключён. Его личные данные остались в его аккаунте.");
     });
@@ -177,7 +181,9 @@ function FamilyAccount({ userId, ready }: { userId?: string; ready: boolean }) {
         .from("families")
         .delete()
         .eq("id", family.id)
-        .eq("owner_user_id", userId!);
+        .eq("owner_user_id", userId!)
+        .select("id")
+        .single();
       if (deleteError) throw new Error("Не удалось расформировать группу.");
       setInvite("");
       setNotice("Группа расформирована. Личные аккаунты сохранены.");
