@@ -39,7 +39,7 @@ function WorkoutPlayerPage() {
   return (
     <div className="flex flex-col gap-4 animate-fade-in">
       <PageHeader title={workout.title} backTo="/workouts" backLabel="Все тренировки" />
-      <WorkoutPlayer workout={workout} />
+      <WorkoutPlayer key={workout.id} workout={workout} />
     </div>
   );
 }
@@ -261,6 +261,7 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
 }
 
 function WorkoutVisualDemo({ visual, running }: { visual: WorkoutVisual; running: boolean }) {
+  const [videoError, setVideoError] = useState(false);
   const media: Record<WorkoutVisual, { src: string; alt: string; source: string }> = {
     arms: {
       src: "/workouts/arms-stretch.mp4",
@@ -290,30 +291,38 @@ function WorkoutVisualDemo({ visual, running }: { visual: WorkoutVisual; running
   };
   const current = media[visual];
 
+  useEffect(() => setVideoError(false), [current.src]);
+
   return (
     <div className="relative mb-4 overflow-hidden rounded-3xl border border-emerald-500/15 bg-gradient-to-b from-emerald-500/10 to-sky-500/10 shadow-sm">
       <div className="flex h-72 items-center justify-center bg-white/75 dark:bg-slate-950/40">
-        <video
-          key={current.src}
-          src={current.src}
-          className="h-full w-full object-contain"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label={current.alt}
-        />
+        {videoError ? (
+          <p className="px-6 text-center text-sm text-muted-foreground">
+            Видео не загрузилось. Проверьте подключение и откройте тренировку ещё раз.
+          </p>
+        ) : (
+          <video
+            key={current.src}
+            src={current.src}
+            className="h-full w-full object-contain"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            preload="metadata"
+            onError={() => setVideoError(true)}
+            aria-label={current.alt}
+          />
+        )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-10 text-white">
-        <span className="rounded-full bg-black/35 px-3 py-1.5 text-sm font-medium backdrop-blur-sm">
-          {running ? "Повторяйте в своём темпе" : "Посмотрите движение"}
-        </span>
+      <div className="flex items-center justify-between gap-3 bg-emerald-500/10 px-4 py-2 text-sm text-foreground">
+        <span>{running ? "Повторяйте в своём темпе" : "Нажмите ▶ на видео"}</span>
         <a
           href={current.source}
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-white/80 underline decoration-white/40 underline-offset-2"
+          className="text-xs text-muted-foreground underline underline-offset-2"
         >
           Источник
         </a>
