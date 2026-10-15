@@ -21,6 +21,13 @@ import {
   type RecoveryStep,
 } from "@/lib/recovery-data";
 
+const BACKGROUND_SOUNDS = [
+  { id: "rain", labelRu: "Тихий дождь", labelEn: "Soft rain" },
+  { id: "sea", labelRu: "Море", labelEn: "Sea" },
+  { id: "forest", labelRu: "Лес", labelEn: "Forest" },
+] as const;
+type BackgroundSound = (typeof BACKGROUND_SOUNDS)[number]["id"];
+
 export const Route = createFileRoute("/_app/recovery/$id")({
   component: RecoveryDetailPage,
 });
@@ -318,7 +325,8 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     }
   });
   const [musicEnabled, setMusicEnabled] = useState(true);
-  const [musicVolume, setMusicVolume] = useState(0.16);
+  const [backgroundSound, setBackgroundSound] = useState<BackgroundSound>("rain");
+  const [musicVolume, setMusicVolume] = useState(0.25);
   const lastSpokenStep = useRef(-1);
   const runningRef = useRef(false);
   const voiceEnabledRef = useRef(true);
@@ -326,6 +334,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
   const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
+  const backgroundAudio = findRecoveryItem(backgroundSound)?.audio;
   const voicesForLanguage = availableVoices.filter((voice) =>
     voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"),
   );
@@ -405,6 +414,15 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     const music = musicRef.current;
     if (music) music.volume = musicVolume;
   }, [musicVolume]);
+
+  useEffect(() => {
+    const music = musicRef.current;
+    if (!music) return;
+    music.load();
+    if (runningRef.current && musicEnabledRef.current && !window.speechSynthesis?.speaking) {
+      resumeMusic();
+    }
+  }, [backgroundSound, resumeMusic]);
 
   useEffect(() => {
     if (
@@ -535,7 +553,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 
   return (
     <Card className="overflow-hidden p-5">
-      <audio ref={musicRef} src="/audio/calm-background.mp3" loop preload="metadata" />
+      <audio ref={musicRef} src={backgroundAudio?.src} loop preload="metadata" />
 
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -580,11 +598,11 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
             aria-label={
               musicEnabled
                 ? ru
-                  ? "Выключить музыку"
-                  : "Mute music"
+                  ? "Выключить фон"
+                  : "Mute background"
                 : ru
-                  ? "Включить музыку"
-                  : "Enable music"
+                  ? "Включить фон"
+                  : "Enable background"
             }
             onClick={toggleMusic}
           >
@@ -638,9 +656,23 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       )}
 
       <div className="mt-4 rounded-2xl bg-sky-500/10 px-4 py-3">
+        <label className="mb-3 block text-sm font-medium text-foreground">
+          <span className="mb-1 block">{ru ? "Звук между фразами" : "Sound between prompts"}</span>
+          <select
+            value={backgroundSound}
+            onChange={(event) => setBackgroundSound(event.target.value as BackgroundSound)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {BACKGROUND_SOUNDS.map((sound) => (
+              <option key={sound.id} value={sound.id}>
+                {ru ? sound.labelRu : sound.labelEn}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="flex items-center gap-3 text-sm font-medium text-foreground">
           <Music2 className="h-4 w-4 shrink-0 text-sky-700 dark:text-sky-300" />
-          <span className="shrink-0">{ru ? "Музыка" : "Music"}</span>
+          <span className="shrink-0">{ru ? "Фон" : "Background"}</span>
           <input
             type="range"
             min="0"
@@ -650,12 +682,22 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
             onChange={(event) => setMusicVolume(Number(event.target.value))}
             disabled={!musicEnabled}
             className="h-2 w-full cursor-pointer accent-sky-600 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label={ru ? "Громкость фоновой музыки" : "Background music volume"}
+            aria-label={ru ? "Громкость фонового звука" : "Background sound volume"}
           />
           <span className="w-10 text-right tabular-nums">
             {musicEnabled ? `${Math.round((musicVolume / 0.35) * 100)}%` : "0%"}
           </span>
         </label>
+        {backgroundAudio && (
+          <a
+            href={backgroundAudio.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block text-xs text-muted-foreground underline underline-offset-2"
+          >
+            {ru ? backgroundAudio.creditRu : backgroundAudio.creditEn}
+          </a>
+        )}
       </div>
 
       {item.mode === "breathing" ? (
@@ -723,8 +765,8 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       {item.mode === "guided" && speechAvailable && voiceEnabled && musicEnabled && (
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {ru
-            ? "Во время голосовой подсказки музыка ставится на паузу, затем включается снова."
-            : "Music pauses during each voice prompt, then resumes automatically."}
+            ? "Во время голосовой подсказки фон ставится на паузу, затем включается снова."
+            : "The background pauses during each voice prompt, then resumes automatically."}
         </p>
       )}
     </Card>
