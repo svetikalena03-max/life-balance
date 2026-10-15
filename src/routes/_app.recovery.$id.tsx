@@ -85,9 +85,9 @@ function RecoveryDetailPage() {
       )}
 
       {item.mode === "ambient" ? (
-        <AmbientPlayer item={item} ru={ru} />
+        <AmbientPlayer key={item.id} item={item} ru={ru} />
       ) : (
-        <PracticePlayer item={item} ru={ru} />
+        <PracticePlayer key={item.id} item={item} ru={ru} />
       )}
     </div>
   );
