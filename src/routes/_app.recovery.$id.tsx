@@ -308,6 +308,15 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const [running, setRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceUri, setSelectedVoiceUri] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return window.localStorage.getItem("recovery-voice-uri") ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [musicVolume, setMusicVolume] = useState(0.16);
   const lastSpokenStep = useRef(-1);
@@ -317,6 +326,31 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
   const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
+  const voicesForLanguage = availableVoices.filter((voice) =>
+    voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"),
+  );
+
+  useEffect(() => {
+    if (!speechAvailable) return;
+    const updateVoices = () => setAvailableVoices(window.speechSynthesis.getVoices());
+    updateVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", updateVoices);
+  }, [speechAvailable]);
+
+  const chooseVoice = (voiceUri: string) => {
+    setSelectedVoiceUri(voiceUri);
+    try {
+      window.localStorage.setItem("recovery-voice-uri", voiceUri);
+    } catch {
+      // Voice selection still works for the current visit.
+    }
+  };
+
+  const preferredVoice =
+    voicesForLanguage.find((voice) => voice.voiceURI === selectedVoiceUri) ??
+    voicesForLanguage.find((voice) => voice.localService) ??
+    voicesForLanguage[0];
 
   const resumeMusic = useCallback(() => {
     const music = musicRef.current;
@@ -335,19 +369,16 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(ru ? step.ru : step.en);
       utterance.lang = ru ? "ru-RU" : "en-US";
-      utterance.rate = 0.86;
-      utterance.pitch = 0.95;
-      const matchingVoice = window.speechSynthesis
-        .getVoices()
-        .find((voice) => voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"));
-      if (matchingVoice) utterance.voice = matchingVoice;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      if (preferredVoice) utterance.voice = preferredVoice;
       utterance.onend = resumeMusic;
       utterance.onerror = resumeMusic;
       window.speechSynthesis.speak(utterance);
       lastSpokenStep.current = stepIndex;
       return true;
     },
-    [resumeMusic, ru, speechAvailable],
+    [preferredVoice, resumeMusic, ru, speechAvailable],
   );
 
   useEffect(() => {
@@ -474,6 +505,21 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     }
   };
 
+  const previewVoice = () => {
+    if (!speechAvailable || running) return;
+    window.speechSynthesis.cancel();
+    const preview = new SpeechSynthesisUtterance(
+      ru
+        ? "Сделайте спокойный вдох. Отметьте, стала ли тяга немного слабее."
+        : "Take a calm breath. Notice how you feel now.",
+    );
+    preview.lang = ru ? "ru-RU" : "en-US";
+    preview.rate = 0.95;
+    preview.pitch = 1;
+    if (preferredVoice) preview.voice = preferredVoice;
+    window.speechSynthesis.speak(preview);
+  };
+
   const toggleMusic = () => {
     const next = !musicEnabled;
     musicEnabledRef.current = next;
@@ -553,6 +599,43 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
           style={{ width: `${progress}%` }}
         />
       </div>
+
+      {item.mode === "guided" && speechAvailable && (
+        <div className="mt-4 flex flex-wrap items-end gap-2">
+          <label className="min-w-0 flex-1 text-sm text-foreground">
+            <span className="mb-1 block">{ru ? "Голос практики" : "Practice voice"}</span>
+            <select
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={
+                voicesForLanguage.some((voice) => voice.voiceURI === selectedVoiceUri)
+                  ? selectedVoiceUri
+                  : (preferredVoice?.voiceURI ?? "")
+              }
+              onChange={(event) => chooseVoice(event.target.value)}
+              disabled={running || voicesForLanguage.length === 0}
+            >
+              {voicesForLanguage.length === 0 && (
+                <option value="">{ru ? "Голоса загружаются" : "Loading voices"}</option>
+              )}
+              {voicesForLanguage.map((voice) => (
+                <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {voice.name} ({voice.lang})
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="button" variant="outline" onClick={previewVoice} disabled={running}>
+            {ru ? "Послушать" : "Preview"}
+          </Button>
+          {availableVoices.length > 0 && voicesForLanguage.length === 0 && (
+            <p className="w-full text-xs text-amber-700 dark:text-amber-300">
+              {ru
+                ? "На устройстве нет русского голоса. Установите его в настройках озвучивания телефона."
+                : "No English voice is installed on this device."}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 rounded-2xl bg-sky-500/10 px-4 py-3">
         <label className="flex items-center gap-3 text-sm font-medium text-foreground">
