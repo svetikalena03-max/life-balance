@@ -331,6 +331,16 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const runningRef = useRef(false);
   const voiceEnabledRef = useRef(true);
   const musicEnabledRef = useRef(true);
+  useEffect(() => {
+    try {
+      const enabled = window.localStorage.getItem("recovery-voice-enabled") !== "false";
+      voiceEnabledRef.current = enabled;
+      setVoiceEnabled(enabled);
+    } catch {
+      // Voice controls remain available when storage is blocked.
+    }
+  }, []);
+
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
   const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
@@ -513,6 +523,11 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     const next = !voiceEnabled;
     voiceEnabledRef.current = next;
     setVoiceEnabled(next);
+    try {
+      window.localStorage.setItem("recovery-voice-enabled", String(next));
+    } catch {
+      // Keep the selection for the current practice when storage is blocked.
+    }
 
     if (!next && speechAvailable) {
       window.speechSynthesis.cancel();
@@ -528,7 +543,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     window.speechSynthesis.cancel();
     const preview = new SpeechSynthesisUtterance(
       ru
-        ? "Сделайте спокойный вдох. Отметьте, стала ли тяга немного слабее."
+        ? "Сделайте спокойный вдох. Устройтесь удобно и расслабьте плечи."
         : "Take a calm breath. Notice how you feel now.",
     );
     preview.lang = ru ? "ru-RU" : "en-US";
@@ -555,7 +570,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     <Card className="overflow-hidden p-5">
       <audio ref={musicRef} src={backgroundAudio?.src} loop preload="metadata" />
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {completed
@@ -575,7 +590,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
             <Button
               type="button"
               variant="outline"
-              size="icon"
+              aria-pressed={voiceEnabled}
               aria-label={
                 voiceEnabled
                   ? ru
@@ -588,7 +603,14 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
               onClick={toggleVoice}
               disabled={!speechAvailable}
             >
-              {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              {voiceEnabled ? (
+                <Volume2 className="mr-2 h-5 w-5" />
+              ) : (
+                <VolumeX className="mr-2 h-5 w-5" />
+              )}
+              {ru
+                ? voiceEnabled ? "Голос: вкл." : "Без голоса"
+                : voiceEnabled ? "Voice: on" : "Voice: off"}
             </Button>
           )}
           <Button

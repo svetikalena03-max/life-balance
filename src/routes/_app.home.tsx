@@ -99,23 +99,32 @@ function HomePage() {
         </Card>
       </Link>
 
-      <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-6 text-primary-foreground shadow-lg">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm opacity-90">Текущий вес</p>
-            <p className="mt-1 text-4xl font-bold">
-              {Number(weight).toFixed(1)} <span className="text-xl font-medium opacity-80">кг</span>
-            </p>
-            <p className="mt-2 text-xs opacity-90">
-              Цель: {Number(target).toFixed(1)} кг • {Number(weightDelta) >= 0 ? "+" : ""}
-              {weightDelta} кг
-            </p>
+      <Link
+        to="/diary"
+        hash="w"
+        hashScrollIntoView={{ block: "center" }}
+        aria-label="Заполнить вес за сегодня"
+        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/70 p-6 text-primary-foreground shadow-lg transition-opacity hover:opacity-90">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm opacity-90">Текущий вес</p>
+              <p className="mt-1 text-4xl font-bold">
+                {Number(weight).toFixed(1)} <span className="text-xl font-medium opacity-80">кг</span>
+              </p>
+              <p className="mt-2 text-xs opacity-90">
+                Цель: {Number(target).toFixed(1)} кг • {Number(weightDelta) >= 0 ? "+" : ""}
+                {weightDelta} кг
+              </p>
+            </div>
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+              <TrendingDown className="h-6 w-6" />
+            </div>
           </div>
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
-            <TrendingDown className="h-6 w-6" />
-          </div>
-        </div>
-      </Card>
+          <p className="mt-3 text-xs font-medium">Заполнить вес →</p>
+        </Card>
+      </Link>
 
       <Button
         onClick={() => setVoiceOpen(true)}
@@ -137,6 +146,8 @@ function HomePage() {
         <StatCard
           icon={<Droplet className="h-5 w-5" />}
           label="Вода"
+          to="/diary"
+          hash="water"
           value={`${(water / 1000).toFixed(1)} л`}
           hint={`Цель: ${(waterGoal / 1000).toFixed(1)} л`}
           progress={Math.min(100, (water / waterGoal) * 100)}
@@ -145,6 +156,8 @@ function HomePage() {
         <StatCard
           icon={<GlassWater className="h-5 w-5" />}
           label="Другие напитки"
+          to="/diary"
+          hash="tea"
           value={`${(otherDrinks / 1000).toFixed(1)} л`}
           hint="чай, кофе, сок и др."
           tint="bg-chart-4/15 text-chart-4"
@@ -152,6 +165,8 @@ function HomePage() {
         <StatCard
           icon={<Moon className="h-5 w-5" />}
           label="Сон"
+          to="/diary"
+          hash="sl"
           value={`${Number(sleep).toFixed(1)} ч`}
           hint="Норма: 7–9 ч"
           progress={Math.min(100, (Number(sleep) / 8) * 100)}
@@ -160,6 +175,8 @@ function HomePage() {
         <StatCard
           icon={<Heart className="h-5 w-5" />}
           label="Давление"
+          to="/health"
+          hash="sys"
           value={lastBP?.systolic ? `${lastBP.systolic}/${lastBP.diastolic ?? "—"}` : "—"}
           hint="мм рт.ст."
           tint="bg-chart-1/15 text-chart-1"
@@ -167,6 +184,8 @@ function HomePage() {
         <StatCard
           icon={<Smile className="h-5 w-5" />}
           label="Настроение"
+          to="/diary"
+          hash="mood"
           value={`${mood}/10`}
           hint={mood >= 7 ? "Отличное" : mood >= 4 ? "Хорошее" : "Так себе"}
           progress={mood * 10}
@@ -175,6 +194,8 @@ function HomePage() {
         <StatCard
           icon={<Activity className="h-5 w-5" />}
           label="Самочувствие"
+          to="/diary"
+          hash="well"
           value={
             wellbeing && wellbeing.length > 14 ? wellbeing.slice(0, 14) + "…" : wellbeing || "—"
           }
@@ -208,6 +229,8 @@ function StatCard({
   hint,
   progress,
   tint,
+  to,
+  hash,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -215,18 +238,29 @@ function StatCard({
   hint: string;
   progress?: number;
   tint: string;
+  to: "/diary" | "/health";
+  hash: string;
 }) {
   return (
-    <Card className="flex min-w-0 flex-col gap-2 p-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${tint}`}>{icon}</div>
-        <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-2xl font-bold text-foreground">{value}</p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>
-      </div>
-      {progress !== undefined && <Progress value={progress} className="h-1.5" />}
-    </Card>
+    <Link
+      to={to}
+      hash={hash}
+      hashScrollIntoView={{ block: "center" }}
+      aria-label={`Заполнить: ${label}`}
+      className="block min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Card className="flex h-full min-w-0 flex-col gap-2 p-3 transition-colors hover:border-primary hover:bg-accent/30">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${tint}`}>{icon}</div>
+          <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-2xl font-bold text-foreground">{value}</p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>
+        </div>
+        {progress !== undefined && <Progress value={progress} className="h-1.5" />}
+        <span className="mt-auto text-xs font-medium text-primary">Заполнить →</span>
+      </Card>
+    </Link>
   );
 }

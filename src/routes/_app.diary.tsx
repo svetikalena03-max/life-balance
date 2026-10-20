@@ -343,7 +343,7 @@ function DiaryPage() {
             <Label htmlFor="well">Самочувствие</Label>
             <Textarea id="well" rows={2} value={wellbeing} onChange={(e) => setWellbeing(e.target.value)} placeholder="Как себя чувствуете?" disabled={saving} />
           </div>
-          <div className="mt-4 flex flex-col gap-3">
+          <div id="mood" className="mt-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label>Настроение</Label>
               <span className="text-sm font-semibold text-primary">{mood}/10</span>

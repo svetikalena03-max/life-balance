@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ru">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body style="margin:0;background:#f4f8f5;font-family:Arial,sans-serif;color:#20382c;">
+    <main style="max-width:520px;margin:24px auto;padding:28px;background:#ffffff;border-radius:16px;">
+      <h1 style="font-size:24px;">Добро пожаловать в «Баланс жизни»!</h1>
+      <p style="line-height:1.6;">Вы зарегистрировались в приложении. Подтвердите адрес электронной почты, чтобы завершить регистрацию.</p>
+      <p style="margin:28px 0;"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 20px;background:#247a52;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:bold;">Подтвердить почту</a></p>
+      <p style="line-height:1.6;">Если кнопка не открывается, скопируйте эту ссылку в браузер:</p>
+      <p style="word-break:break-all;"><a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a></p>
+      <p style="line-height:1.6;color:#52665a;">Если вы не регистрировались в «Балансе жизни», просто проигнорируйте это письмо.</p>
+    </main>
+  </body>
+</html>
