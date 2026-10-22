@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -14,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings } from "@/lib/settings";
+import { prepareRecoveryVoice } from "@/lib/recovery-voice.functions";
 import {
   findRecoveryItem,
   getRecoveryStep,
@@ -309,6 +311,16 @@ function AmbientPlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 }
 
 function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
+  const prepareVoiceFn = useServerFn(prepareRecoveryVoice);
+  const [voiceSource, setVoiceSource] = useState<"yandex" | "device">("yandex");
+  const [voiceClips, setVoiceClips] = useState<string[]>([]);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const voiceAudioRef = useRef<HTMLAudioElement>(null);
+  const voiceSpeakingRef = useRef(false);
+  const voiceRequestRef = useRef(0);
+  const mountedRef = useRef(true);
+  const useYandexVoice = ru && voiceSource === "yandex";
   const totalSeconds = item.duration * 60;
   const musicRef = useRef<HTMLAudioElement>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -344,6 +356,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   const currentStep = getRecoveryStep(item, elapsed);
   const currentStepIndex = currentStep ? (item.steps?.indexOf(currentStep) ?? -1) : -1;
   const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
+  const voiceAvailable = useYandexVoice ? voiceClips.length > 0 : speechAvailable;
   const backgroundAudio = findRecoveryItem(backgroundSound)?.audio;
   const voicesForLanguage = availableVoices.filter((voice) =>
     voice.lang.toLowerCase().startsWith(ru ? "ru" : "en"),
@@ -372,6 +385,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     voicesForLanguage[0];
 
   const resumeMusic = useCallback(() => {
+    voiceSpeakingRef.current = false;
     const music = musicRef.current;
     if (!music || !runningRef.current || !musicEnabledRef.current) return;
     void music.play().catch(() => {
@@ -382,22 +396,51 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 
   const speakStep = useCallback(
     (step: RecoveryStep, stepIndex: number) => {
-      if (!speechAvailable || !voiceEnabledRef.current) return false;
+      if (!voiceEnabledRef.current) return false;
+      const request = ++voiceRequestRef.current;
+
+      if (useYandexVoice) {
+        const voice = voiceAudioRef.current;
+        if (!voice || !voiceClips[stepIndex]) return false;
+        voice.pause();
+        musicRef.current?.pause();
+        if (speechAvailable) window.speechSynthesis.cancel();
+        voiceSpeakingRef.current = true;
+        voice.src = voiceClips[stepIndex];
+        voice.currentTime = 0;
+        lastSpokenStep.current = stepIndex;
+        void voice.play().catch(() => {
+          if (request !== voiceRequestRef.current || !mountedRef.current) return;
+          voiceSpeakingRef.current = false;
+          if (mountedRef.current)
+            setVoiceError(
+              "Не удалось включить голос. Нажмите паузу и продолжите практику или выберите голос устройства.",
+            );
+          resumeMusic();
+        });
+        return true;
+      }
+      if (!speechAvailable) return false;
 
       musicRef.current?.pause();
       window.speechSynthesis.cancel();
+      voiceSpeakingRef.current = true;
       const utterance = new SpeechSynthesisUtterance(ru ? step.ru : step.en);
       utterance.lang = ru ? "ru-RU" : "en-US";
       utterance.rate = 0.95;
       utterance.pitch = 1;
       if (preferredVoice) utterance.voice = preferredVoice;
-      utterance.onend = resumeMusic;
-      utterance.onerror = resumeMusic;
+      utterance.onend = () => {
+        if (request === voiceRequestRef.current) resumeMusic();
+      };
+      utterance.onerror = () => {
+        if (request === voiceRequestRef.current) resumeMusic();
+      };
       window.speechSynthesis.speak(utterance);
       lastSpokenStep.current = stepIndex;
       return true;
     },
-    [preferredVoice, resumeMusic, ru, speechAvailable],
+    [preferredVoice, resumeMusic, ru, speechAvailable, useYandexVoice, voiceClips],
   );
 
   useEffect(() => {
@@ -407,6 +450,10 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       setElapsed((current) => {
         const next = current + 1;
         if (next >= totalSeconds) {
+          voiceRequestRef.current += 1;
+          voiceAudioRef.current?.pause();
+          if (speechAvailable) window.speechSynthesis.cancel();
+          voiceSpeakingRef.current = false;
           musicRef.current?.pause();
           runningRef.current = false;
           setRunning(false);
@@ -418,7 +465,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [running, totalSeconds]);
+  }, [running, totalSeconds, speechAvailable]);
 
   useEffect(() => {
     const music = musicRef.current;
@@ -429,7 +476,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     const music = musicRef.current;
     if (!music) return;
     music.load();
-    if (runningRef.current && musicEnabledRef.current && !window.speechSynthesis?.speaking) {
+    if (runningRef.current && musicEnabledRef.current && !voiceSpeakingRef.current) {
       resumeMusic();
     }
   }, [backgroundSound, resumeMusic]);
@@ -438,7 +485,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     if (
       !running ||
       !voiceEnabled ||
-      !speechAvailable ||
+      !voiceAvailable ||
       item.mode !== "guided" ||
       !currentStep ||
       currentStepIndex === lastSpokenStep.current
@@ -447,12 +494,17 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     }
 
     speakStep(currentStep, currentStepIndex);
-  }, [currentStep, currentStepIndex, item.mode, running, speakStep, speechAvailable, voiceEnabled]);
+  }, [currentStep, currentStepIndex, item.mode, running, speakStep, voiceAvailable, voiceEnabled]);
 
   useEffect(() => {
     const music = musicRef.current;
+    const voice = voiceAudioRef.current;
+    mountedRef.current = true;
     return () => {
+      voiceRequestRef.current += 1;
+      mountedRef.current = false;
       runningRef.current = false;
+      voice?.pause();
       music?.pause();
       if (speechAvailable) window.speechSynthesis.cancel();
     };
@@ -499,6 +551,10 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
 
   const toggleRunning = () => {
     if (running) {
+      voiceRequestRef.current += 1;
+      voiceAudioRef.current?.pause();
+      voiceSpeakingRef.current = false;
+      lastSpokenStep.current = -1;
       runningRef.current = false;
       musicRef.current?.pause();
       if (speechAvailable) window.speechSynthesis.cancel();
@@ -509,6 +565,9 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   };
 
   const reset = () => {
+    voiceRequestRef.current += 1;
+    voiceAudioRef.current?.pause();
+    voiceSpeakingRef.current = false;
     runningRef.current = false;
     setRunning(false);
     setElapsed(0);
@@ -529,8 +588,11 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
       // Keep the selection for the current practice when storage is blocked.
     }
 
-    if (!next && speechAvailable) {
-      window.speechSynthesis.cancel();
+    if (!next) {
+      voiceRequestRef.current += 1;
+      voiceAudioRef.current?.pause();
+      voiceSpeakingRef.current = false;
+      if (speechAvailable) window.speechSynthesis.cancel();
       resumeMusic();
     } else if (next && runningRef.current && currentStep) {
       lastSpokenStep.current = -1;
@@ -539,6 +601,17 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
   };
 
   const previewVoice = () => {
+    voiceRequestRef.current += 1;
+    if (useYandexVoice) {
+      const voice = voiceAudioRef.current;
+      if (!voice || !voiceClips[0] || running) return;
+      voice.src = voiceClips[0];
+      voice.currentTime = 0;
+      void voice
+        .play()
+        .catch(() => setVoiceError("Не удалось проиграть голос. Попробуйте ещё раз."));
+      return;
+    }
     if (!speechAvailable || running) return;
     window.speechSynthesis.cancel();
     const preview = new SpeechSynthesisUtterance(
@@ -559,16 +632,48 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
     setMusicEnabled(next);
     if (!next) {
       musicRef.current?.pause();
-    } else if (runningRef.current && !(speechAvailable && window.speechSynthesis.speaking)) {
+    } else if (runningRef.current && !voiceSpeakingRef.current) {
       resumeMusic();
     }
   };
 
   const progress = Math.min(100, (elapsed / totalSeconds) * 100);
 
+  const loadVoice = async () => {
+    if (!["meditation", "craving", "audio"].includes(item.id)) return;
+    setVoiceLoading(true);
+    setVoiceError("");
+    try {
+      const response = await prepareVoiceFn({
+        data: { id: item.id as "meditation" | "craving" | "audio" },
+      });
+      if (!mountedRef.current) return;
+      if (!response.ok) throw new Error(response.error);
+      setVoiceClips(response.clips);
+    } catch (error) {
+      if (mountedRef.current)
+        setVoiceError(
+          error instanceof Error ? error.message : "Голос недоступен. Попробуйте голос устройства.",
+        );
+    } finally {
+      if (mountedRef.current) setVoiceLoading(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden p-5">
       <audio ref={musicRef} src={backgroundAudio?.src} loop preload="metadata" />
+      <audio
+        ref={voiceAudioRef}
+        preload="auto"
+        onEnded={resumeMusic}
+        onError={() => {
+          setVoiceError(
+            "Не удалось проиграть голос. Выберите голос устройства или отключите озвучку.",
+          );
+          resumeMusic();
+        }}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -601,7 +706,7 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
                     : "Enable voice"
               }
               onClick={toggleVoice}
-              disabled={!speechAvailable}
+              disabled={voiceLoading}
             >
               {voiceEnabled ? (
                 <Volume2 className="mr-2 h-5 w-5" />
@@ -609,8 +714,12 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
                 <VolumeX className="mr-2 h-5 w-5" />
               )}
               {ru
-                ? voiceEnabled ? "Голос: вкл." : "Без голоса"
-                : voiceEnabled ? "Voice: on" : "Voice: off"}
+                ? voiceEnabled
+                  ? "Голос: вкл."
+                  : "Без голоса"
+                : voiceEnabled
+                  ? "Voice: on"
+                  : "Voice: off"}
             </Button>
           )}
           <Button
@@ -640,7 +749,54 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
         />
       </div>
 
-      {item.mode === "guided" && speechAvailable && (
+      {item.mode === "guided" && ru && (
+        <div className="mt-4 space-y-2">
+          <label className="block text-sm font-medium">
+            Озвучка практики
+            <select
+              value={voiceSource}
+              disabled={running || voiceLoading}
+              className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3"
+              onChange={(e) => {
+                voiceRequestRef.current += 1;
+                voiceAudioRef.current?.pause();
+                if (speechAvailable) window.speechSynthesis.cancel();
+                voiceSpeakingRef.current = false;
+                lastSpokenStep.current = -1;
+                setVoiceSource(e.target.value as "yandex" | "device");
+                setVoiceError("");
+              }}
+            >
+              <option value="yandex">Яндекс · Марина</option>
+              <option value="device">Голос устройства</option>
+            </select>
+          </label>
+          {useYandexVoice && voiceClips.length === 0 && (
+            <Button variant="outline" disabled={voiceLoading || running} onClick={loadVoice}>
+              {voiceLoading ? "Готовим голос…" : "Подготовить голос Яндекса"}
+            </Button>
+          )}
+          {useYandexVoice && voiceClips.length > 0 && (
+            <Button variant="outline" disabled={running} onClick={previewVoice}>
+              Послушать голос
+            </Button>
+          )}
+          {useYandexVoice && (
+            <p className="text-xs text-muted-foreground">
+              {voiceClips.length
+                ? "Голос готов. Нажмите «Начать»."
+                : "Подготовьте озвучку один раз перед началом. Фразы воспроизводятся между звуками природы."}
+            </p>
+          )}
+          {voiceError && (
+            <p role="alert" className="text-sm text-amber-700 dark:text-amber-300">
+              {voiceError}
+            </p>
+          )}
+        </div>
+      )}
+
+      {item.mode === "guided" && speechAvailable && !useYandexVoice && (
         <div className="mt-4 flex flex-wrap items-end gap-2">
           <label className="min-w-0 flex-1 text-sm text-foreground">
             <span className="mb-1 block">{ru ? "Голос практики" : "Practice voice"}</span>
@@ -747,6 +903,10 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
           size="lg"
           className="h-14 bg-gradient-to-r from-emerald-500 to-teal-500 text-base text-white"
           onClick={toggleRunning}
+          disabled={
+            voiceLoading ||
+            (item.mode === "guided" && voiceEnabled && useYandexVoice && voiceClips.length === 0)
+          }
         >
           {running ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
           {running
@@ -777,14 +937,14 @@ function PracticePlayer({ item, ru }: { item: RecoveryItem; ru: boolean }) {
         </Button>
       </div>
 
-      {item.mode === "guided" && !speechAvailable && (
+      {item.mode === "guided" && !voiceAvailable && !useYandexVoice && (
         <p className="mt-3 text-xs text-muted-foreground">
           {ru
             ? "На этом устройстве голос недоступен, но текст и таймер работают."
             : "Voice is unavailable on this device, but text and timer still work."}
         </p>
       )}
-      {item.mode === "guided" && speechAvailable && voiceEnabled && musicEnabled && (
+      {item.mode === "guided" && voiceAvailable && voiceEnabled && musicEnabled && (
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {ru
             ? "Во время голосовой подсказки фон ставится на паузу, затем включается снова."

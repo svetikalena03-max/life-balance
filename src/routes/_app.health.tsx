@@ -81,6 +81,10 @@ function HealthPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Здоровье" subtitle="Давление, пульс и самочувствие" />
+      <Link to="/labs" className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <p className="font-semibold text-primary">Разбор анализов →</p>
+        <p className="mt-1 text-sm text-muted-foreground">Фото, PDF или текст — объяснение показателей простыми словами</p>
+      </Link>
       <Link to="/pregnancy" className="rounded-xl border bg-card p-4 font-semibold text-primary">
         Беременность · дневник наблюдений →
       </Link>

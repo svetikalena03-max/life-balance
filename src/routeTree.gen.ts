@@ -26,6 +26,7 @@ import { Route as AppHealthRouteImport } from './routes/_app.health'
 import { Route as AppHealthFeaturesRouteImport } from './routes/_app.health-features'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppLabsRouteImport } from './routes/_app.labs'
 import { Route as AppPregnancyRouteImport } from './routes/_app.pregnancy'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppRecipesRouteImport } from './routes/_app.recipes'
@@ -124,6 +125,11 @@ const AppHomeRoute = AppHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLabsRoute = AppLabsRouteImport.update({
+  id: '/labs',
+  path: '/labs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPregnancyRoute = AppPregnancyRouteImport.update({
   id: '/pregnancy',
   path: '/pregnancy',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/health-features': typeof AppHealthFeaturesRoute
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/labs': typeof AppLabsRoute
   '/pregnancy': typeof AppPregnancyRoute
   '/profile': typeof AppProfileRoute
   '/recipes': typeof AppRecipesRouteWithChildren
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/health-features': typeof AppHealthFeaturesRoute
   '/history': typeof AppHistoryRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/labs': typeof AppLabsRoute
   '/pregnancy': typeof AppPregnancyRoute
   '/profile': typeof AppProfileRoute
   '/recipes': typeof AppRecipesRouteWithChildren
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/_app/health-features': typeof AppHealthFeaturesRoute
   '/_app/history': typeof AppHistoryRouteWithChildren
   '/_app/home': typeof AppHomeRoute
+  '/_app/labs': typeof AppLabsRoute
   '/_app/pregnancy': typeof AppPregnancyRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/recipes': typeof AppRecipesRouteWithChildren
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/health-features'
     | '/history'
     | '/home'
+    | '/labs'
     | '/pregnancy'
     | '/profile'
     | '/recipes'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/health-features'
     | '/history'
     | '/home'
+    | '/labs'
     | '/pregnancy'
     | '/profile'
     | '/recipes'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/_app/health-features'
     | '/_app/history'
     | '/_app/home'
+    | '/_app/labs'
     | '/_app/pregnancy'
     | '/_app/profile'
     | '/_app/recipes'
@@ -511,6 +523,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/labs': {
+      id: '/_app/labs'
+      path: '/labs'
+      fullPath: '/labs'
+      preLoaderRoute: typeof AppLabsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/pregnancy': {
@@ -667,6 +686,7 @@ interface AppRouteChildren {
   AppHealthFeaturesRoute: typeof AppHealthFeaturesRoute
   AppHistoryRoute: typeof AppHistoryRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
+  AppLabsRoute: typeof AppLabsRoute
   AppPregnancyRoute: typeof AppPregnancyRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRecipesRoute: typeof AppRecipesRouteWithChildren
@@ -689,6 +709,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHealthFeaturesRoute: AppHealthFeaturesRoute,
   AppHistoryRoute: AppHistoryRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
+  AppLabsRoute: AppLabsRoute,
   AppPregnancyRoute: AppPregnancyRoute,
   AppProfileRoute: AppProfileRoute,
   AppRecipesRoute: AppRecipesRouteWithChildren,
