@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, type ChangeEvent } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -30,6 +30,15 @@ function LabPage() {
   const [result, setResult] = useState<Result | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const hasData = rows.some((row) => row.name || row.value);
+  const hasUnsavedWork = hasData || Boolean(text.trim() || context.trim() || result || busy);
+  useBlocker({
+    shouldBlockFn: () =>
+      hasUnsavedWork &&
+      !window.confirm(
+        "Введённые анализы и разбор не сохраняются. Уйти со страницы и потерять результат?",
+      ),
+    enableBeforeUnload: hasUnsavedWork,
+  });
   const invalidate = () => {
     setReviewed(false);
     setResult(null);
