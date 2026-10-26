@@ -1,3 +1,4 @@
+import { appendLabRows, MAX_LAB_ROWS } from "@/lib/lab-pages";
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, type ChangeEvent } from "react";
@@ -27,6 +28,7 @@ function LabPage() {
   const [reviewed, setReviewed] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const hasData = rows.some((row) => row.name || row.value);
@@ -66,25 +68,47 @@ function LabPage() {
       setError("Сначала подтвердите отправку данных для разбора.");
       return;
     }
-    if (
-      (text.trim() || hasData) &&
-      !window.confirm("Заменить текущий текст и карточки показателями из нового файла?")
-    )
-      return;
-    setBusy("Читаем файл…");
+    let completed = 0;
+    let total = 1;
+    let combined = rows.filter((row) => row.name || row.value || row.unit || row.reference);
+    setUploadStatus("");
+    invalidate();
+    setBusy("Подготавливаем страницы…");
     try {
-      const prepared = await prepareLabFile(file);
-      const response = await recognize({
-        data: prepared,
-      });
-      if (!response.ok) throw new Error(response.error);
-      setText(response.text);
-      invalidate();
-      setRows([emptyRow()]);
-      await fillRows(response.text);
+      let files = [file];
+      if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+        if (file.size > 10 * 1024 * 1024) throw new Error("Для PDF допустимо до 10 МБ.");
+        const { splitLabPdf } = await import("@/lib/lab-pages");
+        const pages = await splitLabPdf(new Uint8Array(await file.arrayBuffer()));
+        files = pages.map(
+          (page, index) =>
+            new File([page as BlobPart], `page-${index + 1}.pdf`, { type: "application/pdf" }),
+        );
+      }
+      total = files.length;
+      for (let index = 0; index < total; index++) {
+        setBusy(`Распознаём страницу ${index + 1} из ${total}…`);
+        const prepared = await prepareLabFile(files[index]);
+        const response = await recognize({ data: prepared });
+        if (!response.ok) throw new Error(response.error);
+        setText(response.text);
+        setBusy(`Заполняем показатели: страница ${index + 1} из ${total}…`);
+        const extracted = await extract({ data: { text: response.text } });
+        if (!extracted.ok) throw new Error(extracted.error);
+        if (extracted.rows.length >= 40)
+          throw new Error(
+            "На странице выделено 40 показателей: возможно, часть строк не поместилась. Загрузите эту страницу двумя отдельными фото и сверьте полный список.",
+          );
+        combined = appendLabRows(combined, extracted.rows);
+        setRows(combined);
+        completed++;
+        setUploadStatus(
+          `Добавлено страниц: ${completed} из ${total}. Показателей в списке: ${combined.length}. Сверьте полноту со всеми страницами бланка.`,
+        );
+      }
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Не удалось прочитать файл. Вставьте текст вручную.",
+        `Обработано страниц: ${completed} из ${total}. ${e instanceof Error ? e.message : "Не удалось прочитать файл."} Уже добавленные карточки сохранены на экране. Повторно загрузите только необработанные страницы, чтобы не добавить дубликаты.`,
       );
     } finally {
       setBusy("");
@@ -110,15 +134,37 @@ function LabPage() {
     setError("");
     setResult(null);
     try {
-      const response = await explain({ data: { rows, context } });
-      if (!response.ok) {
-        setError(response.error);
-        return;
+      const allRows: Array<
+        LabRow & { index: number; status: "within" | "low" | "high" | "unknown" }
+      > = [];
+      const indicators: Array<{ index: number; explanation: string }> = [];
+      const questions: string[] = [];
+      const limitations: string[] = [];
+      for (let offset = 0; offset < rows.length; offset += 10) {
+        setBusy(
+          `Объясняем показатели ${offset + 1}–${Math.min(offset + 10, rows.length)} из ${rows.length}…`,
+        );
+        const response = await explain({
+          data: { rows: rows.slice(offset, offset + 10), context },
+        });
+        if (!response.ok) throw new Error(response.error);
+        allRows.push(...response.rows.map((row) => ({ ...row, index: row.index + offset })));
+        indicators.push(
+          ...response.indicators.map((item) => ({ ...item, index: item.index + offset })),
+        );
+        questions.push(...response.questions);
+        limitations.push(response.limitations);
       }
-      setResult(response);
-    } catch {
+      setResult({
+        ok: true,
+        rows: allRows,
+        indicators,
+        questions: [...new Set(questions)],
+        limitations: [...new Set(limitations)].join("\n\n"),
+      });
+    } catch (e) {
       setError(
-        "Не удалось получить объяснение. Проверьте подключение и повторите — введённые данные остались в форме.",
+        `${e instanceof Error ? e.message : "Не удалось получить объяснение."} Карточки остались в форме.`,
       );
     } finally {
       setBusy("");
@@ -189,11 +235,14 @@ function LabPage() {
           Загрузить фото или PDF
         </Button>
         <p className="text-xs text-muted-foreground">
-          JPEG, PNG или PDF из одной страницы до 2 МБ. Большие фото уменьшаются на устройстве
-          автоматически. Для многостраничного бланка добавляйте показатели по одной странице.
-          Проверяйте, что ни одна строка не пропущена.
+          PDF до 10 страниц и 10 МБ, каждая страница до 2 МБ. Большие фото уменьшаются
+          автоматически. Новые файлы добавляются к текущим карточкам, до 200 показателей. Не
+          загружайте один файл повторно: появятся дубликаты. Сверьте все строки со всеми страницами
+          бланка.
         </p>
-        <Label htmlFor="lab-text">Или вставьте текст бланка</Label>
+        <Label htmlFor="lab-text">
+          Или вставьте текст бланка (после загрузки здесь текст последней страницы)
+        </Label>
         <Textarea
           id="lab-text"
           rows={5}
@@ -256,7 +305,9 @@ function LabPage() {
                   <Input
                     id={`lab-${index}-${key}`}
                     disabled={!!busy}
-                    maxLength={key === "value" || key === "unit" ? 60 : 120}
+                    maxLength={
+                      key === "reference" ? 1000 : key === "value" || key === "unit" ? 60 : 120
+                    }
                     value={row[key]}
                     placeholder={placeholder}
                     onChange={(e) => update(index, key, e.target.value)}
@@ -268,7 +319,7 @@ function LabPage() {
         ))}
         <Button
           variant="outline"
-          disabled={!!busy || rows.length >= 40}
+          disabled={!!busy || rows.length >= MAX_LAB_ROWS}
           onClick={() => {
             setRows((r) => [...r, emptyRow()]);
             invalidate();
@@ -329,6 +380,11 @@ function LabPage() {
         )}
       </Card>
 
+      {uploadStatus && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {uploadStatus}
+        </p>
+      )}
       {result?.ok && (
         <section className="space-y-3" aria-live="polite">
           <h2 className="text-lg font-semibold">Объяснение результатов</h2>
