@@ -29,12 +29,15 @@ export async function recognizeLabFile(input: { content: string; mimeType: strin
       content: input.content,
       mimeType:
         input.mimeType === "application/pdf"
-          ? "PDF"
+          ? "application/pdf"
           : input.mimeType === "image/png"
             ? "PNG"
             : "JPEG",
       languageCodes: ["ru", "en"],
-      model: "page",
+      // Laboratory reports are tables. Yandex's table model preserves the
+      // relationship between names, values, units and reference ranges much
+      // better than the generic page model.
+      model: "table",
     }),
   });
   if (response.status === 401 || response.status === 403)
