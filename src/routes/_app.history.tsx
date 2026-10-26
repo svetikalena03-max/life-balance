@@ -1,3 +1,4 @@
+import { RecordsNav } from "@/components/RecordsNav";
 import { createFileRoute, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { ChevronRight, Droplet, Moon, Smile, Heart } from "lucide-react";
@@ -17,7 +18,8 @@ function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="История" subtitle={`Записей: ${sorted.length}`} />
+      <PageHeader title="Мои записи" subtitle={`Записей: ${sorted.length}`} />
+      <RecordsNav />
 
       {sorted.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground">Пока нет записей</Card>
@@ -28,13 +30,39 @@ function HistoryPage() {
               <Link to="/history/$date" params={{ date: e.date }} className="block">
                 <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/50">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">{formatDateRu(e.date)}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {formatDateRu(e.date)}
+                    </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      {e.weight != null && <span className="font-medium text-foreground">{e.weight.toFixed(1)} кг</span>}
-                      {e.water != null && <span className="flex items-center gap-1"><Droplet className="h-3 w-3" />{(e.water / 1000).toFixed(1)} л</span>}
-                      {e.sleep != null && <span className="flex items-center gap-1"><Moon className="h-3 w-3" />{e.sleep.toFixed(1)} ч</span>}
-                      {e.mood != null && <span className="flex items-center gap-1"><Smile className="h-3 w-3" />{e.mood}/10</span>}
-                      {e.systolic != null && <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{e.systolic}/{e.diastolic ?? "—"}</span>}
+                      {e.weight != null && (
+                        <span className="font-medium text-foreground">
+                          {e.weight.toFixed(1)} кг
+                        </span>
+                      )}
+                      {e.water != null && (
+                        <span className="flex items-center gap-1">
+                          <Droplet className="h-3 w-3" />
+                          {(e.water / 1000).toFixed(1)} л
+                        </span>
+                      )}
+                      {e.sleep != null && (
+                        <span className="flex items-center gap-1">
+                          <Moon className="h-3 w-3" />
+                          {e.sleep.toFixed(1)} ч
+                        </span>
+                      )}
+                      {e.mood != null && (
+                        <span className="flex items-center gap-1">
+                          <Smile className="h-3 w-3" />
+                          {e.mood}/10
+                        </span>
+                      )}
+                      {e.systolic != null && (
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" />
+                          {e.systolic}/{e.diastolic ?? "—"}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />

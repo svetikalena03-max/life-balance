@@ -1,6 +1,17 @@
+import { RecordsNav } from "@/components/RecordsNav";
 import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  CartesianGrid,
+  BarChart,
+  Bar,
+} from "recharts";
 import { PageHeader } from "@/components/PageHeader";
 import { useEntries, formatDateShort } from "@/lib/store";
 
@@ -21,13 +32,14 @@ function ChartsPage() {
     energy: e.energy ?? null,
     bread: e.breadUnits ?? null,
     coffee: e.coffee ?? null,
-    sweet: ((e.soda ?? 0) + (e.juice ?? 0)) || null,
+    sweet: (e.soda ?? 0) + (e.juice ?? 0) || null,
   }));
 
   if (entries.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <PageHeader title="Графики" subtitle="Динамика по дням" />
+        <PageHeader title="Мои записи" subtitle="Динамика по дням" />
+        <RecordsNav />
         <Card className="p-8 text-center text-muted-foreground">
           Нет данных. Заполните дневник и страницу «Здоровье», чтобы увидеть графики.
         </Card>
@@ -36,19 +48,35 @@ function ChartsPage() {
   }
 
   const axisStyle = { fontSize: 11 } as const;
-  const tooltip = { borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" };
+  const tooltip = {
+    borderRadius: 12,
+    border: "1px solid var(--border)",
+    background: "var(--card)",
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Графики" subtitle="Динамика по дням" />
+      <PageHeader title="Мои записи" subtitle="Динамика по дням" />
+      <RecordsNav />
 
       <ChartCard title="Вес, кг">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
-          <YAxis tick={axisStyle} stroke="var(--muted-foreground)" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+          <YAxis
+            tick={axisStyle}
+            stroke="var(--muted-foreground)"
+            domain={["dataMin - 0.5", "dataMax + 0.5"]}
+          />
           <Tooltip contentStyle={tooltip} />
-          <Line type="monotone" dataKey="weight" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+          <Line
+            type="monotone"
+            dataKey="weight"
+            stroke="var(--chart-1)"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            connectNulls
+          />
         </LineChart>
       </ChartCard>
 
@@ -68,7 +96,14 @@ function ChartsPage() {
           <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
           <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
           <Tooltip contentStyle={tooltip} />
-          <Line type="monotone" dataKey="sleep" stroke="var(--chart-5)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+          <Line
+            type="monotone"
+            dataKey="sleep"
+            stroke="var(--chart-5)"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            connectNulls
+          />
         </LineChart>
       </ChartCard>
 
@@ -78,8 +113,24 @@ function ChartsPage() {
           <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
           <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
           <Tooltip contentStyle={tooltip} />
-          <Line type="monotone" dataKey="systolic" name="Верхнее" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
-          <Line type="monotone" dataKey="diastolic" name="Нижнее" stroke="var(--chart-4)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+          <Line
+            type="monotone"
+            dataKey="systolic"
+            name="Верхнее"
+            stroke="var(--chart-1)"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            connectNulls
+          />
+          <Line
+            type="monotone"
+            dataKey="diastolic"
+            name="Нижнее"
+            stroke="var(--chart-4)"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            connectNulls
+          />
         </LineChart>
       </ChartCard>
 
@@ -89,7 +140,14 @@ function ChartsPage() {
           <XAxis dataKey="date" tick={axisStyle} stroke="var(--muted-foreground)" />
           <YAxis tick={axisStyle} stroke="var(--muted-foreground)" />
           <Tooltip contentStyle={tooltip} />
-          <Line type="monotone" dataKey="pulse" stroke="var(--chart-2)" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+          <Line
+            type="monotone"
+            dataKey="pulse"
+            stroke="var(--chart-2)"
+            strokeWidth={3}
+            dot={{ r: 4 }}
+            connectNulls
+          />
         </LineChart>
       </ChartCard>
 
@@ -141,7 +199,9 @@ function ChartCard({ title, children }: { title: string; children: React.ReactEl
     <Card className="p-4">
       <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
       <div className="h-52 w-full">
-        <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
+          {children}
+        </ResponsiveContainer>
       </div>
     </Card>
   );
