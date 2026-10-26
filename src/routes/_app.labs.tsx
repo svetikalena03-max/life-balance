@@ -291,6 +291,12 @@ function LabPage() {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+            {!row.value.trim() && row.name.trim() && (
+              <p role="status" className="text-sm text-amber-800 dark:text-amber-300">
+                Проверьте результат: значение не распознано. Впишите его с бланка. Если это
+                заголовок, удалите карточку.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-3">
               {(
                 [

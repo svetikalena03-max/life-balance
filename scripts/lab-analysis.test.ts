@@ -36,10 +36,27 @@ test("extracted rows accept numeric JSON results and absent units without invent
       }),
     )[0].reference.length > 120,
   );
-  for (const value of [null, true, {}, []])
+  for (const value of [true, {}, []])
     assert.throws(() => parseLabRows(JSON.stringify({ rows: [{ name: "Пример", value }] })));
   assert.throws(() => parseLabRows('{"rows":[]}'));
   assert.throws(() => parseLabRows('{"rows":[{"name":"Пример","value":"12"}'));
+});
+
+test("one missing OCR result retains all page rows without allowing incomplete medical explanation", () => {
+  for (const value of ["", "   ", null, undefined]) {
+    const rows = parseLabRows(
+      JSON.stringify({
+        rows: [
+          { name: "Нераспознанный", value },
+          { name: "Заполненный", value: 2.7, unit: "г/л", reference: "2-4" },
+        ],
+      }),
+    );
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].value, "");
+    assert.equal(rows[1].value, "2.7");
+    assert.equal(labInputSchema.safeParse({ rows, context: "" }).success, false);
+  }
 });
 
 test("lab failures distinguish access, limits and invalid responses without exposing private data", () => {
