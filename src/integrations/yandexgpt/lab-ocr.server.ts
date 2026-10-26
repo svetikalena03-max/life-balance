@@ -25,7 +25,17 @@ export async function recognizeLabFile(input: { content: string; mimeType: strin
       "x-folder-id": folderId,
       "x-data-logging-enabled": "false",
     },
-    body: JSON.stringify({ ...input, languageCodes: ["ru", "en"], model: "page" }),
+    body: JSON.stringify({
+      content: input.content,
+      mimeType:
+        input.mimeType === "application/pdf"
+          ? "PDF"
+          : input.mimeType === "image/png"
+            ? "PNG"
+            : "JPEG",
+      languageCodes: ["ru", "en"],
+      model: "page",
+    }),
   });
   if (response.status === 401 || response.status === 403)
     throw new Error(
@@ -35,10 +45,13 @@ export async function recognizeLabFile(input: { content: string; mimeType: strin
     throw new Error(
       "Не удалось прочитать файл. Попробуйте чёткое фото одной страницы или вставьте текст.",
     );
+  const annotation = z.object({ textAnnotation: z.object({ fullText: z.string().max(16000) }) });
+  // REST returns textAnnotation at the root; also accept the older wrapped response.
   const parsed = z
-    .object({ result: z.object({ textAnnotation: z.object({ fullText: z.string().max(16000) }) }) })
+    .union([annotation, z.object({ result: annotation })])
     .parse(await response.json());
-  if (!parsed.result.textAnnotation.fullText.trim())
-    throw new Error("Текст не найден. Попробуйте более чёткое фото.");
-  return parsed.result.textAnnotation.fullText;
+  const text =
+    "result" in parsed ? parsed.result.textAnnotation.fullText : parsed.textAnnotation.fullText;
+  if (!text.trim()) throw new Error("Текст не найден. Попробуйте более чёткое фото.");
+  return text;
 }
