@@ -29,6 +29,13 @@ test("extracted rows accept numeric JSON results and absent units without invent
       .value,
     "<0,5",
   );
+  assert.ok(
+    parseLabRows(
+      JSON.stringify({
+        rows: [{ name: "Пример", value: "125", unit: "г/л", reference: "норма ".repeat(40) }],
+      }),
+    )[0].reference.length > 120,
+  );
   for (const value of [null, true, {}, []])
     assert.throws(() => parseLabRows(JSON.stringify({ rows: [{ name: "Пример", value }] })));
   assert.throws(() => parseLabRows('{"rows":[]}'));

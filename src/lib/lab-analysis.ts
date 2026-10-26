@@ -46,7 +46,9 @@ export const labRowSchema = z.object({
   name: z.string().trim().min(1).max(120),
   value: z.string().trim().min(1).max(60),
   unit: z.string().trim().max(60),
-  reference: z.string().trim().max(120),
+  // Lab reports may include long age/sex/pregnancy-specific reference notes.
+  // Keep the literal text for the user's review instead of rejecting the row.
+  reference: z.string().trim().max(1000),
 });
 export type LabRow = z.infer<typeof labRowSchema>;
 
