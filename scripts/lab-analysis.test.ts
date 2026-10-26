@@ -129,7 +129,9 @@ test("OCR validates file signatures, disables provider logging and handles missi
     );
     globalThis.fetch = async (_url, init) => {
       assert.equal(new Headers(init?.headers).get("x-data-logging-enabled"), "false");
-      assert.equal(JSON.parse(String(init?.body)).mimeType, "PDF");
+      const request = JSON.parse(String(init?.body));
+      assert.equal(request.mimeType, "application/pdf");
+      assert.equal(request.model, "table");
       return Response.json({ textAnnotation: { fullText: "Пример 125 г/л 120–150" } });
     };
     assert.match(await recognizeLabFile(data), /125/);
