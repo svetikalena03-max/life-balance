@@ -4,7 +4,7 @@ import { useSettings } from "@/lib/settings";
 export function ThemeLangToggle() {
   const { theme, lang, setTheme, setLang } = useSettings();
   return (
-    <div className="fixed right-3 top-3 z-50 flex items-center gap-1 rounded-full border border-border bg-card/90 px-1 py-1 shadow-sm backdrop-blur">
+    <div className="mx-auto flex w-fit items-center gap-1 rounded-full border border-border bg-card/90 px-1 py-1 my-2 shadow-sm backdrop-blur">
       <button
         type="button"
         aria-label={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
