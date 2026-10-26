@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-export async function recognizeLabFile(input: { content: string; mimeType: string }) {
+export async function recognizeLabFile(input: {
+  content: string;
+  mimeType: string;
+  model?: "page" | "table";
+}) {
   const apiKey = process.env.YANDEX_VISION_API_KEY || process.env.YANDEX_CLOUD_API_KEY;
   const folderId = process.env.YANDEX_CLOUD_FOLDER_ID;
   if (!apiKey || !folderId)
@@ -37,7 +41,7 @@ export async function recognizeLabFile(input: { content: string; mimeType: strin
       // Laboratory reports are tables. Yandex's table model preserves the
       // relationship between names, values, units and reference ranges much
       // better than the generic page model.
-      model: "table",
+      model: input.model ?? "table",
     }),
   });
   if (response.status === 401 || response.status === 403)

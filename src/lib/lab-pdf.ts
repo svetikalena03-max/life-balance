@@ -4,15 +4,19 @@ import { LAB_PDF_FONT } from "./lab-pdf-font.ts";
 
 // Entirely local: no report content is sent to a server to create this file.
 export function createLabPdf(result: Parameters<typeof labReportText>[0]) {
+  return createTextPdf(labReportText(result), "Баланс жизни - разбор анализов");
+}
+
+export function createTextPdf(text: string, title: string) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   doc.addFileToVFS("LabSans.ttf", LAB_PDF_FONT);
   doc.addFont("LabSans.ttf", "LabSans", "normal");
   doc.setFont("LabSans");
-  doc.setProperties({ title: "Баланс жизни - разбор анализов", creator: "Баланс жизни" });
+  doc.setProperties({ title, creator: "Баланс жизни" });
   const margin = 18;
   const width = 174;
   let y = 22;
-  const paragraphs = labReportText(result).split("\n\n");
+  const paragraphs = text.split("\n\n");
   paragraphs.forEach((paragraph, index) => {
     const heading = index === 0 || paragraph === "Что обсудить с врачом";
     doc.setFontSize(index === 0 ? 17 : heading ? 13 : 10.5);
