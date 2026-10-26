@@ -1,4 +1,3 @@
-import { labReportText } from "@/lib/lab-export";
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, type ChangeEvent } from "react";
@@ -126,17 +125,18 @@ function LabPage() {
     }
   };
 
-  const downloadReport = () => {
-    if (!result?.ok) return;
-    const blob = new Blob(["\uFEFF", labReportText(result)], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "balans-zhizni-analizy.txt";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  const [downloading, setDownloading] = useState(false);
+  const downloadReport = async () => {
+    if (!result?.ok || downloading) return;
+    setDownloading(true);
+    try {
+      const { createLabPdf } = await import("@/lib/lab-pdf");
+      createLabPdf(result).save("balans-zhizni-analizy.pdf");
+    } catch {
+      setError("Не удалось создать PDF. Разбор остался на экране, попробуйте скачать ещё раз.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -332,9 +332,14 @@ function LabPage() {
       {result?.ok && (
         <section className="space-y-3" aria-live="polite">
           <h2 className="text-lg font-semibold">Объяснение результатов</h2>
-          <Button type="button" variant="outline" onClick={downloadReport}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void downloadReport()}
+            disabled={downloading}
+          >
             <Download className="mr-2 h-4 w-4" />
-            Скачать разбор (.txt)
+            {downloading ? "Готовим PDF…" : "Скачать разбор (PDF)"}
           </Button>
           <p className="text-xs text-muted-foreground">
             Сохраните файл на своём устройстве. В истории приложения разбор не хранится.
