@@ -243,11 +243,11 @@ function HomePage() {
       </Link>
 
       <Link
-        to="/labs"
+        to="/examinations"
         className="block rounded-xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
       >
-        <p className="font-semibold text-primary">Разбор анализов →</p>
-        <p className="mt-1 text-xs text-muted-foreground">Загрузите бланк или введите показатели</p>
+        <p className="font-semibold text-primary">Анализы и обследования →</p>
+        <p className="mt-1 text-xs text-muted-foreground">Анализы и заключения УЗИ, КТ, МРТ</p>
       </Link>
     </div>
   );

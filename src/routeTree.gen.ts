@@ -19,6 +19,8 @@ import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppAiRouteImport } from './routes/_app.ai'
 import { Route as AppChartsRouteImport } from './routes/_app.charts'
 import { Route as AppDiaryRouteImport } from './routes/_app.diary'
+import { Route as AppExaminationReportRouteImport } from './routes/_app.examination-report'
+import { Route as AppExaminationsRouteImport } from './routes/_app.examinations'
 import { Route as AppFamilyRouteImport } from './routes/_app.family'
 import { Route as AppGlucoseRouteImport } from './routes/_app.glucose'
 import { Route as AppHabitsRouteImport } from './routes/_app.habits'
@@ -88,6 +90,16 @@ const AppChartsRoute = AppChartsRouteImport.update({
 const AppDiaryRoute = AppDiaryRouteImport.update({
   id: '/diary',
   path: '/diary',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExaminationReportRoute = AppExaminationReportRouteImport.update({
+  id: '/examination-report',
+  path: '/examination-report',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExaminationsRoute = AppExaminationsRouteImport.update({
+  id: '/examinations',
+  path: '/examinations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFamilyRoute = AppFamilyRouteImport.update({
@@ -206,6 +218,8 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
+  '/examination-report': typeof AppExaminationReportRoute
+  '/examinations': typeof AppExaminationsRoute
   '/family': typeof AppFamilyRoute
   '/glucose': typeof AppGlucoseRoute
   '/habits': typeof AppHabitsRoute
@@ -238,6 +252,8 @@ export interface FileRoutesByTo {
   '/ai': typeof AppAiRoute
   '/charts': typeof AppChartsRoute
   '/diary': typeof AppDiaryRoute
+  '/examination-report': typeof AppExaminationReportRoute
+  '/examinations': typeof AppExaminationsRoute
   '/family': typeof AppFamilyRoute
   '/glucose': typeof AppGlucoseRoute
   '/habits': typeof AppHabitsRoute
@@ -272,6 +288,8 @@ export interface FileRoutesById {
   '/_app/ai': typeof AppAiRoute
   '/_app/charts': typeof AppChartsRoute
   '/_app/diary': typeof AppDiaryRoute
+  '/_app/examination-report': typeof AppExaminationReportRoute
+  '/_app/examinations': typeof AppExaminationsRoute
   '/_app/family': typeof AppFamilyRoute
   '/_app/glucose': typeof AppGlucoseRoute
   '/_app/habits': typeof AppHabitsRoute
@@ -306,6 +324,8 @@ export interface FileRouteTypes {
     | '/ai'
     | '/charts'
     | '/diary'
+    | '/examination-report'
+    | '/examinations'
     | '/family'
     | '/glucose'
     | '/habits'
@@ -338,6 +358,8 @@ export interface FileRouteTypes {
     | '/ai'
     | '/charts'
     | '/diary'
+    | '/examination-report'
+    | '/examinations'
     | '/family'
     | '/glucose'
     | '/habits'
@@ -371,6 +393,8 @@ export interface FileRouteTypes {
     | '/_app/ai'
     | '/_app/charts'
     | '/_app/diary'
+    | '/_app/examination-report'
+    | '/_app/examinations'
     | '/_app/family'
     | '/_app/glucose'
     | '/_app/habits'
@@ -474,6 +498,20 @@ declare module '@tanstack/react-router' {
       path: '/diary'
       fullPath: '/diary'
       preLoaderRoute: typeof AppDiaryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/examination-report': {
+      id: '/_app/examination-report'
+      path: '/examination-report'
+      fullPath: '/examination-report'
+      preLoaderRoute: typeof AppExaminationReportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/examinations': {
+      id: '/_app/examinations'
+      path: '/examinations'
+      fullPath: '/examinations'
+      preLoaderRoute: typeof AppExaminationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/family': {
@@ -679,6 +717,8 @@ interface AppRouteChildren {
   AppAiRoute: typeof AppAiRoute
   AppChartsRoute: typeof AppChartsRoute
   AppDiaryRoute: typeof AppDiaryRoute
+  AppExaminationReportRoute: typeof AppExaminationReportRoute
+  AppExaminationsRoute: typeof AppExaminationsRoute
   AppFamilyRoute: typeof AppFamilyRoute
   AppGlucoseRoute: typeof AppGlucoseRoute
   AppHabitsRoute: typeof AppHabitsRoute
@@ -702,6 +742,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiRoute: AppAiRoute,
   AppChartsRoute: AppChartsRoute,
   AppDiaryRoute: AppDiaryRoute,
+  AppExaminationReportRoute: AppExaminationReportRoute,
+  AppExaminationsRoute: AppExaminationsRoute,
   AppFamilyRoute: AppFamilyRoute,
   AppGlucoseRoute: AppGlucoseRoute,
   AppHabitsRoute: AppHabitsRoute,

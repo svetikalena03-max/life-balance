@@ -190,8 +190,8 @@ function LabPage() {
       <PageHeader
         title="Разбор анализов"
         subtitle="Показатели простыми словами"
-        backTo="/health"
-        backLabel="Здоровье"
+        backTo="/examinations"
+        backLabel="Анализы и обследования"
       />
       <Card className="space-y-3 p-4 text-sm">
         <p>
