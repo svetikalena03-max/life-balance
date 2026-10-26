@@ -106,7 +106,10 @@ function LabPage() {
     setResult(null);
     try {
       const response = await explain({ data: { rows, context } });
-      if (!response.ok) throw new Error(response.error);
+      if (!response.ok) {
+        setError(response.error);
+        return;
+      }
       setResult(response);
     } catch {
       setError(
@@ -221,10 +224,10 @@ function LabPage() {
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
-                  ["name", "Название", "Гемоглобин"],
-                  ["value", "Результат", "125"],
-                  ["unit", "Единицы", "г/л"],
-                  ["reference", "Норма на бланке", "120–150"],
+                  ["name", "Название", "Введите название с бланка"],
+                  ["value", "Результат", "Введите результат"],
+                  ["unit", "Единицы", "Единицы с бланка"],
+                  ["reference", "Норма на бланке", "Интервал с бланка"],
                 ] as const
               ).map(([key, label, placeholder]) => (
                 <div key={key} className={key === "name" ? "col-span-2 space-y-1" : "space-y-1"}>

@@ -1,14 +1,56 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { compareLabRow, labInputSchema, parseLabExplanation } from "../src/lib/lab-analysis.ts";
+import {
+  compareLabRow,
+  labFailureMessage,
+  labInputSchema,
+  parseLabExplanation,
+} from "../src/lib/lab-analysis.ts";
 import { recognizeLabFile } from "../src/integrations/yandexgpt/lab-ocr.server.ts";
-import { prepareVoice } from "../src/integrations/yandexgpt/recovery-voice.server.ts";
+import {
+  prepareVoice,
+  prepareWorkoutClips,
+} from "../src/integrations/yandexgpt/recovery-voice.server.ts";
 
 const row = (value: string, reference: string, unit = "г/л") => ({
   name: "Пример",
   value,
   reference,
   unit,
+});
+
+test("lab failures distinguish access, limits and invalid responses without exposing private data", () => {
+  assert.match(labFailureMessage(new Error("YandexGPT request failed with status 403")), /доступ/);
+  assert.match(labFailureMessage(new Error("YandexGPT request failed with status 429")), /лимит/);
+  assert.match(labFailureMessage(new SyntaxError("private lab input")), /прочитать/);
+  assert.doesNotMatch(labFailureMessage(new Error("private lab input")), /private lab input/);
+});
+
+test("workout voice accepts only known programs and reuses fixed Yandex clips", async () => {
+  const originalFetch = globalThis.fetch;
+  const previousKey = process.env.YANDEX_SPEECHKIT_API_KEY;
+  process.env.YANDEX_SPEECHKIT_API_KEY = "test-placeholder";
+  let requests = 0;
+  try {
+    globalThis.fetch = async (_url, init) => {
+      requests++;
+      const body = new URLSearchParams(String(init?.body));
+      assert.equal(body.get("voice"), "marina");
+      assert.equal(body.get("format"), "mp3");
+      return new Response(new Uint8Array([1, 2, 3]));
+    };
+    await assert.rejects(() => prepareWorkoutClips("arbitrary-user-text"));
+    assert.equal(requests, 0);
+    const first = await prepareWorkoutClips("gentle-morning");
+    assert.equal(first.length, 5);
+    const count = requests;
+    assert.deepEqual(await prepareWorkoutClips("gentle-morning"), first);
+    assert.equal(requests, count);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousKey === undefined) delete process.env.YANDEX_SPEECHKIT_API_KEY;
+    else process.env.YANDEX_SPEECHKIT_API_KEY = previousKey;
+  }
 });
 
 test("lab comparison uses only the supplied range, including decimal commas and exact boundaries", () => {
