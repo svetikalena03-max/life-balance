@@ -1,12 +1,11 @@
-import { createFileRoute, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, useRouterState, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -89,7 +88,7 @@ function DiaryPage() {
   const [steps, setSteps] = useState("");
   const [workout, setWorkout] = useState("");
   const [workoutMinutes, setWorkoutMinutes] = useState("");
-  const [mood, setMood] = useState(7);
+  const [mood, setMood] = useState<number | undefined>(undefined);
   const [water, setWater] = useState("");
   const [tea, setTea] = useState("");
   const [coffee, setCoffee] = useState("");
@@ -106,7 +105,43 @@ function DiaryPage() {
     setTemplates(loadMealTemplates());
   }, []);
 
+  const hydrated = useRef(false);
+  const [initialized, setInitialized] = useState(false);
+  const [baseline, setBaseline] = useState<string | null>(null);
+  const snapshot = JSON.stringify({
+    meals,
+    wellbeing,
+    weight,
+    sleep,
+    breadUnits,
+    steps,
+    workout,
+    workoutMinutes,
+    mood,
+    water,
+    tea,
+    coffee,
+    soda,
+    juice,
+    otherDrinks,
+    sugar,
+    sugarOther,
+    milk,
+  });
+  const dirty = baseline !== null && baseline !== snapshot;
+  useBlocker({
+    shouldBlockFn: () =>
+      dirty && !window.confirm("Изменения дневника не сохранены. Уйти без сохранения?"),
+    enableBeforeUnload: dirty,
+  });
   useEffect(() => {
+    if (initialized && baseline === null) setBaseline(snapshot);
+  }, [initialized, baseline, snapshot]);
+
+  useEffect(() => {
+    if (!ready || hydrated.current) return;
+    hydrated.current = true;
+    setInitialized(true);
     if (!existing) return;
     if (existing.meals && existing.meals.length > 0) {
       setMeals(restoreMealSlots(existing.meals));
@@ -118,7 +153,7 @@ function DiaryPage() {
     setSteps(existing.steps != null ? String(existing.steps) : "");
     setWorkout(existing.workout ?? "");
     setWorkoutMinutes(existing.workoutMinutes != null ? String(existing.workoutMinutes) : "");
-    setMood(existing.mood ?? 7);
+    setMood(existing.mood ?? undefined);
     setWater(existing.water != null ? String(existing.water) : "");
     setTea(existing.tea != null ? String(existing.tea) : "");
     setCoffee(existing.coffee != null ? String(existing.coffee) : "");
@@ -172,8 +207,7 @@ function DiaryPage() {
     toast.success(`Добавлено: ${tpl.label}`);
   };
 
-  const saveCurrentMealAsTemplate = () => {
-    const filled = meals.find((m) => m.food?.trim());
+  const saveCurrentMealAsTemplate = (filled: Meal) => {
     if (!filled?.food?.trim()) {
       toast.error("Сначала заполните хотя бы один приём пищи");
       return;
@@ -195,6 +229,7 @@ function DiaryPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving || baseline === null) return;
     const cleanMeals = meals.filter(
       (m) =>
         (m.food && m.food.trim()) ||
@@ -230,6 +265,7 @@ function DiaryPage() {
     }
 
     toast.success("День сохранён");
+    setBaseline(snapshot);
     setSaved(true);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -237,6 +273,9 @@ function DiaryPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Дневник дня" subtitle="Запишите, как прошёл день" />
+      <p className="text-sm text-muted-foreground">
+        Не нужно заполнять всё. Выберите то, что хотите отслеживать сегодня.
+      </p>
 
       {saved && <SaveSuccess onContinue={() => setSaved(false)} />}
 
@@ -247,20 +286,10 @@ function DiaryPage() {
             variant="secondary"
             className="flex-1 gap-2"
             onClick={copyYesterday}
-            disabled={!yesterdayEntry || saving}
+            disabled={!yesterdayEntry || saving || baseline === null}
           >
             <Copy className="h-4 w-4" />
             Скопировать вчера
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 gap-2"
-            onClick={saveCurrentMealAsTemplate}
-            disabled={saving}
-          >
-            <BookmarkPlus className="h-4 w-4" />
-            Сохранить блюдо в шаблоны
           </Button>
         </div>
       </Card>
@@ -280,7 +309,7 @@ function DiaryPage() {
                 size="sm"
                 className="h-auto py-1.5"
                 onClick={() => applyTemplate(tpl)}
-                disabled={saving}
+                disabled={saving || baseline === null}
               >
                 {tpl.label}
               </Button>
@@ -289,217 +318,247 @@ function DiaryPage() {
         </Card>
       )}
 
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <DiarySection title="Приёмы пищи" targets={[]} initiallyOpen>
-          <div className="flex flex-col gap-3">
-            {meals.map((m, idx) => (
-              <MealBlock
-                key={m.id}
-                meal={m}
-                index={idx}
-                onChange={(patch) => updateMeal(m.id, patch)}
-                onRemove={() => removeMeal(m.id)}
-                canRemove={meals.length > 1}
+      <form onSubmit={submit} className="flex flex-col gap-4" aria-busy={saving}>
+        <fieldset disabled={saving || baseline === null} className="contents">
+          <DiarySection title="Приёмы пищи" targets={[]} initiallyOpen>
+            <div className="flex flex-col gap-3">
+              {meals.map((m, idx) => (
+                <MealBlock
+                  key={m.id}
+                  meal={m}
+                  index={idx}
+                  onChange={(patch) => updateMeal(m.id, patch)}
+                  onRemove={() => removeMeal(m.id)}
+                  onRemember={() => saveCurrentMealAsTemplate(m)}
+                  canRemove={meals.length > 1}
+                  disabled={saving}
+                />
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={addMeal}
+              className="mt-3 h-11 w-full"
+              disabled={saving}
+            >
+              <Plus className="mr-1 h-4 w-4" /> Добавить ещё приём пищи
+            </Button>
+          </DiarySection>
+
+          <DiarySection title="Напитки" targets={["water", "tea", "coffee", "soda", "juice"]}>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                id="water"
+                label="Вода, мл"
+                value={water}
+                setValue={setWater}
+                placeholder="2000"
                 disabled={saving}
               />
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={addMeal}
-            className="mt-3 h-11 w-full"
-            disabled={saving}
-          >
-            <Plus className="mr-1 h-4 w-4" /> Добавить ещё приём пищи
-          </Button>
-        </DiarySection>
-
-        <DiarySection title="Напитки" targets={["water", "tea", "coffee", "soda", "juice"]}>
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              id="water"
-              label="Вода, мл"
-              value={water}
-              setValue={setWater}
-              placeholder="2000"
-              disabled={saving}
-            />
-            <Field
-              id="tea"
-              label="Чай, мл"
-              value={tea}
-              setValue={setTea}
-              placeholder="400"
-              disabled={saving}
-            />
-            <Field
-              id="coffee"
-              label="Кофе, мл"
-              value={coffee}
-              setValue={setCoffee}
-              placeholder="200"
-              disabled={saving}
-            />
-            <Field
-              id="soda"
-              label="Газировка, мл"
-              value={soda}
-              setValue={setSoda}
-              placeholder="0"
-              disabled={saving}
-            />
-            <Field
-              id="juice"
-              label="Сок, мл"
-              value={juice}
-              setValue={setJuice}
-              placeholder="0"
-              disabled={saving}
-            />
-            <div className="flex min-w-0 flex-col gap-2">
-              <Label>Сахар</Label>
-              <Select
-                value={sugar}
-                onValueChange={(v) => setSugar(v as SugarLevel)}
+              <Field
+                id="tea"
+                label="Чай, мл"
+                value={tea}
+                setValue={setTea}
+                placeholder="400"
                 disabled={saving}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SUGAR_LABELS).map(([v, l]) => (
-                    <SelectItem key={v} value={v}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
+              <Field
+                id="coffee"
+                label="Кофе, мл"
+                value={coffee}
+                setValue={setCoffee}
+                placeholder="200"
+                disabled={saving}
+              />
+              <Field
+                id="soda"
+                label="Газировка, мл"
+                value={soda}
+                setValue={setSoda}
+                placeholder="0"
+                disabled={saving}
+              />
+              <Field
+                id="juice"
+                label="Сок, мл"
+                value={juice}
+                setValue={setJuice}
+                placeholder="0"
+                disabled={saving}
+              />
+              <div className="flex min-w-0 flex-col gap-2">
+                <Label>Сахар</Label>
+                <Select
+                  value={sugar}
+                  onValueChange={(v) => setSugar(v as SugarLevel)}
+                  disabled={saving}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SUGAR_LABELS).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          {sugar === "other" && (
+            {sugar === "other" && (
+              <div className="mt-3 flex flex-col gap-2">
+                <Label htmlFor="sugarOther">Уточните количество сахара</Label>
+                <Input
+                  id="sugarOther"
+                  value={sugarOther}
+                  onChange={(e) => setSugarOther(e.target.value)}
+                  placeholder="например, 3 ложки"
+                  disabled={saving}
+                />
+              </div>
+            )}
+            <div className="mt-3 flex items-center justify-between rounded-lg border border-border p-3">
+              <Label className="text-sm">Молоко / сливки</Label>
+              <Switch checked={milk} onCheckedChange={setMilk} disabled={saving} />
+            </div>
             <div className="mt-3 flex flex-col gap-2">
-              <Label htmlFor="sugarOther">Уточните количество сахара</Label>
+              <Label htmlFor="other">Другие напитки</Label>
               <Input
-                id="sugarOther"
-                value={sugarOther}
-                onChange={(e) => setSugarOther(e.target.value)}
-                placeholder="например, 3 ложки"
+                id="other"
+                value={otherDrinks}
+                onChange={(e) => setOtherDrinks(e.target.value)}
+                placeholder="кефир, морс…"
                 disabled={saving}
               />
             </div>
-          )}
-          <div className="mt-3 flex items-center justify-between rounded-lg border border-border p-3">
-            <Label className="text-sm">Молоко / сливки</Label>
-            <Switch checked={milk} onCheckedChange={setMilk} disabled={saving} />
-          </div>
-          <div className="mt-3 flex flex-col gap-2">
-            <Label htmlFor="other">Другие напитки</Label>
-            <Input
-              id="other"
-              value={otherDrinks}
-              onChange={(e) => setOtherDrinks(e.target.value)}
-              placeholder="кефир, морс…"
-              disabled={saving}
-            />
-          </div>
-        </DiarySection>
+          </DiarySection>
 
-        <DiarySection
-          title="Показатели дня"
-          targets={["w", "bu", "sl", "st", "wm", "well", "mood"]}
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              id="w"
-              label="Вес, кг"
-              value={weight}
-              setValue={setWeight}
-              step="0.1"
-              placeholder="70"
-              disabled={saving}
-            />
-            <Field
-              id="bu"
-              label="Хлебцы за день, шт"
-              value={breadUnits}
-              setValue={setBreadUnits}
-              placeholder="0"
-              disabled={saving}
-            />
-            <Field
-              id="sl"
-              label="Часы сна"
-              value={sleep}
-              setValue={setSleep}
-              step="0.1"
-              placeholder="7.5"
-              disabled={saving}
-            />
-            <Field
-              id="st"
-              label="Шаги"
-              value={steps}
-              setValue={setSteps}
-              placeholder="8000"
-              disabled={saving}
-            />
-            <Field
-              id="wm"
-              label="Тренировка, мин"
-              value={workoutMinutes}
-              setValue={setWorkoutMinutes}
-              placeholder="30"
-              disabled={saving}
-            />
-          </div>
-          <div className="mt-3 flex flex-col gap-2">
-            <Label htmlFor="workout">Какая тренировка</Label>
-            <Input
-              id="workout"
-              value={workout}
-              onChange={(e) => setWorkout(e.target.value)}
-              placeholder="Йога, бег, силовая…"
-              disabled={saving}
-            />
-          </div>
-          <div className="mt-3 flex flex-col gap-2">
-            <Label htmlFor="well">Самочувствие</Label>
-            <Textarea
-              id="well"
-              rows={2}
-              value={wellbeing}
-              onChange={(e) => setWellbeing(e.target.value)}
-              placeholder="Как себя чувствуете?"
-              disabled={saving}
-            />
-          </div>
-          <div id="mood" className="mt-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <Label>Настроение</Label>
-              <span className="text-sm font-semibold text-primary">{mood}/10</span>
+          <DiarySection
+            title="Показатели дня"
+            targets={["w", "bu", "sl", "st", "wm", "well", "mood"]}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                id="w"
+                label="Вес, кг"
+                value={weight}
+                setValue={setWeight}
+                step="0.1"
+                placeholder="70"
+                disabled={saving}
+              />
+              <Field
+                id="bu"
+                label="Хлебцы за день, шт"
+                value={breadUnits}
+                setValue={setBreadUnits}
+                placeholder="0"
+                disabled={saving}
+              />
+              <Field
+                id="sl"
+                label="Часы сна"
+                value={sleep}
+                setValue={setSleep}
+                step="0.1"
+                placeholder="7.5"
+                disabled={saving}
+              />
+              <Field
+                id="st"
+                label="Шаги"
+                value={steps}
+                setValue={setSteps}
+                placeholder="8000"
+                disabled={saving}
+              />
+              <Field
+                id="wm"
+                label="Тренировка, мин"
+                value={workoutMinutes}
+                setValue={setWorkoutMinutes}
+                placeholder="30"
+                disabled={saving}
+              />
             </div>
-            <Slider
-              min={1}
-              max={10}
-              step={1}
-              value={[mood]}
-              onValueChange={(v) => setMood(v[0])}
-              disabled={saving}
-            />
-          </div>
-        </DiarySection>
-
-        <Button type="submit" size="lg" className="h-12 text-base font-semibold" disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Сохранение...
-            </>
-          ) : (
-            "Сохранить день"
-          )}
-        </Button>
+            <div className="mt-3 flex flex-col gap-2">
+              <Label htmlFor="workout">Какая тренировка</Label>
+              <Input
+                id="workout"
+                value={workout}
+                onChange={(e) => setWorkout(e.target.value)}
+                placeholder="Йога, бег, силовая…"
+                disabled={saving}
+              />
+            </div>
+            <div className="mt-3 flex flex-col gap-2">
+              <Label htmlFor="well">Самочувствие</Label>
+              <Textarea
+                id="well"
+                rows={2}
+                value={wellbeing}
+                onChange={(e) => setWellbeing(e.target.value)}
+                placeholder="Как себя чувствуете?"
+                disabled={saving}
+              />
+            </div>
+            <div id="mood" className="mt-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <Label>Настроение</Label>
+                <span className="text-sm font-semibold text-primary">
+                  {mood != null ? `${mood}/10` : "Не отмечено"}
+                </span>
+              </div>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Оценка настроения от 1 до 10"
+              >
+                {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    variant={mood === value ? "default" : "outline"}
+                    aria-pressed={mood === value}
+                    className="h-11 w-11 p-0"
+                    onClick={() => setMood(value)}
+                  >
+                    {value}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </DiarySection>
+        </fieldset>
+        <div className="sticky bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 rounded-xl border bg-background/95 p-3 shadow-lg">
+          <p className="mb-2 text-center text-xs text-muted-foreground" role="status">
+            {saving
+              ? "Сохраняем…"
+              : dirty
+                ? "Есть несохранённые изменения"
+                : saved
+                  ? "Изменения сохранены"
+                  : "Заполните нужные поля и сохраните"}
+          </p>
+          <Button
+            type="submit"
+            size="lg"
+            className="h-12 w-full text-base font-semibold"
+            disabled={saving || baseline === null || !dirty}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Сохранение...
+              </>
+            ) : (
+              "Сохранить изменения"
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );
@@ -509,6 +568,7 @@ function MealBlock({
   meal,
   onChange,
   onRemove,
+  onRemember,
   canRemove,
   disabled,
 }: {
@@ -516,6 +576,7 @@ function MealBlock({
   index: number;
   onChange: (patch: Partial<Meal>) => void;
   onRemove: () => void;
+  onRemember: () => void;
   canRemove: boolean;
   disabled?: boolean;
 }) {
@@ -590,6 +651,15 @@ function MealBlock({
           disabled={disabled}
         />
       </div>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={disabled || !meal.food?.trim()}
+        onClick={onRemember}
+      >
+        <BookmarkPlus className="mr-2 h-4 w-4" />
+        Запомнить блюдо
+      </Button>
       <MealAiAnalysis meal={meal} disabled={disabled} />
     </div>
   );

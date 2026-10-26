@@ -87,7 +87,9 @@ function HomePage() {
         </span>
         <span className="min-w-0 text-left">
           <span className="block truncate">Рассказать о своём дне</span>
-          <span className="block text-xs font-normal opacity-90">AI-анализ вашего дня</span>
+          <span className="block text-xs font-normal opacity-90">
+            Голосом или текстом — заполним дневник
+          </span>
         </span>
       </Button>
 
