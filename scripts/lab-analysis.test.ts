@@ -5,6 +5,7 @@ import {
   labFailureMessage,
   labInputSchema,
   parseLabExplanation,
+  parseLabRows,
 } from "../src/lib/lab-analysis.ts";
 import { recognizeLabFile } from "../src/integrations/yandexgpt/lab-ocr.server.ts";
 import {
@@ -17,6 +18,20 @@ const row = (value: string, reference: string, unit = "г/л") => ({
   value,
   reference,
   unit,
+});
+
+test("extracted rows accept numeric JSON results and absent units without inventing missing values", () => {
+  const parsed = parseLabRows('```json\n{"rows":[{"name":"Пример","value":125,"unit":null}]}\n```');
+  assert.deepEqual(parsed, [{ name: "Пример", value: "125", unit: "", reference: "" }]);
+  assert.equal(
+    parseLabRows('{"rows":[{"name":"Пример","value":"<0,5","unit":"ед","reference":"<1"}]}')[0]
+      .value,
+    "<0,5",
+  );
+  for (const value of [null, true, {}, []])
+    assert.throws(() => parseLabRows(JSON.stringify({ rows: [{ name: "Пример", value }] })));
+  assert.throws(() => parseLabRows('{"rows":[]}'));
+  assert.throws(() => parseLabRows('{"rows":[{"name":"Пример","value":"12"}'));
 });
 
 test("lab failures distinguish access, limits and invalid responses without exposing private data", () => {

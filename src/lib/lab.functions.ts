@@ -5,7 +5,7 @@ import {
   compareLabRow,
   labFailureMessage,
   labInputSchema,
-  labRowSchema,
+  parseLabRows,
   parseLabExplanation,
 } from "./lab-analysis";
 
@@ -21,7 +21,7 @@ export const extractLabRows = createServerFn({ method: "POST" })
         await import("@/integrations/yandexgpt/client.server");
       const text = await generateYandexGPTCompletion({
         temperature: 0,
-        maxTokens: 3500,
+        maxTokens: 6000,
         messages: [
           { role: "system", text: SYSTEM },
           {
@@ -32,10 +32,7 @@ export const extractLabRows = createServerFn({ method: "POST" })
           },
         ],
       });
-      const parsed = z
-        .object({ rows: z.array(labRowSchema).min(1).max(40) })
-        .parse(JSON.parse(text));
-      return { ok: true as const, rows: parsed.rows };
+      return { ok: true as const, rows: parseLabRows(text) };
     } catch (error) {
       return {
         ok: false as const,
