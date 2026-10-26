@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+// Never show provider responses or validation input: they may contain lab data.
+export function labFailureMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (/status (401|403)\b/.test(message))
+    return "Сервис разбора не получил доступ к Яндексу. Требуется проверка подключения приложения.";
+  if (/status 429\b/.test(message)) return "Достигнут лимит запросов к Яндексу. Попробуйте позже.";
+  if (/60 секунд|abort|timeout/i.test(message))
+    return "Яндекс не успел ответить. Попробуйте разобрать один показатель.";
+  if (error instanceof SyntaxError || error instanceof z.ZodError || /Неполный ответ/.test(message))
+    return "Ответ Яндекса не удалось прочитать полностью. Попробуйте разобрать один показатель.";
+  return "Сервис разбора сейчас недоступен. Введённые данные остались в форме. Повторите позже.";
+}
+
 export const labRowSchema = z.object({
   name: z.string().trim().min(1).max(120),
   value: z.string().trim().min(1).max(60),

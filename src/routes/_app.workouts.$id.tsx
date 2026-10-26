@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -16,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { todayISO, useEntries } from "@/lib/store";
 import { getWorkout, getWorkoutMinutes, type WorkoutVisual } from "@/lib/workout-data";
+import { prepareWorkoutVoice } from "@/lib/workout-voice.functions";
 
 export const Route = createFileRoute("/_app/workouts/$id")({
   component: WorkoutPlayerPage,
@@ -53,6 +55,10 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [saved, setSaved] = useState(false);
   const spokenIndex = useRef(-1);
+  const prepareVoice = useServerFn(prepareWorkoutVoice);
+  const [voiceClips, setVoiceClips] = useState<string[]>([]);
+  const [preparingVoice, setPreparingVoice] = useState(false);
+  const audio = useRef<HTMLAudioElement | null>(null);
   const exercise = workout.exercises[index];
   const totalSeconds = useMemo(
     () => workout.exercises.reduce((sum, item) => sum + item.seconds, 0),
@@ -62,7 +68,37 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
     workout.exercises.slice(0, index).reduce((sum, item) => sum + item.seconds, 0) +
     (exercise.seconds - remaining);
   const progress = complete ? 100 : Math.min(100, (completedSeconds / totalSeconds) * 100);
-  const speechAvailable = typeof window !== "undefined" && "speechSynthesis" in window;
+  const stopVoice = () => {
+    audio.current?.pause();
+    spokenIndex.current = -1;
+  };
+
+  const playVoice = (clipIndex: number) => {
+    if (!voiceClips[clipIndex]) return;
+    const player = audio.current ?? (audio.current = new Audio());
+    player.pause();
+    player.src = voiceClips[clipIndex];
+    spokenIndex.current = clipIndex;
+    void player.play().catch(() => {
+      toast.error("Не удалось включить звук. Нажмите паузу и продолжите тренировку.");
+    });
+  };
+
+  const prepare = async () => {
+    setPreparingVoice(true);
+    try {
+      const response = await prepareVoice({ data: { id: workout.id } });
+      if (!response.ok) {
+        toast.error(response.error);
+        return;
+      }
+      setVoiceClips(response.clips);
+    } catch {
+      toast.error("Не удалось подготовить голос. Повторите или выключите озвучку.");
+    } finally {
+      setPreparingVoice(false);
+    }
+  };
 
   useEffect(() => {
     if (!running || complete) return;
@@ -82,28 +118,25 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
   }, [complete, index, running, workout.exercises]);
 
   useEffect(() => {
-    if (!running || !voiceEnabled || !speechAvailable || spokenIndex.current === index) return;
-    window.speechSynthesis.cancel();
-    const message = new SpeechSynthesisUtterance(`${exercise.title}. ${exercise.instruction}`);
-    message.lang = "ru-RU";
-    message.rate = 0.92;
-    const voice = window.speechSynthesis
-      .getVoices()
-      .find((candidate) => candidate.lang.toLowerCase().startsWith("ru"));
-    if (voice) message.voice = voice;
-    window.speechSynthesis.speak(message);
-    spokenIndex.current = index;
-  }, [exercise, index, running, speechAvailable, voiceEnabled]);
+    if (!running || complete || !voiceEnabled) {
+      audio.current?.pause();
+      spokenIndex.current = -1;
+      return;
+    }
+    if (spokenIndex.current !== index) playVoice(index);
+    // Playback uses the current clip; this effect runs only when playback state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, running, complete, voiceEnabled, voiceClips]);
 
   useEffect(() => {
     return () => {
-      if (speechAvailable) window.speechSynthesis.cancel();
+      audio.current?.pause();
     };
-  }, [speechAvailable]);
+  }, []);
 
   const moveTo = (nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= workout.exercises.length) return;
-    window.speechSynthesis?.cancel();
+    stopVoice();
     setIndex(nextIndex);
     setRemaining(workout.exercises[nextIndex].seconds);
     setComplete(false);
@@ -112,7 +145,7 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
   };
 
   const reset = () => {
-    window.speechSynthesis?.cancel();
+    stopVoice();
     setIndex(0);
     setRemaining(workout.exercises[0].seconds);
     setRunning(false);
@@ -156,10 +189,9 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
               size="icon"
               onClick={() => {
                 setVoiceEnabled((current) => !current);
-                window.speechSynthesis?.cancel();
+                stopVoice();
                 spokenIndex.current = -1;
               }}
-              disabled={!speechAvailable}
               aria-label={voiceEnabled ? "Выключить голос" : "Включить голос"}
             >
               {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
@@ -234,10 +266,27 @@ function WorkoutPlayer({ workout }: { workout: NonNullable<ReturnType<typeof get
           <Button
             size="lg"
             className="h-14 bg-gradient-to-r from-emerald-500 to-teal-500 text-base text-white"
-            onClick={() => setRunning((current) => !current)}
+            disabled={preparingVoice}
+            onClick={() => {
+              if (voiceEnabled && !voiceClips.length) {
+                void prepare();
+                return;
+              }
+              if (running) stopVoice();
+              else if (voiceEnabled) playVoice(index);
+              setRunning((current) => !current);
+            }}
           >
             {running ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
-            {running ? "Пауза" : completedSeconds > 0 ? "Продолжить" : "Начать"}
+            {preparingVoice
+              ? "Готовим голос…"
+              : voiceEnabled && !voiceClips.length
+                ? "Подготовить голос"
+                : running
+                  ? "Пауза"
+                  : completedSeconds > 0
+                    ? "Продолжить"
+                    : "Начать"}
           </Button>
           <Button
             variant="outline"
