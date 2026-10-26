@@ -1,7 +1,8 @@
+import { labReportText } from "@/lib/lab-export";
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, type ChangeEvent } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Download } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -123,6 +124,19 @@ function LabPage() {
     } finally {
       setBusy("");
     }
+  };
+
+  const downloadReport = () => {
+    if (!result?.ok) return;
+    const blob = new Blob(["\uFEFF", labReportText(result)], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "balans-zhizni-analizy.txt";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
   };
 
   return (
@@ -318,6 +332,13 @@ function LabPage() {
       {result?.ok && (
         <section className="space-y-3" aria-live="polite">
           <h2 className="text-lg font-semibold">Объяснение результатов</h2>
+          <Button type="button" variant="outline" onClick={downloadReport}>
+            <Download className="mr-2 h-4 w-4" />
+            Скачать разбор (.txt)
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Сохраните файл на своём устройстве. В истории приложения разбор не хранится.
+          </p>
           {result.rows.map((row) => (
             <Card key={row.index} className="space-y-2 p-4">
               <h3 className="font-semibold">
