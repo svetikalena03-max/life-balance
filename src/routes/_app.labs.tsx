@@ -40,6 +40,14 @@ function LabPage() {
     setRows((current) => current.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
   };
 
+  const fillRows = async (source: string) => {
+    setBusy("Заполняем карточки показателей…");
+    const response = await extract({ data: { text: source } });
+    if (!response.ok) throw new Error(response.error);
+    setRows(response.rows);
+    setReviewed(false);
+  };
+
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -50,8 +58,8 @@ function LabPage() {
       return;
     }
     if (
-      text.trim() &&
-      !window.confirm("Заменить текущий текст текстом из файла? Карточки показателей сохранятся.")
+      (text.trim() || hasData) &&
+      !window.confirm("Заменить текущий текст и карточки показателями из нового файла?")
     )
       return;
     setBusy("Читаем файл…");
@@ -63,6 +71,8 @@ function LabPage() {
       if (!response.ok) throw new Error(response.error);
       setText(response.text);
       invalidate();
+      setRows([emptyRow()]);
+      await fillRows(response.text);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Не удалось прочитать файл. Вставьте текст вручную.",
@@ -78,10 +88,7 @@ function LabPage() {
     setError("");
     setResult(null);
     try {
-      const response = await extract({ data: { text } });
-      if (!response.ok) throw new Error(response.error);
-      setRows(response.rows);
-      setReviewed(false);
+      await fillRows(text);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось выделить показатели.");
     } finally {
@@ -184,7 +191,8 @@ function LabPage() {
           Выделить показатели из текста
         </Button>
         <p className="text-xs text-muted-foreground">
-          Можно сразу заполнить карточки ниже вручную.
+          После загрузки файла карточки заполняются автоматически. Если не получилось, проверьте
+          распознанный текст и повторите выделение. Можно заполнить карточки вручную.
         </p>
       </Card>
 

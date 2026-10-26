@@ -20,6 +20,39 @@ export const labRowSchema = z.object({
   reference: z.string().trim().max(120),
 });
 export type LabRow = z.infer<typeof labRowSchema>;
+
+function parseModelJson(text: string): unknown {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i);
+  return JSON.parse(fenced ? fenced[1].trim() : trimmed);
+}
+
+export function parseLabRows(text: string): LabRow[] {
+  // Model output may encode a result as a JSON number and absent units as null.
+  // Normalize only these representations; never infer values or reference ranges.
+  const result = z
+    .object({
+      rows: z
+        .array(
+          z.object({
+            name: labRowSchema.shape.name,
+            value: z.union([labRowSchema.shape.value, z.number().finite().transform(String)]),
+            unit: z
+              .string()
+              .nullish()
+              .transform((value) => value ?? ""),
+            reference: z
+              .string()
+              .nullish()
+              .transform((value) => value ?? ""),
+          }),
+        )
+        .min(1)
+        .max(40),
+    })
+    .parse(parseModelJson(text));
+  return result.rows.map((row) => labRowSchema.parse(row));
+}
 export type LabStatus = "within" | "low" | "high" | "unknown";
 export const LAB_STATUS_LABELS: Record<LabStatus, string> = {
   within: "В пределах интервала лаборатории",
@@ -79,7 +112,7 @@ export const labExplanationSchema = z.object({
 });
 
 export function parseLabExplanation(text: string, count: number) {
-  const result = labExplanationSchema.parse(JSON.parse(text));
+  const result = labExplanationSchema.parse(parseModelJson(text));
   const indexes = new Set(result.indicators.map((row) => row.index));
   if (
     indexes.size !== count ||
