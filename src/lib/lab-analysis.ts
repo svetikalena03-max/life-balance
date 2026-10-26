@@ -76,7 +76,10 @@ export function parseLabRows(text: string): LabRow[] {
         .array(
           z.object({
             name: labRowSchema.shape.name,
-            value: z.union([labRowSchema.shape.value, z.number().finite().transform(String)]),
+            value: z
+              .union([z.string().trim().max(60), z.number().finite().transform(String)])
+              .nullish()
+              .transform((value) => value ?? ""),
             unit: z
               .string()
               .nullish()
@@ -91,7 +94,10 @@ export function parseLabRows(text: string): LabRow[] {
         .max(40),
     })
     .parse(json);
-  return result.rows.map((row) => labRowSchema.parse(row));
+  // Keep missing OCR values visible for review; explanation input remains strict.
+  return result.rows.map((row) =>
+    labRowSchema.extend({ value: z.string().trim().max(60) }).parse(row),
+  );
 }
 export type LabStatus = "within" | "low" | "high" | "unknown";
 export const LAB_STATUS_LABELS: Record<LabStatus, string> = {
