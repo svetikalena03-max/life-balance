@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   compareLabRow,
+  labFailureDiagnostic,
   labFailureMessage,
   labInputSchema,
   parseLabRows,
@@ -16,10 +17,11 @@ export const extractLabRows = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ text: z.string().trim().min(1).max(16000) }).parse(data))
   .handler(async ({ data }) => {
+    let modelText: string | undefined;
     try {
       const { generateYandexGPTCompletion } =
         await import("@/integrations/yandexgpt/client.server");
-      const text = await generateYandexGPTCompletion({
+      modelText = await generateYandexGPTCompletion({
         temperature: 0,
         maxTokens: 6000,
         messages: [
@@ -32,8 +34,9 @@ export const extractLabRows = createServerFn({ method: "POST" })
           },
         ],
       });
-      return { ok: true as const, rows: parseLabRows(text) };
+      return { ok: true as const, rows: parseLabRows(modelText) };
     } catch (error) {
+      console.error("lab.extract.failed", JSON.stringify(labFailureDiagnostic(error, modelText)));
       return {
         ok: false as const,
         error: labFailureMessage(error),
@@ -45,11 +48,12 @@ export const explainLabResults = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => labInputSchema.parse(data))
   .handler(async ({ data }) => {
+    let modelText: string | undefined;
     try {
       const rows = data.rows.map((row, index) => ({ ...row, index, status: compareLabRow(row) }));
       const { generateYandexGPTCompletion } =
         await import("@/integrations/yandexgpt/client.server");
-      const text = await generateYandexGPTCompletion({
+      modelText = await generateYandexGPTCompletion({
         temperature: 0.1,
         maxTokens: 5000,
         messages: [
@@ -62,8 +66,9 @@ export const explainLabResults = createServerFn({ method: "POST" })
           },
         ],
       });
-      return { ok: true as const, rows, ...parseLabExplanation(text, rows.length) };
+      return { ok: true as const, rows, ...parseLabExplanation(modelText, rows.length) };
     } catch (error) {
+      console.error("lab.explain.failed", JSON.stringify(labFailureDiagnostic(error, modelText)));
       return {
         ok: false as const,
         error: labFailureMessage(error),

@@ -1,5 +1,32 @@
 import { z } from "zod";
 
+export class LabRowsNotFoundError extends Error {
+  constructor() {
+    super("В распознанном тексте не найдены лабораторные показатели");
+    this.name = "LabRowsNotFoundError";
+  }
+}
+
+// Safe for server logs: it reports only parser shape and validation paths,
+// never the model response or the user's laboratory data.
+export function labFailureDiagnostic(error: unknown, modelText?: string) {
+  const output = {
+    length: modelText?.length ?? 0,
+    first: modelText?.trim().slice(0, 1) || "",
+    last: modelText?.trim().slice(-1) || "",
+  };
+  if (error instanceof z.ZodError)
+    return {
+      kind: "zod",
+      output,
+      issues: error.issues.slice(0, 8).map((issue) => ({ code: issue.code, path: issue.path })),
+    };
+  return {
+    kind: error instanceof Error ? error.name : "unknown",
+    output,
+  };
+}
+
 // Never show provider responses or validation input: they may contain lab data.
 export function labFailureMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
@@ -8,6 +35,8 @@ export function labFailureMessage(error: unknown): string {
   if (/status 429\b/.test(message)) return "Достигнут лимит запросов к Яндексу. Попробуйте позже.";
   if (/60 секунд|abort|timeout/i.test(message))
     return "Яндекс не успел ответить. Попробуйте разобрать один показатель.";
+  if (error instanceof LabRowsNotFoundError)
+    return "Яндекс прочитал файл, но не нашёл в нём строки с показателями. Попробуйте более крупное фото таблицы.";
   if (error instanceof SyntaxError || error instanceof z.ZodError || /Неполный ответ/.test(message))
     return "Ответ Яндекса не удалось прочитать полностью. Попробуйте разобрать один показатель.";
   return "Сервис разбора сейчас недоступен. Введённые данные остались в форме. Повторите позже.";
@@ -30,6 +59,15 @@ function parseModelJson(text: string): unknown {
 export function parseLabRows(text: string): LabRow[] {
   // Model output may encode a result as a JSON number and absent units as null.
   // Normalize only these representations; never infer values or reference ranges.
+  const json = parseModelJson(text);
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    "rows" in json &&
+    Array.isArray(json.rows) &&
+    json.rows.length === 0
+  )
+    throw new LabRowsNotFoundError();
   const result = z
     .object({
       rows: z
@@ -50,7 +88,7 @@ export function parseLabRows(text: string): LabRow[] {
         .min(1)
         .max(40),
     })
-    .parse(parseModelJson(text));
+    .parse(json);
   return result.rows.map((row) => labRowSchema.parse(row));
 }
 export type LabStatus = "within" | "low" | "high" | "unknown";

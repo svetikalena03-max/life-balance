@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   compareLabRow,
+  labFailureDiagnostic,
   labFailureMessage,
   labInputSchema,
   parseLabExplanation,
@@ -39,6 +40,11 @@ test("lab failures distinguish access, limits and invalid responses without expo
   assert.match(labFailureMessage(new Error("YandexGPT request failed with status 429")), /лимит/);
   assert.match(labFailureMessage(new SyntaxError("private lab input")), /прочитать/);
   assert.doesNotMatch(labFailureMessage(new Error("private lab input")), /private lab input/);
+  const diagnostic = JSON.stringify(
+    labFailureDiagnostic(new SyntaxError("private lab input"), '{"rows":['),
+  );
+  assert.match(diagnostic, /SyntaxError/);
+  assert.doesNotMatch(diagnostic, /private lab input/);
 });
 
 test("workout voice accepts only known programs and reuses fixed Yandex clips", async () => {
