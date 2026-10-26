@@ -16,6 +16,7 @@ import {
   GlassWater,
   ChefHat,
   Dumbbell,
+  ChevronRight,
 } from "lucide-react";
 import { useEntries, useProfile, todayISO, formatDateWeekday } from "@/lib/store";
 import { VoiceDayDialog } from "@/components/VoiceDayDialog";
@@ -99,7 +100,10 @@ function HomePage() {
         </Card>
       </Link>
 
-      <Link to="/labs" className="block rounded-xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
+      <Link
+        to="/labs"
+        className="block rounded-xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+      >
         <p className="font-semibold text-primary">Разбор анализов →</p>
         <p className="mt-1 text-xs text-muted-foreground">Загрузите бланк или введите показатели</p>
       </Link>
@@ -116,7 +120,8 @@ function HomePage() {
             <div className="min-w-0">
               <p className="text-sm opacity-90">Текущий вес</p>
               <p className="mt-1 text-4xl font-bold">
-                {Number(weight).toFixed(1)} <span className="text-xl font-medium opacity-80">кг</span>
+                {Number(weight).toFixed(1)}{" "}
+                <span className="text-xl font-medium opacity-80">кг</span>
               </p>
               <p className="mt-2 text-xs opacity-90">
                 Цель: {Number(target).toFixed(1)} кг • {Number(weightDelta) >= 0 ? "+" : ""}
@@ -254,9 +259,11 @@ function StatCard({
       aria-label={`Заполнить: ${label}`}
       className="block min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <Card className="flex h-full min-w-0 flex-col gap-2 p-3 transition-colors hover:border-primary hover:bg-accent/30">
+      <Card className="flex h-full min-w-0 flex-col gap-2 border-primary/20 p-3 shadow-sm transition-all hover:border-primary hover:bg-accent/30 active:scale-[0.98] active:bg-accent/50">
         <div className="flex min-w-0 items-center gap-2">
-          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${tint}`}>{icon}</div>
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${tint}`}>
+            {icon}
+          </div>
           <span className="truncate text-xs font-medium text-muted-foreground">{label}</span>
         </div>
         <div className="min-w-0">
@@ -264,7 +271,10 @@ function StatCard({
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>
         </div>
         {progress !== undefined && <Progress value={progress} className="h-1.5" />}
-        <span className="mt-auto text-xs font-medium text-primary">Заполнить →</span>
+        <span className="mt-auto flex items-center justify-between rounded-lg bg-primary/10 px-2 py-1.5 text-xs font-semibold text-primary">
+          Заполнить
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </span>
       </Card>
     </Link>
   );
