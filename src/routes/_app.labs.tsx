@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LAB_STATUS_LABELS, type LabRow } from "@/lib/lab-analysis";
+import { prepareLabFile } from "@/lib/lab-file";
 import { explainLabResults, extractLabRows, recognizeLabDocument } from "@/lib/lab.functions";
 
 export const Route = createFileRoute("/_app/labs")({ component: LabPage });
@@ -49,27 +50,15 @@ function LabPage() {
       return;
     }
     if (
-      !["image/jpeg", "image/png", "application/pdf"].includes(file.type) ||
-      file.size > 2 * 1024 * 1024
-    ) {
-      setError("Выберите JPEG, PNG или одностраничный PDF до 2 МБ. HEIC нужно сохранить как JPEG.");
-      return;
-    }
-    if (
       text.trim() &&
       !window.confirm("Заменить текущий текст текстом из файла? Карточки показателей сохранятся.")
     )
       return;
     setBusy("Читаем файл…");
     try {
-      const content = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(",")[1]);
-        reader.onerror = () => reject(new Error("Не удалось открыть файл"));
-        reader.readAsDataURL(file);
-      });
+      const prepared = await prepareLabFile(file);
       const response = await recognize({
-        data: { content, mimeType: file.type as "image/jpeg" | "image/png" | "application/pdf" },
+        data: prepared,
       });
       if (!response.ok) throw new Error(response.error);
       setText(response.text);
@@ -170,8 +159,9 @@ function LabPage() {
           Загрузить фото или PDF
         </Button>
         <p className="text-xs text-muted-foreground">
-          JPEG, PNG или PDF из одной страницы до 2 МБ. Для многостраничного бланка добавляйте
-          показатели по одной странице. Проверяйте, что ни одна строка не пропущена.
+          JPEG, PNG или PDF из одной страницы до 2 МБ. Большие фото уменьшаются на устройстве
+          автоматически. Для многостраничного бланка добавляйте показатели по одной странице.
+          Проверяйте, что ни одна строка не пропущена.
         </p>
         <Label htmlFor="lab-text">Или вставьте текст бланка</Label>
         <Textarea
