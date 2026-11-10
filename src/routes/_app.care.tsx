@@ -6,17 +6,16 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_app/care")({ component: CarePage });
-type Recipient = { id: string; display_name: string; consent_confirmed: boolean };
-type CareEvent = { id: string; recipient_id: string; category: string; details: string; event_at: string };
+type Recipient = Pick<Database["public"]["Tables"]["care_recipients"]["Row"], "id" | "display_name" | "consent_confirmed">;
+type CareEvent = Pick<Database["public"]["Tables"]["care_events"]["Row"], "id" | "recipient_id" | "category" | "details" | "event_at">;
 const categories: Record<string, string> = {
  bp: "Давление и пульс", medication: "Лекарство", meal: "Питание",
  hydration: "Вода", hygiene: "Гигиена", position: "Положение тела",
  wellbeing: "Самочувствие", caregiver_visit: "Помощник", note: "Заметка"
 };
-// The migration is deployed independently; these tables are not yet in generated Supabase types.
-const db = supabase as unknown as { from: (table: string) => any };
 
 function CarePage() {
  const { user } = useAuth();
@@ -33,7 +32,7 @@ function CarePage() {
  const [loaded, setLoaded] = useState(false);
 
  async function reloadPeople() {
-  const { data, error: err } = await db.from("care_recipients").select("id,display_name,consent_confirmed").order("created_at", { ascending: true });
+  const { data, error: err } = await supabase.from("care_recipients").select("id,display_name,consent_confirmed").order("created_at", { ascending: true });
   if (err) throw err;
   const list = (data ?? []) as Recipient[];
   setPeople(list);
@@ -41,15 +40,16 @@ function CarePage() {
  }
  async function reloadEvents(id: string) {
   if (!id) { setEvents([]); return; }
-  const { data, error: err } = await db.from("care_events").select("id,recipient_id,category,details,event_at").eq("recipient_id", id).order("event_at", { ascending: false }).limit(100);
+  const { data, error: err } = await supabase.from("care_events").select("id,recipient_id,category,details,event_at").eq("recipient_id", id).order("event_at", { ascending: false }).limit(100);
   if (err) throw err;
   setEvents((data ?? []) as CareEvent[]);
  }
  useEffect(() => {
   if (!user) return;
   let active = true;
+  setError("");
   setLoaded(false);
-  db.from("care_recipients").select("id,display_name,consent_confirmed").order("created_at", { ascending: true })
+  supabase.from("care_recipients").select("id,display_name,consent_confirmed").order("created_at", { ascending: true })
    .then(({ data, error: err }: { data: Recipient[] | null; error: Error | null }) => {
     if (!active) return;
     if (err) setError("Дневник пока недоступен. Проверьте, что миграция базы данных выполнена.");
@@ -65,7 +65,7 @@ function CarePage() {
  useEffect(() => {
   if (!selected) { setEvents([]); return; }
   let active = true;
-  db.from("care_events").select("id,recipient_id,category,details,event_at").eq("recipient_id", selected).order("event_at", { ascending: false }).limit(100)
+  supabase.from("care_events").select("id,recipient_id,category,details,event_at").eq("recipient_id", selected).order("event_at", { ascending: false }).limit(100)
    .then(({data,error:err}: {data:CareEvent[]|null;error:Error|null}) => {
     if (!active) return;
     if (err) setError("Не удалось загрузить записи.");
@@ -82,7 +82,7 @@ function CarePage() {
  function addPerson() {
   if (!name.trim() || !consent || !user) return;
   void run(async () => {
-   const { error: err } = await db.from("care_recipients").insert({ owner_user_id: user.id, display_name: name.trim(), consent_confirmed: true });
+   const { error: err } = await supabase.from("care_recipients").insert({ owner_user_id: user.id, display_name: name.trim(), consent_confirmed: true });
    if (err) throw err;
    setName(""); setConsent(false); await reloadPeople(); setMessage("Карточка создана.");
   });
@@ -90,7 +90,7 @@ function CarePage() {
  function addEvent() {
   if (!selected || !details.trim() || !user) return;
   void run(async () => {
-   const { error: err } = await db.from("care_events").insert({ recipient_id: selected, created_by: user.id, category, details: details.trim() });
+   const { error: err } = await supabase.from("care_events").insert({ recipient_id: selected, created_by: user.id, category, details: details.trim() });
    if (err) throw err;
    setDetails(""); await reloadEvents(selected); setMessage("Запись сохранена.");
   });
@@ -98,7 +98,7 @@ function CarePage() {
  function removeEvent(id: string) {
   if (!window.confirm("Удалить запись?")) return;
   void run(async () => {
-   const { error: err } = await db.from("care_events").delete().eq("id", id).eq("recipient_id", selected);
+   const { error: err } = await supabase.from("care_events").delete().eq("id", id).eq("recipient_id", selected);
    if (err) throw err;
    await reloadEvents(selected); setMessage("Запись удалена.");
   });
@@ -109,6 +109,7 @@ function CarePage() {
   {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   {message && <p role="status" className="text-sm text-primary">{message}</p>}
   {!loaded ? <p>Загрузка...</p> : <>
+   {error.includes("миграция") || error.includes("подключиться") ? null : <>
    <Card className="space-y-3 p-4">
     <h2 className="font-semibold">Добавить близкого</h2>
     <Input aria-label="Имя или псевдоним" value={name} onChange={e => setName(e.target.value)} placeholder="Имя или псевдоним" maxLength={100}/>
@@ -138,6 +139,7 @@ function CarePage() {
       <Button size="sm" variant="outline" disabled={busy} onClick={() => removeEvent(event.id)}>Удалить</Button>
      </div>)}
     </Card>
+   </>}
    </>}
   </>}
  </div>;
