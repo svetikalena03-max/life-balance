@@ -16,6 +16,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      care_recipients: {
+        Row: {
+          id: string
+          owner_user_id: string
+          display_name: string
+          consent_confirmed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          owner_user_id: string
+          display_name: string
+          consent_confirmed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          owner_user_id?: string
+          display_name?: string
+          consent_confirmed?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      care_events: {
+        Row: {
+          id: string
+          recipient_id: string
+          created_by: string
+          event_at: string
+          category: string
+          details: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_id: string
+          created_by: string
+          event_at?: string
+          category: string
+          details: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipient_id?: string
+          created_by?: string
+          event_at?: string
+          category?: string
+          details?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "care_recipients"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       pregnancy_settings: {
         Row: PregnancySettings
         Insert: Omit<PregnancySettings, "updated_at"> & { updated_at?: string }

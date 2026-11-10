@@ -43,6 +43,7 @@ import {
   Settings as SettingsIcon,
   ChefHat,
   UsersRound,
+  ClipboardList,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/profile")({
@@ -305,6 +306,19 @@ function ProfilePage() {
             <p className="text-xs text-muted-foreground">
               Пригласить близких, у каждого свои данные
             </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </Card>
+      </Link>
+
+      <Link to="/care" className="block">
+        <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/40">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <ClipboardList className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">Уход за близким</p>
+            <p className="text-xs text-muted-foreground">Отдельные записи о давлении, лекарствах и уходе</p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </Card>
