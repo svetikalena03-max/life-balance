@@ -49,28 +49,41 @@ function CarePage() {
   let active = true;
   setError("");
   setLoaded(false);
-  supabase.from("care_recipients").select("id,display_name,consent_confirmed").order("created_at", { ascending: true })
-   .then(({ data, error: err }: { data: Recipient[] | null; error: Error | null }) => {
+  void (async () => {
+   try {
+    const { data, error: err } = await supabase.from("care_recipients")
+     .select("id,display_name,consent_confirmed")
+     .order("created_at", { ascending: true });
     if (!active) return;
-    if (err) setError("Дневник пока недоступен. Проверьте, что миграция базы данных выполнена.");
-    else {
-     const list = data ?? [];
-     setPeople(list);
-     setSelected(list[0]?.id ?? "");
-    }
-   }).catch(() => { if (active) setError("Не удалось подключиться к базе."); })
-   .finally(() => { if (active) setLoaded(true); });
+    if (err) throw err;
+    const list = data ?? [];
+    setPeople(list);
+    setSelected(list[0]?.id ?? "");
+   } catch {
+    if (active) setError("Не удалось подключиться к базе или таблицы дневника ещё не созданы.");
+   } finally {
+    if (active) setLoaded(true);
+   }
+  })();
   return () => { active = false; };
  }, [user?.id]);
  useEffect(() => {
   if (!selected) { setEvents([]); return; }
   let active = true;
-  supabase.from("care_events").select("id,recipient_id,category,details,event_at").eq("recipient_id", selected).order("event_at", { ascending: false }).limit(100)
-   .then(({data,error:err}: {data:CareEvent[]|null;error:Error|null}) => {
+  void (async () => {
+   try {
+    const { data, error: err } = await supabase.from("care_events")
+     .select("id,recipient_id,category,details,event_at")
+     .eq("recipient_id", selected)
+     .order("event_at", { ascending: false })
+     .limit(100);
     if (!active) return;
-    if (err) setError("Не удалось загрузить записи.");
-    else setEvents(data ?? []);
-   }).catch(() => { if (active) setError("Не удалось загрузить записи."); });
+    if (err) throw err;
+    setEvents(data ?? []);
+   } catch {
+    if (active) setError("Не удалось загрузить записи.");
+   }
+  })();
   return () => { active = false; };
  }, [selected]);
 
@@ -109,7 +122,7 @@ function CarePage() {
   {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   {message && <p role="status" className="text-sm text-primary">{message}</p>}
   {!loaded ? <p>Загрузка...</p> : <>
-   {error.includes("миграция") || error.includes("подключиться") ? null : <>
+   {error.includes("таблицы дневника") || error.includes("подключиться") ? null : <>
    <Card className="space-y-3 p-4">
     <h2 className="font-semibold">Добавить близкого</h2>
     <Input aria-label="Имя или псевдоним" value={name} onChange={e => setName(e.target.value)} placeholder="Имя или псевдоним" maxLength={100}/>
