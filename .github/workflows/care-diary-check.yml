@@ -1,5 +1,7 @@
 name: Care diary build check
 on:
+  push:
+    branches: ["feature/caregiver-diary-plan"]
   pull_request:
     paths:
       - "src/**"
